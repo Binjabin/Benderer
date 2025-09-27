@@ -1,12 +1,22 @@
 #include "benderer.h"
-#include "bvh.h"
+#include "scene/hittables/bvh.h"
 
-#include "camera.h"
-#include "hittable.h"
-#include "hittable_list.h"
-#include "material.h"
-#include "quad.h"
-#include "sphere.h"
+#include "scene/camera.h"
+#include "scene/hittables/hittable.h"
+#include "scene/hittables/hittable_list.h"
+#include "scene/material/material.h"
+
+#include "scene/hittables/primatives/quad.h"
+#include "scene/hittables/primatives/sphere.h"
+
+#include "scene/material/materials/mat_lambertian.h"
+#include "scene/material/materials/mat_dielectric.h"
+#include "scene/material/materials/mat_diffuse_light.h"
+#include "scene/material/materials/mat_metal.h"
+
+#include "scene/texture/textures/tex_checker.h"
+#include "scene/texture/textures/tex_image.h"
+#include "scene/texture/textures/tex_noise.h"
 
 
 void scene_checkered_spheres() {

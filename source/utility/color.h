@@ -5,8 +5,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-#include "interval.h"
-#include "vec3.h"
+#include "../structures/interval.h"
+#include "../structures/vec3.h"
 
 using color = vec3;
 

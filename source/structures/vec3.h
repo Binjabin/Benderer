@@ -4,7 +4,7 @@
 
 #ifndef VEC3_H
 #define VEC3_H
-#include "color.h"
+#include "../utility/color.h"
 
 class vec3 {
 public:

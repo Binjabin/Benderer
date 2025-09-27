@@ -49,11 +49,11 @@ cmake_ninja_workdir = /home/binjabin/CLionProjects/Benderer/cmake-build-debug/
 
 build cmake_object_order_depends_target_Benderer: phony || .
 
-build CMakeFiles/Benderer.dir/main.cpp.o: CXX_COMPILER__Benderer_unscanned_Debug /home/binjabin/CLionProjects/Benderer/main.cpp || cmake_object_order_depends_target_Benderer
-  DEP_FILE = CMakeFiles/Benderer.dir/main.cpp.o.d
+build CMakeFiles/Benderer.dir/source/main.cpp.o: CXX_COMPILER__Benderer_unscanned_Debug /home/binjabin/CLionProjects/Benderer/source/main.cpp || cmake_object_order_depends_target_Benderer
+  DEP_FILE = CMakeFiles/Benderer.dir/source/main.cpp.o.d
   FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles/Benderer.dir
-  OBJECT_FILE_DIR = CMakeFiles/Benderer.dir
+  OBJECT_FILE_DIR = CMakeFiles/Benderer.dir/source
 
 
 # =============================================================================
@@ -63,7 +63,7 @@ build CMakeFiles/Benderer.dir/main.cpp.o: CXX_COMPILER__Benderer_unscanned_Debug
 #############################################
 # Link the executable Benderer
 
-build Benderer: CXX_EXECUTABLE_LINKER__Benderer_Debug CMakeFiles/Benderer.dir/main.cpp.o
+build Benderer: CXX_EXECUTABLE_LINKER__Benderer_Debug CMakeFiles/Benderer.dir/source/main.cpp.o
   DEP_FILE = CMakeFiles/Benderer.dir/link.d
   FLAGS = -g
   LINK_FLAGS = -Wl,--dependency-file=CMakeFiles/Benderer.dir/link.d

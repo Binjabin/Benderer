@@ -5,7 +5,7 @@
 #ifndef HITTABLE_H
 #define HITTABLE_H
 
-#include "aabb.h"
+#include "../../structures/aabb.h"
 
 //tell compiler we handle what this is later
 class material;

@@ -5,7 +5,7 @@
 #ifndef QUAD_H
 #define QUAD_H
 
-#include "hittable.h"
+#include "../hittable.h"
 
 class quad : public hittable {
 public:

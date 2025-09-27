@@ -41,9 +41,9 @@ inline int random_int(int min, int max) {
 
 //COMMON HEADERS
 
-#include "color.h"
-#include "ray.h"
-#include "vec3.h"
-#include "interval.h"
+#include "utility/color.h"
+#include "structures/ray.h"
+#include "structures/vec3.h"
+#include "structures/interval.h"
 
 #endif //BENDERER_H

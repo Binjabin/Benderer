@@ -4,7 +4,7 @@
 
 #ifndef PERLIN_H
 #define PERLIN_H
-#include "benderer.h"
+#include "../benderer.h"
 
 
 class perlin {

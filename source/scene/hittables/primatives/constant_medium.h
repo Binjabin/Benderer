@@ -5,9 +5,9 @@
 #ifndef CONSTANT_MEDIUM_H
 #define CONSTANT_MEDIUM_H
 
-#include "hittable.h"
-#include "material.h"
-#include "texture.h"
+#include "../hittable.h"
+#include "../../material.h"
+#include "../../texture.h"
 
 class constant_medium : public hittable {
 public:
@@ -28,24 +28,24 @@ public:
         //make sure we exit the volume
         if ( !boundary->hit( r, interval( rec1.t + 0.0001, infinity ), rec2 ) ) return false;
 
-        //crop the enter and exit points to the section of the ray we are checking
+        //crop enter and exit points to the section of the ray we are checking
         if ( rec1.t < ray_t.min ) rec1.t = ray_t.min;
         if ( rec2.t > ray_t.max ) rec2.t = ray_t.max;
 
-        //if we spend no time in volume, exit
+        //if we spend no time in the volume, exit
         if ( rec1.t >= rec2.t ) return false;
 
         //at earliest, start ray transmission at camera
         if ( rec1.t < 0 ) rec1.t = 0;
 
-        //calculate distance we spend inside boundary
+        //calculate the distance we spend inside the boundary
         auto ray_length = r.direction().length();
         auto distance_inside_boundary = ( rec2.t - rec1.t ) * ray_length;
 
         //how long until we deflect in volume
         auto hit_distance = neg_inv_density * std::log( random_double() );
 
-        //if we don't defract, we don't "hit" volume
+        //if we don't refract, we don't "hit" volume
         if ( hit_distance > distance_inside_boundary ) return false;
 
         //we hit after hit_distance length from entering the volume

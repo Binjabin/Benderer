@@ -11,6 +11,7 @@
 #include <algorithm> //for sort
 
 
+//acceleration structure for handling lots of objects in sub-linear time
 class bvh_node : public hittable {
 public:
     bvh_node( hittable_list list ) : bvh_node( list.objects, 0, list.objects.size() ) {
