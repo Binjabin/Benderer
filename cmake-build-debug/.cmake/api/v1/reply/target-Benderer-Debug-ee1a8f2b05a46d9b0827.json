@@ -116,7 +116,9 @@
 				25,
 				26,
 				27,
-				28
+				28,
+				29,
+				30
 			]
 		}
 	],
@@ -266,6 +268,16 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/scene/material/materials/mat_diffuse_light.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/scene.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/scene_library.h",
 			"sourceGroupIndex" : 1
 		}
 	],

@@ -32,4 +32,6 @@ add_executable(Benderer source/main.cpp
         source/scene/material/materials/mat_dielectric.h
         source/scene/material/materials/mat_metal.h
         source/scene/material/materials/mat_diffuse_light.h
+        source/scene/scene.h
+        source/scene/scene_library.h
 )
