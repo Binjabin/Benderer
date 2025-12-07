@@ -5,7 +5,7 @@
 #ifndef PDF_H
 #define PDF_H
 #include "../benderer.h"
-
+#include "../structures/onb.h"
 
 class pdf {
 public:
@@ -14,6 +14,10 @@ public:
 
     virtual double value( const vec3& direction ) const = 0;
     virtual vec3 generate() const = 0;
+
+    //Do we actually have a value we can sample, or is it a trivial pdf?
+    //Example, if we have no in-scene lights
+    virtual bool trivial() const = 0;
 };
 
 class sphere_pdf : public pdf {
@@ -28,6 +32,9 @@ public:
     vec3 generate() const override {
         return random_unit_vector();
     }
+
+
+    bool trivial() const override { return false; }
 };
 
 class cosine_pdf : public pdf {
@@ -43,6 +50,8 @@ public:
     vec3 generate() const override {
         return uvw.transform( random_cosine_direction() );
     }
+
+    bool trivial() const override { return false; }
 
 private:
     onb uvw;
@@ -62,6 +71,8 @@ public:
         return objects.random(origin);
     }
 
+    bool trivial() const override { return (objects.count() <= 0); }
+
 private:
     const hittable& objects;
     point3 origin;
@@ -79,13 +90,13 @@ public:
     }
 
     vec3 generate() const override {
-        if (random_double() < 0.5) {
+        if (!p[0]->trivial() && random_double() < 0.5) {
             return p[0]->generate();
         }
-        else {
-            return p[1]->generate();
-        }
+        return p[1]->generate();
     }
+
+    bool trivial() const override { return (p[0]->trivial() && p[1]->trivial()); }
 
 private:
     shared_ptr<pdf> p[2];

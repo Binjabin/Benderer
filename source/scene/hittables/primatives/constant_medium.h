@@ -6,17 +6,19 @@
 #define CONSTANT_MEDIUM_H
 
 #include "../hittable.h"
-#include "../../material.h"
-#include "../../texture.h"
+#include "../../material/material.h"
+#include "../../texture/texture.h"
 
 class constant_medium : public hittable {
 public:
     constant_medium( shared_ptr<hittable> boundary, double density, shared_ptr<texture> tex )
         : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotopic>( tex ) ) {
+        m_count = 1;
     }
 
     constant_medium( shared_ptr<hittable> boundary, double density, const color& albedo )
         : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotopic>( albedo ) ) {
+        m_count = 1;
     }
 
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {

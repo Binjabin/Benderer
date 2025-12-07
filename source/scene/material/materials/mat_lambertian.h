@@ -5,6 +5,9 @@
 #ifndef MAT_LAMBERTIAN_H
 #define MAT_LAMBERTIAN_H
 
+#include "../../texture/texture.h"
+#include "../../texture/textures/tex_solid_colour.h"
+
 class lambertian : public material {
 public:
     lambertian( const color& albedo ) : tex( make_shared<solid_color>( albedo ) ) {

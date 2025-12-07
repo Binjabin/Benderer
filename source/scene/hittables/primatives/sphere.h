@@ -14,6 +14,8 @@ public:
         : center( static_center, vec3( 0, 0, 0 ) ), radius( std::fmax( 0, radius ) ), mat( mat ) {
         auto rvec = vec3( radius, radius, radius );
         bbox = aabb( static_center - rvec, static_center + rvec );
+
+        m_count = 1;
     }
 
     sphere( const point3& center1, const point3& center2, double radius, shared_ptr<material> mat )
@@ -22,6 +24,8 @@ public:
         aabb bbox1 = aabb( center1 - rvec, center1 + rvec );
         aabb bbox2 = aabb( center2 - rvec, center2 + rvec );
         bbox = aabb( bbox1, bbox2 );
+
+        m_count = 1;
     }
 
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {

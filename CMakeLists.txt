@@ -34,4 +34,7 @@ add_executable(Benderer source/main.cpp
         source/scene/material/materials/mat_diffuse_light.h
         source/scene/scene.h
         source/scene/scene_library.h
+        source/image/image_info.h
+        source/structures/scatter_record.h
+        source/image/image_info_library.h
 )

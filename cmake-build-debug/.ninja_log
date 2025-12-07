@@ -1,8 +1,11 @@
 # ninja log v6
-1	384	1750435165933083637	CMakeFiles/Benderer.dir/vec3.cpp.o	68f926c20f387311
-1	30	1758978952599448830	build.ninja	4d31078224d17f77
-3	1835	1758970977698838463	CMakeFiles/Benderer.dir/main.cpp.o	8d38c63b05f068c7
-0	1881	1758973699238677500	CMakeFiles/Benderer.dir/source/main.cpp.o	68d816b83e97c483
-1882	1961	1758973701120698752	Benderer	80dae2c026edcb17
-1	1951	1758980616804553703	CMakeFiles/Benderer.dir/source/main.cpp.o	68d816b83e97c483
-1951	2032	1758980618754579338	Benderer	80dae2c026edcb17
+1	26	1765132713366804373	/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/cmake_install.cmake	887a5d1ce1b23164
+1	26	1765132713366804373	build.ninja	887a5d1ce1b23164
+2	1526	1765130325532646402	CMakeFiles/Benderer.dir/source/main.cpp.o	68cb0d85f1a185d4
+1526	1595	1765130327056649964	Benderer	80dae2c026edcb17
+0	24	1765132713366804373	build.ninja	887a5d1ce1b23164
+0	24	1765132713366804373	/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/cmake_install.cmake	887a5d1ce1b23164
+1	1550	1765133084930905811	CMakeFiles/Benderer.dir/source/main.cpp.o	68cb0d85f1a185d4
+1550	1620	1765133086479923231	Benderer	80dae2c026edcb17
+2	1315	1765133301898311282	CMakeFiles/Benderer.dir/source/main.cpp.o	68cb0d85f1a185d4
+1315	1380	1765133303211325655	Benderer	80dae2c026edcb17

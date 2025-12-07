@@ -6,19 +6,9 @@
 #define MATERIAL_H
 
 #include "../hittables/hittable.h"
-#include "../../structures/onb.h"
 #include "../../structures/pdf.h"
-#include "../texture/texture.h"
-#include "../texture/textures/tex_solid_colour.h"
 #include "../../structures/vec3.h"
-
-class scatter_record {
-public:
-    color attenuation;
-    shared_ptr<pdf> pdf_ptr;
-    bool skip_pdf;
-    ray skip_pdf_ray;
-};
+#include "../../structures/scatter_record.h"
 
 class material {
 public:

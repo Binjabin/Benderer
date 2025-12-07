@@ -1,4 +1,4 @@
-/home/binjabin/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/binjabin/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja -G Ninja -S /home/binjabin/CLionProjects/Benderer -B /home/binjabin/CLionProjects/Benderer/cmake-build-debug
+/home/binjabin/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/home/binjabin/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja -G Ninja -S /home/binjabin/Coding/Oxford/Project/Benderer -B /home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug
 -- Configuring done (0.0s)
 -- Generating done (0.0s)
--- Build files have been written to: /home/binjabin/CLionProjects/Benderer/cmake-build-debug
+-- Build files have been written to: /home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug

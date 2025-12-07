@@ -12,17 +12,17 @@ public:
     ~scene() = default;
 
     scene( camera cam, hittable_list world, hittable_list lights )
-        : cam( cam ), world( world ), lights( lights ) {
+        : m_cam( cam ), m_world( world ), m_lights( lights ) {
     }
 
-    void render() {
-        cam.render( world, lights );
+    void render( image_info info ) {
+        m_cam.render( m_world, m_lights, info );
     }
 
 private:
-    camera cam;
-    hittable_list world;
-    hittable_list lights;
+    camera m_cam;
+    hittable_list m_world;
+    hittable_list m_lights;
 };
 
 #endif //SCENE_H

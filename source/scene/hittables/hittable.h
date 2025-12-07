@@ -40,6 +40,13 @@ public:
     virtual vec3 random(const point3& origin) const {
         return vec3(1, 0, 0);
     }
+
+    virtual int count() const {
+        return m_count;
+    }
+
+protected:
+    int m_count = 0;
 };
 
 class translate : public hittable {
@@ -47,6 +54,7 @@ public:
     translate( shared_ptr<hittable> object, const vec3& offset )
         : object( object ), offset( offset ) {
         bbox = object->bounding_box() + offset;
+        m_count = object->count();
     }
 
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
@@ -104,6 +112,7 @@ public:
         }
 
         bbox = aabb( min, max );
+        m_count = object->count();
     }
 
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
@@ -132,6 +141,10 @@ public:
     }
 
     aabb bounding_box() const override { return bbox; }
+
+    int count() const override {
+        return object->count();
+    }
 
 private:
     shared_ptr<hittable> object;

@@ -47,7 +47,11 @@ public:
             right = make_shared<bvh_node>( objects, mid, end );
         }
 
-
+        int sum = 0;
+        for (int i = 0; i < objects.size(); i++) {
+            sum += objects[i]->count();
+        }
+        m_count = sum;
     }
 
     //check if we hit any objects in subtree

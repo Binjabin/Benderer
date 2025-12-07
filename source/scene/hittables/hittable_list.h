@@ -17,7 +17,10 @@ public:
     hittable_list() {
     }
 
-    hittable_list( shared_ptr<hittable> object ) { add( object ); }
+    hittable_list( shared_ptr<hittable> object ) {
+        add( object );
+        m_count += object->count();
+    }
 
     void clear() { objects.clear(); }
 
@@ -63,7 +66,12 @@ public:
         return obj->random(origin);
     }
 
+    int count() const override {
+        return m_count;
+    }
+
 private:
+    int m_count = 0;
     aabb bbox;
 };
 

@@ -20,12 +20,16 @@ public:
         area = n.length();
 
         set_bounding_box();
+
+        m_count = 1;
     }
 
     virtual void set_bounding_box() {
         auto bbox_diagonal1 = aabb( Q, Q + u + v );
         auto bbox_diagonal2 = aabb( Q + u, Q + v );
         bbox = aabb( bbox_diagonal1, bbox_diagonal2 );
+
+        m_count = 1;
     }
 
     aabb bounding_box() const override { return bbox; }
