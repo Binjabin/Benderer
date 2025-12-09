@@ -4,7 +4,6 @@
 
 #ifndef BENDERER_LIGHT_SAMPLE_H
 #define BENDERER_LIGHT_SAMPLE_H
-#include <bits/valarray_after.h>
 
 #include "../benderer.h"
 
