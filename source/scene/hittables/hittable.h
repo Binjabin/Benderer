@@ -6,6 +6,7 @@
 #define HITTABLE_H
 
 #include "../../structures/aabb.h"
+#include "../../structures/light_sample.h"
 
 //tell compiler we handle what this is later
 class material;
@@ -59,7 +60,7 @@ public:
 
     virtual void compute_properties() = 0;
 
-    virtual point3 sample_point_over_flux(double seed) const = 0;
+    virtual shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const = 0;
 
 protected:
     void set_flux_rgb(const vec3& flux_rgb) {

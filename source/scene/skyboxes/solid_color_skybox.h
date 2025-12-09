@@ -20,8 +20,12 @@ public:
         return 4 * pi * m_color;
     }
 
-    vec3 sample_direction_over_flux() const override {
-        return random_unit_vector();
+    shared_ptr<environment_light_sample> sample_light_over_flux(double running_p) const override {
+        auto d = random_unit_vector();
+        //TODO: Make neater
+        auto pdf_omega = running_p / (4.0 * pi);
+        environment_light_sample sample = environment_light_sample(m_color, pdf_omega, d);
+        return make_shared<environment_light_sample>(sample);
     }
 
 private:

@@ -108,6 +108,10 @@ public:
         return Q + r1 * u + r2 * v;
     }
 
+    vec3 get_normal(point3 p) const override {
+        return normal;
+    }
+
 private:
     point3 Q;
     vec3 u, v;

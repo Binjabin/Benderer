@@ -82,7 +82,7 @@ public:
         set_flux_rgb(left->get_flux_rgb() + right->get_flux_rgb());
     }
 
-    point3 sample_point_over_flux(double seed) const override {
+    shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
 
         double l_flux = left->get_flux_weight();
         double r_flux = right->get_flux_weight();
@@ -91,10 +91,12 @@ public:
 
         if (sample < l_flux) {
             auto new_seed = sample / total_flux;
-            return left->sample_point_over_flux(new_seed);
+            double prob = l_flux / total_flux;
+            return left->sample_light_over_flux(new_seed, running_prob * prob);
         }
         auto new_seed = (sample - l_flux) / total_flux;
-        return right->sample_point_over_flux(new_seed);
+        double prob = l_flux / total_flux;
+        return right->sample_light_over_flux(new_seed, running_prob * prob);
     }
 
 private:

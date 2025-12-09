@@ -5,6 +5,7 @@
 #ifndef BENDERER_PRIMITIVE_H
 #define BENDERER_PRIMITIVE_H
 #include "../hittable.h"
+#include "../../../structures/ray.h"
 
 class primitive : public hittable {
 
@@ -17,6 +18,8 @@ protected:
 
     virtual double calculate_surface_area() const = 0;
 
+    virtual vec3 get_normal(point3 p) const = 0;
+
     void compute_properties() override {
         if (m_mat) {
             double area = calculate_surface_area();
@@ -25,11 +28,23 @@ protected:
         }
     }
 
-    point3 sample_point_over_flux(double seed) const override {
-        return sample_over_surface();
+    shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
+        auto p = sample_over_surface();
+        auto n = get_normal(p);
+        color radiance = m_mat->get_radiance();
+
+        auto pdf_a = local_pdf(p) * running_prob;
+
+        return make_shared<surface_light_sample>(radiance, p, n, pdf_a);
     }
 
     virtual point3 sample_over_surface() const = 0;
+
+    double local_pdf(point3& p) const {
+        return 1.0 / get_surface_area();
+    };
+
+
 };
 
 #endif //BENDERER_PRIMITIVE_H

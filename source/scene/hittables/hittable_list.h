@@ -89,7 +89,7 @@ public:
         set_flux_rgb(sum_flux_rgb);
     }
 
-    point3 sample_point_over_flux(double seed) const override {
+    shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
         if (objects.size() <= 0) {
             throw std::runtime_error("No objects in hittable list");
         }
@@ -109,8 +109,8 @@ public:
 
         //We end under a specific item
         double new_seed = (sample - bottom) / interval_range;
-
-        return objects[i]->sample_point_over_flux(new_seed);
+        double prob = interval_range / total_flux;
+        return objects[i]->sample_light_over_flux(new_seed, running_prob * prob);
 
     }
 

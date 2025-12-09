@@ -135,6 +135,10 @@ private:
 
         return vec3( x, y, z );
     }
+
+    vec3 get_normal(point3 p) const override {
+        return unit_vector(p - center.origin());
+    }
 };
 
 

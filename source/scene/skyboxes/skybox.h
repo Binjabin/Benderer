@@ -18,7 +18,7 @@ public:
         return flux_weight(get_flux_rgb());
     };
 
-    virtual vec3 sample_direction_over_flux() const = 0;
+    virtual shared_ptr<environment_light_sample> sample_light_over_flux(double running_p) const = 0;
 };
 
 #endif //BENDERER_SKYBOX_H
