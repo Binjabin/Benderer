@@ -5,12 +5,17 @@
 #ifndef MAT_DIFFUSE_LIGHT_H
 #define MAT_DIFFUSE_LIGHT_H
 
+#include "../../texture/texture.h"
+
 class diffuse_light : public material {
 public:
+    //TODO: Allow for non-uniform emission...
     diffuse_light( shared_ptr<texture> tex ) : tex( tex ) {
+        m_radiance = tex->get_base_color();
     }
 
     diffuse_light( const color& emit ) : tex( make_shared<solid_color>( emit ) ) {
+        m_radiance = emit;
     }
 
     color emitted( const ray& r_in, const hit_record& rec, double u, double v, const point3& p ) const override {

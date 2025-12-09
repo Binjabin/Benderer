@@ -1,5 +1,6 @@
 #include "benderer.h"
 #include "image/image_info_library.h"
+#include "integrators/rtw_model.h"
 
 #include "scene/hittables/bvh.h"
 #include "scene/scene.h"
@@ -8,9 +9,10 @@
 int main() {
     freopen( "output.ppm", "w", stdout );
 
-    scene our_scene = scene_library::earth();
-    image_info info = image_info_library::low();
-    our_scene.render( info );
+    scene our_scene = scene_library::cornell_ball();
+    image_info info = image_info_library::preview();
+    auto itgr = rtw_model();
+    our_scene.render(info, itgr);
 
     return 0;
 }

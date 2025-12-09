@@ -8,24 +8,24 @@
 #include "../hittable.h"
 #include "../../../structures/onb.h"
 
-class sphere : public hittable {
+class sphere : public primitive {
 public:
-    sphere( const point3& static_center, double radius, shared_ptr<material> mat )
-        : center( static_center, vec3( 0, 0, 0 ) ), radius( std::fmax( 0, radius ) ), mat( mat ) {
+    sphere( const point3& static_center, double radius, shared_ptr<material> mat ) :
+    primitive(mat),
+    center( static_center, vec3( 0, 0, 0 ) ),
+    radius( std::fmax( 0, radius ) ), mat( mat ) {
         auto rvec = vec3( radius, radius, radius );
         bbox = aabb( static_center - rvec, static_center + rvec );
-
-        m_count = 1;
     }
 
-    sphere( const point3& center1, const point3& center2, double radius, shared_ptr<material> mat )
-        : center( center1, center2 - center1 ), radius( std::fmax( 0, radius ) ), mat( mat ) {
+    sphere( const point3& center1, const point3& center2, double radius, shared_ptr<material> mat ) :
+    primitive(mat),
+    center( center1, center2 - center1 ),
+    radius( std::fmax( 0, radius ) ), mat( mat ) {
         auto rvec = vec3( radius, radius, radius );
         aabb bbox1 = aabb( center1 - rvec, center1 + rvec );
         aabb bbox2 = aabb( center2 - rvec, center2 + rvec );
         bbox = aabb( bbox1, bbox2 );
-
-        m_count = 1;
     }
 
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
@@ -78,7 +78,7 @@ public:
         //the "patch" of view that the sphere takes up
         auto solid_angle = 2 * pi * ( 1 - cos_theta_max );
 
-        //the pdf for this patch of sphere
+        //the PDF for this patch of the sphere
         return 1 / solid_angle;
     }
 
@@ -87,6 +87,10 @@ public:
         auto distance_squared = direction.length_squared();
         onb uvw( direction );
         return uvw.transform( random_to_sphere( radius, distance_squared ) );
+    }
+
+    double get_surface_area() const override {
+        return 4 * pi * radius * radius;
     }
 
 private:

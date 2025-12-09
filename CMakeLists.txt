@@ -20,7 +20,7 @@ add_executable(Benderer source/main.cpp
         source/utility/benderer_stb_image.h
         source/utility/perlin.h
         source/scene/hittables/primatives/quad.h
-        source/scene/hittables/primatives/constant_medium.h
+        source/scene/hittables/constant_medium.h
         source/structures/onb.h
         source/structures/pdf.h
         source/scene/texture/textures/tex_solid_colour.h
@@ -37,4 +37,11 @@ add_executable(Benderer source/main.cpp
         source/image/image_info.h
         source/structures/scatter_record.h
         source/image/image_info_library.h
+        source/structures/light_sample.h
+        source/scene/hittables/primatives/primitive.h
+        source/scene/hittables/transforms/transform.h
+        source/scene/hittables/transforms/translate.h
+        source/scene/hittables/transforms/rotate_y.h
+        source/integrators/rtw_model.h
+        source/integrators/integrator.h
 )

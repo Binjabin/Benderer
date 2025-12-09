@@ -18,6 +18,13 @@ inline double linear_to_gamma( double linear_component ) {
     return 0;
 }
 
+const color sky = color( 0.5, 0.7, 1.0 );
+
+const vec3 luminance_map = vec3(0.2126, 0.7152, 0.0722);
+inline double flux_weight(const color& rgb) {
+    return dot(rgb, luminance_map);
+}
+
 void write_color( std::ostream& out, const color& pixel_color ) {
     auto r = pixel_color.x();
     auto g = pixel_color.y();

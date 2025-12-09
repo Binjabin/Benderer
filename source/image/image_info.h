@@ -28,7 +28,7 @@ public:
 private:
     double m_aspect_ratio; // Ratio of image width over height
     int m_pixel_width; //Width of image in pixels
-    int m_samples_per_pixel; // Count of random samples of each pixel
+    int m_samples_per_pixel; // Number of random samples for each pixel
     int m_max_depth; // Maximum number of ray bounces into a scene
 
     int m_pixel_height;
@@ -46,7 +46,7 @@ private:
     }
 
     double compute_actual_ratio() const {
-        return double(m_pixel_height / m_pixel_width);
+        return double(m_pixel_height) / double(m_pixel_width);
     }
 
     void validate() {

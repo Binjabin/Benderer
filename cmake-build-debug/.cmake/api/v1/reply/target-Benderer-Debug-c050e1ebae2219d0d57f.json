@@ -117,7 +117,14 @@
 				30,
 				31,
 				32,
-				33
+				33,
+				34,
+				35,
+				36,
+				37,
+				38,
+				39,
+				40
 			]
 		}
 	],
@@ -211,7 +218,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/primatives/constant_medium.h",
+			"path" : "source/scene/hittables/constant_medium.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -292,6 +299,41 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/image/image_info_library.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/structures/light_sample.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/primatives/primitive.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/transforms/transform.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/transforms/translate.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/transforms/rotate_y.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/integrators/rtw_model.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/integrators/integrator.h",
 			"sourceGroupIndex" : 1
 		}
 	],

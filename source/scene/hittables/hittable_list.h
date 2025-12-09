@@ -19,7 +19,9 @@ public:
 
     hittable_list( shared_ptr<hittable> object ) {
         add( object );
-        m_count += object->count();
+        set_count(object->get_count());
+        set_surface_area(object->get_surface_area());
+        set_flux_rgb(object->get_flux_rgb());
     }
 
     void clear() { objects.clear(); }
@@ -27,6 +29,9 @@ public:
     void add( shared_ptr<hittable> object ) {
         objects.push_back( object );
         bbox = aabb( bbox, object->bounding_box() );
+        set_count(get_count() + object->get_count());
+        set_surface_area(get_surface_area() + object->get_surface_area());
+        set_flux_rgb(get_flux_rgb() + object->get_flux_rgb());
     }
 
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
@@ -66,12 +71,7 @@ public:
         return obj->random(origin);
     }
 
-    int count() const override {
-        return m_count;
-    }
-
 private:
-    int m_count = 0;
     aabb bbox;
 };
 

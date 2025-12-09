@@ -9,11 +9,10 @@
 #include "material/material.h"
 #include "../structures/pdf.h"
 #include "../image/image_info.h"
+#include "../integrators/integrator.h"
 
 class camera {
 public:
-    color background; //scene background color
-
     double vfov = 90; // Vertical view angle fov
     point3 lookfrom = point3( 0, 0, 0 );
     point3 lookat = point3( 0, 0, -1 );
@@ -22,21 +21,28 @@ public:
     double defocus_angle = 0; //variation of angle of rays through each pixel
     double focus_dist = 10; //distance from camera look point to distance of perfect focus
 
-    void render( const hittable& world, const hittable& lights, image_info info ) {
+    void render( const hittable& world, const hittable& lights, const color& background, image_info info, const integrator& itgr) {
         initialize(info);
 
         std::cout << "P3\n" << info.pixel_width() << " " << info.pixel_height() << "\n255\n";
 
-        for ( int j = 0; j < info.pixel_height() ; j++ ) {
-            std::clog << "\rScanlines remaining: " << ( info.pixel_height() - j ) << ' ' << std::flush;
-            for ( int i = 0; i < info.pixel_width() ; i++ ) {
+        int ph = info.pixel_height();
+        int pw = info.pixel_width();
+        int spp = info.samples_per_pixel();
+        int md = info.max_depth();
+        double ss = info.sample_scale();
+
+        for ( int j = 0; j < ph ; j++ ) {
+            std::clog << "\rScanlines remaining: " << ( ph - j ) << ' ' << std::flush;
+
+            for ( int i = 0; i < pw ; i++ ) {
                 color pixel_color( 0, 0, 0 );
-                for ( int sample = 0; sample < info.samples_per_pixel(); sample++ ) {
+                for ( int sample = 0; sample < spp; sample++ ) {
                     ray r = get_ray( i, j );
-                    pixel_color += ray_color( r, info.max_depth(), world, lights );
+                    pixel_color += itgr.ray_color( r, md, world, lights, background );
                 }
 
-                write_color( std::cout, info.sample_scale() * pixel_color );
+                write_color( std::cout, ss * pixel_color );
             }
         }
 
@@ -108,53 +114,6 @@ private:
         return center + ( p[0] * defocus_disk_u ) + ( p[1] * defocus_disk_v );
     }
 
-    color ray_color( const ray& r, int depth, const hittable& world, const hittable& lights ) const {
-        //no more light is gathered
-        if ( depth <= 0 ) {
-            return color( 0, 0, 0 );
-        }
-
-        hit_record rec;
-        auto ray_interval = interval( 0.001, infinity );
-
-        if ( !world.hit( r, ray_interval, rec ) ) {
-            return background;
-        }
-
-
-        scatter_record srec;
-        color color_from_emission = rec.mat->emitted( r, rec, rec.u, rec.v, rec.p );
-
-        //cast ray, get results
-        //After this, pdf_value is the pdf of the actually generated ray through our SAMPLING SYSTEM.
-        //ie how we chose the ray
-        //we use this to weight the contribution later
-        if ( !rec.mat->scatter( r, rec, srec ) ) {
-            return color_from_emission;
-        }
-
-        if ( srec.skip_pdf ) {
-            return srec.attenuation * ray_color( srec.skip_pdf_ray, depth - 1, world, lights );
-        }
-
-        auto light_ptr = make_shared<hittable_pdf>( lights, rec.p );
-        mixture_pdf p( light_ptr, srec.pdf_ptr );
-
-        ray scattered = ray( rec.p, p.generate(), r.time() );
-        auto pdf_value = p.value( scattered.direction() );
-
-        double scattering_pdf = rec.mat->scattering_pdf( r, rec, scattered );
-
-        color sample_color = ray_color( scattered, depth - 1, world, lights );
-        color color_from_scatter = ( srec.attenuation * scattering_pdf * sample_color ) / pdf_value;
-
-        return color_from_emission + color_from_scatter;
-
-        //SKYBOX
-        //vec3 unit_direction = unit_vector( r.direction() );
-        //auto a = 0.5 * ( unit_direction.y() + 1.0 );
-        //return ( 1.0 - a ) * color( 1.0, 1.0, 1.0 ) + a * color( 0.5, 0.5, 0.7 );
-    }
 };
 
 #endif //CAMERA_H

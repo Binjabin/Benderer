@@ -19,7 +19,7 @@ public:
 
     //construct leaf node. list of hittable objects
     bvh_node( std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end ) {
-        //create bounding box of all source items
+        //create a bounding box of all source items
         bbox = aabb::empty;
         for ( size_t object_index = start; object_index < end; object_index++ ) {
             bbox = aabb(bbox, objects[object_index]->bounding_box());
@@ -41,20 +41,26 @@ public:
         else {
             //sort along some axis (from comparator)
             std::sort( std::begin( objects ) + start, std::begin( objects ) + end, comparator );
-            //then split in middle into left and right subtrees
+            //then split in through the middle into left and right subtrees
             auto mid = start + object_span / 2;
             left = make_shared<bvh_node>( objects, start, mid );
             right = make_shared<bvh_node>( objects, mid, end );
         }
 
-        int sum = 0;
+        int count_sum = 0;
+        double area_sum = 0;
+        vec3 flux_sum = vec3(0,0,0);
         for (int i = 0; i < objects.size(); i++) {
-            sum += objects[i]->count();
+            count_sum += objects[i]->get_count();
+            area_sum += objects[i]->get_surface_area();
+            flux_sum += objects[i]->get_flux_rgb();
         }
-        m_count = sum;
+        set_count(count_sum);
+        set_surface_area(area_sum);
+        set_flux_rgb(flux_sum);
     }
 
-    //check if we hit any objects in subtree
+    //check if we hit any objects in the subtree
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
         if ( !bbox.hit( r, ray_t ) )
             return false;

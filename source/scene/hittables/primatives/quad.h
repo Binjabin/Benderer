@@ -5,31 +5,26 @@
 #ifndef QUAD_H
 #define QUAD_H
 
+#include "primitive.h"
 #include "../hittable.h"
 
-class quad : public hittable {
+class quad : public primitive {
 public:
     quad( const point3& Q, const vec3& u, const vec3& v, shared_ptr<material> mat )
-        : Q( Q ), u( u ), v( v ), mat( mat ) {
+        : primitive(mat), Q( Q ), u( u ), v( v ) {
+
         auto n = cross( u, v );
         normal = unit_vector( n );
         D = dot( normal, Q );
         w = n / dot( n, n );
 
-        //get area from cross product length
-        area = n.length();
-
         set_bounding_box();
-
-        m_count = 1;
     }
 
     virtual void set_bounding_box() {
         auto bbox_diagonal1 = aabb( Q, Q + u + v );
         auto bbox_diagonal2 = aabb( Q + u, Q + v );
         bbox = aabb( bbox_diagonal1, bbox_diagonal2 );
-
-        m_count = 1;
     }
 
     aabb bounding_box() const override { return bbox; }
@@ -57,7 +52,7 @@ public:
 
         rec.t = t;
         rec.p = intersection;
-        rec.mat = mat;
+        rec.mat = m_mat;
         rec.set_face_normal( r, normal );
 
         return true;
@@ -72,7 +67,7 @@ public:
     }
 
     double pdf_value( const point3& origin, const vec3& direction ) const override {
-        //pdf value is 0 if it doesn't hit this object
+        //PDF value is 0 if it doesn't hit this object
         hit_record rec;
         ray r = ray( origin, direction );
         interval r_interval = interval( 0.001, infinity );
@@ -85,7 +80,7 @@ public:
         //dw = (dAcos(theta)) / (distance_squared)
         //so (dA/dw) = distance_squared / cos(theta)
 
-        //if the surface area is uniform then pdfA = 1 / area
+        //if the surface area is uniform, then pdfA = 1 / area
 
         //we have pdfW = pdfA * (dA / dw) = (1 / area) * (distance_squared / cos(theta))
         //    = distance_squared / (cos(theta) * area)
@@ -94,7 +89,7 @@ public:
         auto distance_squared = rec.t * rec.t * direction.length_squared();
         //cos of our solid angle
         auto cosine = std::fabs( dot( direction, rec.normal ) / direction.length() );
-        return distance_squared / ( cosine * area );
+        return distance_squared / ( cosine * get_surface_area() );
     }
 
     vec3 random( const point3& origin ) const override {
@@ -103,16 +98,19 @@ public:
         return p - origin;
     }
 
+protected:
+    double calculate_surface_area() override {
+        auto n = cross( u, v );
+        return n.length();
+    }
+
 private:
     point3 Q;
     vec3 u, v;
     vec3 w;
-    shared_ptr<material> mat;
     aabb bbox;
-
     vec3 normal;
     double D;
-    double area;
 };
 
 inline shared_ptr<hittable_list> box( const point3& a, const point3& b, shared_ptr<material> mat ) {
