@@ -10,7 +10,8 @@ int main() {
     freopen( "output.ppm", "w", stdout );
 
     scene our_scene = scene_library::cornell_ball();
-    image_info info = image_info_library::preview();
+    our_scene.finalize();
+    image_info info = image_info_library::preview_sol();
     auto itgr = rtw_model();
     our_scene.render(info, itgr);
 

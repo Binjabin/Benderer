@@ -57,6 +57,8 @@ public:
         return flux_weight(m_flux_rgb);
     }
 
+    virtual void compute_properties() = 0;
+
 protected:
     void set_flux_rgb(const vec3& flux_rgb) {
         m_flux_rgb = flux_rgb;
@@ -69,6 +71,7 @@ protected:
     void set_surface_area(const double surface_area) {
         m_surface_area = surface_area;
     }
+
 
 private:
     int m_count = 0;

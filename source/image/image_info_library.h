@@ -19,6 +19,15 @@ public:
             );
     }
 
+    static image_info preview_sol() {
+        return image_info(
+            1.0,
+            64,
+            1024,
+            16
+            );
+    }
+
     static image_info very_low() {
         return image_info(
             1.0,

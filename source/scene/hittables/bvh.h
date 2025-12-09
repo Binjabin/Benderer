@@ -75,6 +75,13 @@ public:
 
     aabb bounding_box() const override { return bbox; }
 
+    void compute_properties() override {
+        left->compute_properties();
+        right->compute_properties();
+        set_surface_area(left->get_surface_area() + right->get_surface_area());
+        set_flux_rgb(left->get_flux_rgb() + right->get_flux_rgb());
+    }
+
 private:
     shared_ptr<hittable> left;
     shared_ptr<hittable> right;

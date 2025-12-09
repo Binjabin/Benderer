@@ -270,7 +270,7 @@ public:
         world.add( glass_ball );
 
         // Light Sources
-        auto light_mat = make_shared<diffuse_light>( color( 1500, 1500, 1500 ) );
+        auto light_mat = make_shared<diffuse_light>( color( 15, 15, 15 ) );
 
         auto light = make_shared<quad>( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
         // Light

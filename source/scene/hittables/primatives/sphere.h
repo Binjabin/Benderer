@@ -26,6 +26,7 @@ public:
         aabb bbox1 = aabb( center1 - rvec, center1 + rvec );
         aabb bbox2 = aabb( center2 - rvec, center2 + rvec );
         bbox = aabb( bbox1, bbox2 );
+
     }
 
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
@@ -89,7 +90,7 @@ public:
         return uvw.transform( random_to_sphere( radius, distance_squared ) );
     }
 
-    double get_surface_area() const override {
+    double calculate_surface_area() const override {
         return 4 * pi * radius * radius;
     }
 

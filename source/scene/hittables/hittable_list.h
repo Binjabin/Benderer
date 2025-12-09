@@ -71,6 +71,24 @@ public:
         return obj->random(origin);
     }
 
+    void compute_properties() override {
+
+        int sum_count = 0;
+        double sum_area = 0;
+        vec3 sum_flux_rgb = vec3(0,0,0);
+
+        for (const auto& object : objects) {
+            object->compute_properties();
+            sum_count += object->get_count();
+            sum_area += object->get_surface_area();
+            sum_flux_rgb += object->get_flux_rgb();
+        }
+
+        set_count(sum_count);
+        set_surface_area(sum_area);
+        set_flux_rgb(sum_flux_rgb);
+    }
+
 private:
     aabb bbox;
 };

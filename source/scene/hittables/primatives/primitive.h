@@ -11,17 +11,19 @@ class primitive : public hittable {
 protected:
     primitive(shared_ptr<material> mat) : m_mat(mat) {
         set_count(1);
-        double area = calculate_surface_area();
-        set_surface_area(area);
-        set_flux_rgb(pi * area * m_mat->get_radiance());
-    }
-
-    virtual double calculate_surface_area() {
-        return 0;
     }
 
     shared_ptr<material> m_mat;
 
+    virtual double calculate_surface_area() const = 0;
+
+    void compute_properties() override {
+        if (m_mat) {
+            double area = calculate_surface_area();
+            set_surface_area(area);
+            set_flux_rgb(pi * area * m_mat->get_radiance());
+        }
+    }
 };
 
 #endif //BENDERER_PRIMITIVE_H

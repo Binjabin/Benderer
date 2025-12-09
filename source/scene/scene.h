@@ -5,6 +5,7 @@
 #ifndef SCENE_H
 #define SCENE_H
 #include "camera.h"
+#include "hittables/hittable.h"
 #include "hittables/hittable_list.h"
 
 class scene {
@@ -19,10 +20,15 @@ public:
         m_cam.render( m_world, m_lights, m_background, info, itgr);
     }
 
+    void finalize() {
+        m_world.compute_properties();
+        m_lights.compute_properties();
+    }
+
 private:
     camera m_cam;
-    const hittable_list m_world;
-    const hittable_list m_lights;
+    hittable_list m_world;
+    hittable_list m_lights;
     const color m_background;
 };
 

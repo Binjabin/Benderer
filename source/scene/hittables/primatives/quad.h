@@ -21,7 +21,7 @@ public:
         set_bounding_box();
     }
 
-    virtual void set_bounding_box() {
+    void set_bounding_box() {
         auto bbox_diagonal1 = aabb( Q, Q + u + v );
         auto bbox_diagonal2 = aabb( Q + u, Q + v );
         bbox = aabb( bbox_diagonal1, bbox_diagonal2 );
@@ -98,10 +98,8 @@ public:
         return p - origin;
     }
 
-protected:
-    double calculate_surface_area() override {
-        auto n = cross( u, v );
-        return n.length();
+    double calculate_surface_area() const override {
+        return cross( u, v ).length();
     }
 
 private:
