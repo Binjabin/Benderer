@@ -44,4 +44,7 @@ add_executable(Benderer source/main.cpp
         source/scene/hittables/transforms/rotate_y.h
         source/integrators/rtw_model.h
         source/integrators/integrator.h
+        source/scene/skyboxes/skybox.h
+        source/scene/skyboxes/gradient_skybox.h
+        source/scene/skyboxes/solid_color_skybox.h
 )

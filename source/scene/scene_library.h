@@ -19,6 +19,8 @@
 #include "material/materials/mat_dielectric.h"
 #include "material/materials/mat_diffuse_light.h"
 #include "material/materials/mat_metal.h"
+#include "skyboxes/gradient_skybox.h"
+#include "skyboxes/solid_color_skybox.h"
 
 #include "texture/textures/tex_checker.h"
 #include "texture/textures/tex_image.h"
@@ -35,15 +37,15 @@ public:
         cam.defocus_angle = 0;
 
         hittable_list world;
-        auto checker = make_shared<checker_texture>( 0.32, color( .2, .3, .1 ), color( .9, .9, .9 ) );
+        auto checker = make_shared<checker_texture>( 0.32, colors::n_teal, colors::n_white );
         world.add( make_shared<sphere>( point3( 0, -10, 0 ), 10, make_shared<lambertian>( checker ) ) );
         world.add( make_shared<sphere>( point3( 0, 10, 0 ), 10, make_shared<lambertian>( checker ) ) );
 
         hittable_list lights;
 
-        color background = color( 0.70, 0.80, 1.00 );
+        auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 
     static scene earth() {
@@ -62,9 +64,9 @@ public:
 
         hittable_list lights;
 
-        color background = color( 0.70, 0.80, 1.00 );
+        auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 
     static scene random_balls() {
@@ -77,7 +79,7 @@ public:
         cam.focus_dist = 10.0;
 
         hittable_list world;
-        auto check_tex = make_shared<checker_texture>( 0.2, color( .5, .5, .5 ), color( .9, .9, .9 ) );
+        auto check_tex = make_shared<checker_texture>( 0.2, colors::gray, colors::n_white );
         auto ground_material = make_shared<lambertian>( check_tex );
         world.add( make_shared<sphere>( point3( 0, -1000, -1 ), 1000, ground_material ) );
         for ( int a = -11; a < 11; a++ ) {
@@ -121,9 +123,9 @@ public:
 
         hittable_list lights;
 
-        color background = color( 0.70, 0.80, 1.00 );
+        auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 
     static scene perlin_spheres() {
@@ -141,9 +143,9 @@ public:
 
         hittable_list lights;
 
-        color background = color( 0.70, 0.80, 1.00 );
+        auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 
     static scene quads() {
@@ -156,11 +158,11 @@ public:
 
         hittable_list world;
         // Materials
-        auto left_red = make_shared<lambertian>( color( 1.0, 0.2, 0.2 ) );
-        auto back_green = make_shared<lambertian>( color( 0.2, 1.0, 0.2 ) );
-        auto right_blue = make_shared<lambertian>( color( 0.2, 0.2, 1.0 ) );
-        auto upper_orange = make_shared<lambertian>( color( 1.0, 0.5, 0.0 ) );
-        auto lower_teal = make_shared<lambertian>( color( 0.2, 0.8, 0.8 ) );
+        auto left_red = make_shared<lambertian>( colors::n_red );
+        auto back_green = make_shared<lambertian>( colors::n_green );
+        auto right_blue = make_shared<lambertian>( colors::n_blue );
+        auto upper_orange = make_shared<lambertian>( colors::n_orange );
+        auto lower_teal = make_shared<lambertian>( colors::n_teal );
         // Quads
         world.add( make_shared<quad>( point3( -3, -2, 5 ), vec3( 0, 0, -4 ), vec3( 0, 4, 0 ), left_red ) );
         world.add( make_shared<quad>( point3( -2, -2, 0 ), vec3( 4, 0, 0 ), vec3( 0, 4, 0 ), back_green ) );
@@ -170,9 +172,9 @@ public:
 
         hittable_list lights;
 
-        color background = color( 0.70, 0.80, 1.00 );
+        auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 
     static scene simple_light() {
@@ -188,7 +190,7 @@ public:
         world.add( make_shared<sphere>( point3( 0, -1000, 0 ), 1000, make_shared<lambertian>( pertext ) ) );
         world.add( make_shared<sphere>( point3( 0, 2, 0 ), 2, make_shared<lambertian>( pertext ) ) );
 
-        auto light_mat = make_shared<diffuse_light>( color( 4, 4, 4 ) );
+        auto light_mat = make_shared<diffuse_light>( colors::dim_light );
         auto light_quad = make_shared<quad>( point3( 3, 1, -2 ), vec3( 2, 0, 0 ), vec3( 0, 2, 0 ), light_mat );
 
         world.add( light_quad );
@@ -196,9 +198,9 @@ public:
         hittable_list lights;
         lights.add( light_quad );
 
-        color background = color( 0, 0, 0 );
+        auto const skybox = make_shared<solid_color_skybox>(colors::black);
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 
     static scene cornell_box() {
@@ -210,10 +212,10 @@ public:
         cam.defocus_angle = 0;
 
         hittable_list world;
-        auto red = make_shared<lambertian>( color( .65, .05, .05 ) );
-        auto white = make_shared<lambertian>( color( .73, .73, .73 ) );
-        auto green = make_shared<lambertian>( color( .12, .45, .15 ) );
-        auto aluminum = make_shared<metal>( color( 0.8, 0.85, 0.88 ), 0.01 );
+        auto red = make_shared<lambertian>( colors::n_red );
+        auto white = make_shared<lambertian>( colors::n_white );
+        auto green = make_shared<lambertian>( colors::n_green );
+        auto aluminum = make_shared<metal>( colors::metal_grey, 0.01 );
         world.add( make_shared<quad>( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
         world.add( make_shared<quad>( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
         world.add( make_shared<quad>( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
@@ -228,7 +230,7 @@ public:
         box2 = make_shared<translate>( box2, vec3( 130, 0, 65 ) );
         world.add( box2 );
 
-        auto light_mat = make_shared<diffuse_light>( color( 15, 15, 15 ) );
+        auto light_mat = make_shared<diffuse_light>( colors::bright_light );
         auto light = make_shared<quad>( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
 
         world.add( light );
@@ -236,9 +238,9 @@ public:
         hittable_list lights;
         lights.add( light );
 
-        color background = color( 0, 0, 0 );
+        auto const skybox = make_shared<solid_color_skybox>(colors::black);
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 
     static scene cornell_ball() {
@@ -250,10 +252,10 @@ public:
         cam.defocus_angle = 0;
 
         hittable_list world;
-        auto red = make_shared<lambertian>( color( .65, .05, .05 ) );
-        auto white = make_shared<lambertian>( color( .73, .73, .73 ) );
-        auto green = make_shared<lambertian>( color( .12, .45, .15 ) );
-        auto aluminum = make_shared<metal>( color( 0.8, 0.85, 0.88 ), 0.01 );
+        auto red = make_shared<lambertian>( colors::n_red );
+        auto white = make_shared<lambertian>( colors::n_white );
+        auto green = make_shared<lambertian>( colors::n_green );
+        auto aluminum = make_shared<metal>( colors::metal_grey, 0.01 );
         world.add( make_shared<quad>( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
         world.add( make_shared<quad>( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
         world.add( make_shared<quad>( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
@@ -270,7 +272,7 @@ public:
         world.add( glass_ball );
 
         // Light Sources
-        auto light_mat = make_shared<diffuse_light>( color( 15, 15, 15 ) );
+        auto light_mat = make_shared<diffuse_light>( colors::bright_light );
 
         auto light = make_shared<quad>( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
         // Light
@@ -281,10 +283,9 @@ public:
         //Others to sample
         lights.add( glass_ball );
 
-        //color background = color( 0.70, 0.80, 1.00 );
-        color background = color( 0, 0, 0 );
+        auto const skybox = make_shared<solid_color_skybox>((colors::black));
 
-        return scene( cam, world, lights, background );
+        return scene( cam, world, lights, skybox );
     }
 };
 

@@ -7,10 +7,11 @@
 
 #include "../benderer.h"
 #include "../scene/hittables/hittable.h"
+#include "../scene/skyboxes/skybox.h"
 
 class integrator {
 public:
-    virtual color ray_color( const ray& r, int depth, const hittable& world, const hittable& lights, const color& background ) const {
+    virtual color ray_color( const ray& r, int depth, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky ) const {
         return color(0,0,0);
     }
 };

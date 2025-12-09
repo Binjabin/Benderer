@@ -12,12 +12,12 @@ class scene {
 public:
     ~scene() = default;
 
-    scene( camera& cam, const hittable_list& world, const hittable_list& lights, const color& background )
-        : m_cam( cam ), m_world( world ), m_lights( lights ), m_background( background ) {
+    scene( camera& cam, const hittable_list& world, const hittable_list& lights, const shared_ptr<skybox> skybox)
+        : m_cam( cam ), m_world( world ), m_lights( lights ), m_sky( skybox ) {
     }
 
     void render( const image_info& info, const integrator& itgr ) {
-        m_cam.render( m_world, m_lights, m_background, info, itgr);
+        m_cam.render( m_world, m_lights, m_sky, info, itgr);
     }
 
     void finalize() {
@@ -29,7 +29,7 @@ private:
     camera m_cam;
     hittable_list m_world;
     hittable_list m_lights;
-    const color m_background;
+    const shared_ptr<skybox> m_sky;
 };
 
 #endif //SCENE_H

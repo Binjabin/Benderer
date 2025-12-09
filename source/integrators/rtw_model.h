@@ -11,7 +11,7 @@
 
 class rtw_model : public integrator {
 public:
-    color ray_color(const ray &r, int depth, const hittable &world, const hittable &lights, const color& background) const override {
+    color ray_color(const ray &r, int depth, const hittable &world, const hittable &lights, const shared_ptr<skybox> sky) const override {
         //no more light is gathered
         if ( depth <= 0 ) {
             return color( 0, 0, 0 );
@@ -21,7 +21,7 @@ public:
         auto ray_interval = interval( 0.001, infinity );
 
         if ( !world.hit( r, ray_interval, rec ) ) {
-            return background;
+            return sky->sample_color(r.direction());
         }
 
 
@@ -37,7 +37,7 @@ public:
         }
 
         if ( srec.skip_pdf ) {
-            return srec.attenuation * ray_color( srec.skip_pdf_ray, depth - 1, world, lights, background );
+            return srec.attenuation * ray_color( srec.skip_pdf_ray, depth - 1, world, lights, sky );
         }
 
         auto light_ptr = make_shared<hittable_pdf>( lights, rec.p );
@@ -48,15 +48,10 @@ public:
 
         double scattering_pdf = rec.mat->scattering_pdf( r, rec, scattered );
 
-        color sample_color = ray_color( scattered, depth - 1, world, lights, background );
+        color sample_color = ray_color( scattered, depth - 1, world, lights, sky );
         color color_from_scatter = ( srec.attenuation * scattering_pdf * sample_color ) / pdf_value;
 
         return color_from_emission + color_from_scatter;
-
-        //SKYBOX
-        //vec3 unit_direction = unit_vector( r.direction() );
-        //auto a = 0.5 * ( unit_direction.y() + 1.0 );
-        //return ( 1.0 - a ) * color( 1.0, 1.0, 1.0 ) + a * color( 0.5, 0.5, 0.7 );
     }
 };
 

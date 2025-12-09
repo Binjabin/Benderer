@@ -124,7 +124,10 @@
 				37,
 				38,
 				39,
-				40
+				40,
+				41,
+				42,
+				43
 			]
 		}
 	],
@@ -334,6 +337,21 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/integrators/integrator.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/skyboxes/skybox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/skyboxes/gradient_skybox.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/skyboxes/solid_color_skybox.h",
 			"sourceGroupIndex" : 1
 		}
 	],
