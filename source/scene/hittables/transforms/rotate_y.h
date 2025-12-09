@@ -40,8 +40,9 @@ public:
         bbox = aabb( min, max );
     }
 
-    bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
-        //transform ray from world space to object space
+    aabb bounding_box() const override { return bbox; }
+
+    ray transform_ray(const ray& r) const override {
         auto ox = cos_theta * r.origin().x() + sin_theta * r.origin().z();
         auto oz = -sin_theta * r.origin().x() + cos_theta * r.origin().z();
         auto origin = point3( ox, r.origin().y(), oz );
@@ -50,22 +51,20 @@ public:
         auto dz = -sin_theta * r.direction().x() + cos_theta * r.direction().z();
         auto direction = vec3( dx, r.direction().y(), dz );
 
-        ray rotated_r = ray( origin, direction, r.time() );
-        if ( !m_object->hit( rotated_r, ray_t, rec ) )
-            return false;
-
-        auto px = cos_theta * rec.p.x() - sin_theta * rec.p.z();
-        auto pz = sin_theta * rec.p.x() + cos_theta * rec.p.z();
-        rec.p = point3( px, rec.p.y(), pz );
-
-        auto nx = cos_theta * rec.normal.x() - sin_theta * rec.normal.z();
-        auto nz = sin_theta * rec.normal.x() + cos_theta * rec.normal.z();
-        rec.normal = vec3(nx, rec.normal.y(), nz);
-
-        return true;
+        return ray( origin, direction, r.time() );
     }
 
-    aabb bounding_box() const override { return bbox; }
+    point3 reverse_transform_point(const point3& p) const override {
+        auto px = cos_theta * p.x() - sin_theta * p.z();
+        auto pz = sin_theta * p.x() + cos_theta * p.z();
+        return point3( px, p.y(), pz );
+    }
+
+    vec3 reverse_transform_normal(const vec3& normal) const override {
+        auto nx = cos_theta * normal.x() - sin_theta * normal.z();
+        auto nz = sin_theta * normal.x() + cos_theta * normal.z();
+        return vec3( nx, normal.y(), nz );
+    }
 
 private:
     double sin_theta;

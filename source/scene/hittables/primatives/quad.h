@@ -102,6 +102,12 @@ public:
         return cross( u, v ).length();
     }
 
+    point3 sample_over_surface() const override {
+        double r1 = random_double();
+        double r2 = random_double();
+        return Q + r1 * u + r2 * v;
+    }
+
 private:
     point3 Q;
     vec3 u, v;

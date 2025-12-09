@@ -16,6 +16,15 @@ public:
         return ( 1.0 - a ) * m_top + a * m_bottom;
     }
 
+    color get_flux_rgb() const override {
+        return 4 * pi * ( m_top + m_bottom ) * 0.5;
+    }
+
+    //TODO: improve?
+    vec3 sample_direction_over_flux() const override {
+        return random_unit_vector();
+    }
+
 private:
     const color m_top;
     const color m_bottom;

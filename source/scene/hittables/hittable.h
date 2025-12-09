@@ -59,6 +59,8 @@ public:
 
     virtual void compute_properties() = 0;
 
+    virtual point3 sample_point_over_flux(double seed) const = 0;
+
 protected:
     void set_flux_rgb(const vec3& flux_rgb) {
         m_flux_rgb = flux_rgb;

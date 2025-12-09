@@ -16,6 +16,14 @@ public:
         return m_color;
     }
 
+    color get_flux_rgb() const override {
+        return 4 * pi * m_color;
+    }
+
+    vec3 sample_direction_over_flux() const override {
+        return random_unit_vector();
+    }
+
 private:
     const color m_color;
 };

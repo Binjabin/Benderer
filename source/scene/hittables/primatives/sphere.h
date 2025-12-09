@@ -94,6 +94,18 @@ public:
         return 4 * pi * radius * radius;
     }
 
+    point3 sample_over_surface() const override {
+        double u = random_double();
+        double v = random_double();
+
+        double z = 1.0 - 2.0 * u;
+        double phi = 2.0 * pi * v;
+        double r_xy = std::sqrt(std::fmax(0.0, 1.0 - z * z));
+
+        vec3 local = vec3(r_xy * std::cos(phi), r_xy * std::sin(phi), z) * radius;
+        return center.origin() + local;
+    }
+
 private:
     ray center;
     double radius;

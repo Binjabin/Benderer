@@ -47,4 +47,5 @@ add_executable(Benderer source/main.cpp
         source/scene/skyboxes/skybox.h
         source/scene/skyboxes/gradient_skybox.h
         source/scene/skyboxes/solid_color_skybox.h
+        source/integrators/mips_model.h
 )

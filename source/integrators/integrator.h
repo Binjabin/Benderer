@@ -11,6 +11,7 @@
 
 class integrator {
 public:
+    virtual ~integrator() = default;
     virtual color ray_color( const ray& r, int depth, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky ) const {
         return color(0,0,0);
     }

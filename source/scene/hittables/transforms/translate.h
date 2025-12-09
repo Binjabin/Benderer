@@ -13,20 +13,20 @@ public:
         bbox = object->bounding_box() + offset;
     }
 
-    bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
-        ray offset_r( r.origin() - offset, r.direction(), r.time() );
-
-        if ( !m_object->hit( offset_r, ray_t, rec ) ) {
-            return false;
-        }
-
-        rec.p += offset;
-
-        return true;
-    }
-
     aabb bounding_box() const override {
         return bbox;
+    }
+
+    ray transform_ray(const ray &r) const override {
+        return ray( r.origin() - offset, r.direction(), r.time() );
+    };
+
+    point3 reverse_transform_point(const point3 &p) const override {
+        return (p + offset);
+    }
+
+    point3 reverse_transform_normal(const vec3 &n) const override {
+        return n;
     }
 
 private:

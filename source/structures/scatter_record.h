@@ -6,6 +6,8 @@
 #ifndef BENDERER_SCATTER_RECORD_H
 #define BENDERER_SCATTER_RECORD_H
 
+#include "../structures/pdf.h"
+
 class scatter_record {
 public:
     color attenuation;

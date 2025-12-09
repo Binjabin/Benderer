@@ -89,6 +89,31 @@ public:
         set_flux_rgb(sum_flux_rgb);
     }
 
+    point3 sample_point_over_flux(double seed) const override {
+        if (objects.size() <= 0) {
+            throw std::runtime_error("No objects in hittable list");
+        }
+
+        auto total_flux = get_flux_weight();
+        auto sample = seed * total_flux;
+
+        double bottom = 0;
+        double top = objects[0]->get_flux_weight();
+        double interval_range = top;
+        int i = 0;
+        while (top < sample && i + 1 < objects.size()) {
+            top += objects[i+1]->get_flux_weight();
+            bottom += interval_range;
+            interval_range = top - bottom;
+        }
+
+        //We end under a specific item
+        double new_seed = (sample - bottom) / interval_range;
+
+        return objects[i]->sample_point_over_flux(new_seed);
+
+    }
+
 private:
     aabb bbox;
 };

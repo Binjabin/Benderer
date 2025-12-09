@@ -82,6 +82,21 @@ public:
         set_flux_rgb(left->get_flux_rgb() + right->get_flux_rgb());
     }
 
+    point3 sample_point_over_flux(double seed) const override {
+
+        double l_flux = left->get_flux_weight();
+        double r_flux = right->get_flux_weight();
+        double total_flux = l_flux + r_flux;
+        double sample = seed * total_flux;
+
+        if (sample < l_flux) {
+            auto new_seed = sample / total_flux;
+            return left->sample_point_over_flux(new_seed);
+        }
+        auto new_seed = (sample - l_flux) / total_flux;
+        return right->sample_point_over_flux(new_seed);
+    }
+
 private:
     shared_ptr<hittable> left;
     shared_ptr<hittable> right;

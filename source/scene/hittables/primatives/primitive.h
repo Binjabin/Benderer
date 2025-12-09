@@ -24,6 +24,12 @@ protected:
             set_flux_rgb(pi * area * m_mat->get_radiance());
         }
     }
+
+    point3 sample_point_over_flux(double seed) const override {
+        return sample_over_surface();
+    }
+
+    virtual point3 sample_over_surface() const = 0;
 };
 
 #endif //BENDERER_PRIMITIVE_H
