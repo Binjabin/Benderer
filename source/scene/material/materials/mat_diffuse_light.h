@@ -25,6 +25,8 @@ public:
         return tex->value( u, v, p );
     }
 
+    //TODO: Consider reflectance off emissive materials...
+
 private:
     shared_ptr<texture> tex;
 };

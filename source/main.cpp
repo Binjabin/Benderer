@@ -1,6 +1,7 @@
 #include "benderer.h"
 #include "image/image_info_library.h"
 #include "integrators/mips_model.h"
+#include "integrators/one_step_shadow.h"
 #include "integrators/rtw_model.h"
 
 #include "scene/hittables/bvh.h"
@@ -14,7 +15,7 @@ int main() {
     our_scene.finalize();
     image_info info = image_info_library::preview_sol();
     //auto itgr = rtw_model();
-    auto itgr = mips_model();
+    auto itgr = one_step_shadow();
     our_scene.render(info, itgr);
 
     return 0;

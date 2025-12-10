@@ -28,6 +28,10 @@ public:
 
     color get_radiance() const { return m_radiance; }
 
+    virtual color get_attenuation( const hit_record& rec ) const {
+        return color(1, 1, 1);
+    };
+
 protected:
     //TODO: Allow for non-uniform emission...
     color m_radiance = color( 0, 0, 0 );

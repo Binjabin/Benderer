@@ -1,14 +1,11 @@
 //
-// Created by binjabin on 12/9/25.
+// Created by binjabin on 12/10/25.
 //
 
-#ifndef BENDERER_MIPS_MODEL_H
-#define BENDERER_MIPS_MODEL_H
-#include "integrator.h"
-#include "../structures/scatter_record.h"
-#include "../scene/material/material.h"
+#ifndef BENDERER_ONE_STEP_SHADOW_H
+#define BENDERER_ONE_STEP_SHADOW_H
 
-class mips_model : public integrator {
+class one_step_shadow : public integrator {
 public:
     const int n_light_samples_per_bounce = 4;
 
@@ -86,6 +83,8 @@ private:
         double p = lights_weight / flux_sum;
         return lights.sample_light_over_flux(new_seed, p);
     }
+
+
 };
 
-#endif //BENDERER_MIPS_MODEL_H
+#endif //BENDERER_ONE_STEP_SHADOW_H

@@ -128,7 +128,8 @@
 				41,
 				42,
 				43,
-				44
+				44,
+				45
 			]
 		}
 	],
@@ -358,6 +359,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/integrators/mips_model.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/integrators/one_step_shadow.h",
 			"sourceGroupIndex" : 1
 		}
 	],

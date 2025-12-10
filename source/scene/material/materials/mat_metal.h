@@ -14,12 +14,16 @@ public:
         vec3 reflected = reflect( r_in.direction(), rec.normal );
         reflected = unit_vector( reflected ) + ( fuzz * random_unit_vector() );
 
-        srec.attenuation = albedo;
+        srec.attenuation = get_attenuation(rec);
         srec.pdf_ptr = nullptr;
         srec.skip_pdf = true;
         srec.skip_pdf_ray = ray( rec.p, reflected, r_in.time() );
 
         return true;
+    }
+
+    color get_attenuation(const hit_record &rec) const override {
+        return albedo;
     }
 
 private:

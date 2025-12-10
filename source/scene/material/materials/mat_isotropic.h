@@ -24,6 +24,10 @@ public:
         return 1 / ( 4 * pi );
     }
 
+    color get_attenuation(const hit_record &rec) const override {
+        return tex->value( rec.u, rec.v, rec.p );
+    }
+
 private:
     shared_ptr<texture> tex;
 };

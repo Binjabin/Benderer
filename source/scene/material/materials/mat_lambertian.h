@@ -28,6 +28,10 @@ public:
         return cos_theta < 0 ? 0 : cos_theta / pi;
     }
 
+    color get_attenuation(const hit_record &rec) const override {
+        return tex->value( rec.u, rec.v, rec.p );
+    }
+
 private:
     shared_ptr<texture> tex;
 };
