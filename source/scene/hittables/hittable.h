@@ -20,6 +20,7 @@ public:
     double u;
     double v;
     bool front_face;
+    double pdf_v;
 
     void set_face_normal( const ray& r, const vec3& outward_normal ) {
         //require outward_normal length is 1

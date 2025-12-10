@@ -23,6 +23,14 @@ public:
     virtual double light_distance(point3 o) const = 0;
 
     virtual double pdf_w_value(point3 o) const = 0;
+
+    virtual double pdf_A_value() const {
+        return 0.0;
+    };
+
+    virtual vec3 get_normal() const {
+        return vec3(0, 0, 0);
+    }
 };
 
 class environment_light_sample : public light_sample {
@@ -43,7 +51,7 @@ public:
     }
 
     double light_distance(point3 o) const override {
-        return 1000;
+        return infinity;
     }
 private:
     vec3 m_direction;
@@ -73,6 +81,15 @@ public:
         auto pdf_w = m_pdf_a_value * scalar;
         return pdf_w;
     }
+
+    vec3 get_normal() const override {
+        return m_normal;
+    }
+
+    double pdf_A_value() const override {
+        return m_pdf_a_value;
+    }
+
     double m_pdf_a_value;
     point3 m_light_p;
     vec3 m_normal;

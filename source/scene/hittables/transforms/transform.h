@@ -20,12 +20,12 @@ public:
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
         ray offset_r = transform_ray(r);
 
+        //Probability defers to sub-item here
         if ( !m_object->hit( offset_r, ray_t, rec ) ) {
             return false;
         }
 
         rec.p = reverse_transform_point( rec.p );
-
         rec.normal = reverse_transform_normal( rec.normal );
 
         return true;

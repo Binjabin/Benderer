@@ -28,6 +28,15 @@ protected:
         }
     }
 
+    bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
+        bool h = prim_hit(r, ray_t, rec);
+        rec.mat = m_mat;
+        rec.pdf_v = local_pdf(rec.p);
+        return h;
+    }
+
+    virtual bool prim_hit( const ray& r, interval ray_t, hit_record& rec ) const = 0;
+
     shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
         auto p = sample_over_surface();
         auto n = get_normal(p);

@@ -27,6 +27,11 @@ public:
 
     //TODO: Consider reflectance off emissive materials...
 
+    color bsdf(vec3 d_in, const hit_record &rec, const vec3 &r_out) override {
+        //Don't use monte carlo here
+        return color(0, 0, 0);
+    }
+
 private:
     shared_ptr<texture> tex;
 };

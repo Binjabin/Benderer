@@ -72,6 +72,15 @@ public:
             32
             );
     }
+
+    static image_info low_sample_low() {
+        return image_info(
+        1.0,
+        640,
+        4,
+        8
+        );
+    }
 };
 
 

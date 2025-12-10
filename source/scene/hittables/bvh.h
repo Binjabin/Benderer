@@ -65,10 +65,32 @@ public:
         if ( !bbox.hit( r, ray_t ) )
             return false;
 
-        bool hit_left = left->hit( r, ray_t, rec );
-        //if we hit something in left subtree only check up to where we hit (efficiency)
-        interval right_ray_t = interval( ray_t.min, hit_left ? rec.t : ray_t.max );
-        bool hit_right = right->hit( r, right_ray_t, rec );
+        hit_record l_rec = hit_record();
+        bool hit_left = left->hit( r, ray_t, l_rec );
+
+        hit_record r_rec = hit_record();
+        interval right_ray_t = interval( ray_t.min, hit_left ? l_rec.t : ray_t.max );
+        bool hit_right = right->hit( r, right_ray_t, r_rec );
+
+        if (!hit_left && !hit_right) {
+            return false;
+        }
+
+        //Calculate the probability of choosing either item
+        auto l_p = left->get_flux_weight();
+        auto r_p = right->get_flux_weight();
+        auto total = r_p + l_p;
+        //If we hit right it was closer
+        if (hit_right) {
+            auto p = r_p / total;
+            rec = r_rec;
+            rec.pdf_v *= p;
+        }
+        else if (hit_left) {
+            auto p = l_p / total;
+            rec = l_rec;
+            rec.pdf_v *= p;
+        }
 
         return hit_left || hit_right;
     }

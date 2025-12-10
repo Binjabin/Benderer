@@ -10,7 +10,7 @@
 
 class mips_model : public integrator {
 public:
-    const int n_light_samples_per_bounce = 4;
+    const int n_light_samples_per_bounce = 5;
 
     color ray_color(const ray &r, int depth, const hittable &world, const hittable &lights, const shared_ptr<skybox> sky) const override {
         //no more light is gathered
@@ -21,53 +21,224 @@ public:
         hit_record rec;
         auto ray_interval = interval( 0.001, infinity );
 
+        //===========================
         //Check our ray hits ANYTHING
         if ( !world.hit( r, ray_interval, rec ) ) {
             return sky->sample_color(r.direction());
         }
 
+        //=================================================================
         //First calculate direct contribution from this point from emission
+
         color color_from_emission = rec.mat->emitted( r, rec, rec.u, rec.v, rec.p );
+
+        //====================================
+        // Then we check our scatter to see if our bounce is deterministic
+        // If our bounce is, ie for specular/dieletric, then we don't need to cast shadow rays, just bounce
+        // In this case we simply check if we scatter, and if we do, scatter deterministicly
+
+        scatter_record srec;
+        bool scattered = rec.mat->scatter(r, rec, srec);
+        if (srec.skip_pdf) {
+            if (scattered) {
+                return srec.attenuation * ray_color(srec.skip_pdf_ray, depth - 1, world, lights, sky);
+            }
+            //Otherwise we just return emmisive color (weird?)
+            return color_from_emission;
+        }
+
+        //====================================
+        // Otherwise we sample direct light
 
         color total_direct_light = color(0,0,0);
         for (int i = 0; i < n_light_samples_per_bounce; i++) {
-            color this_sample_direct = sample_direct_light_for_hit(r, world, lights, sky, rec);
-            total_direct_light += this_sample_direct;
+
+            //Calculate light directly onto this point through samples of scene lights:
+            shared_ptr<light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
+
+            hit_record shadow_rec;
+
+            vec3 shadow_ray_dir = light_sample->light_direction(rec.p);
+            ray shadow_ray = ray(rec.p, shadow_ray_dir, r.time());
+
+            //Values for MIS/pdfs
+            double sky_weight = sky->get_flux_weight();
+            double light_weight = lights.get_flux_weight();
+            double flux_sum = sky_weight + light_weight;
+
+            color direct_of_sample = color(0,0,0);
+
+            //First handle skybox sample case:
+            if (light_sample->is_environment_light()) {
+                interval shadow_ray_interval = interval(0.001, infinity);
+
+                //If our doesn't hit anything between start and light, we contribute
+                if (!world.hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
+
+                    double p_of_env = sky_weight / flux_sum;
+                    double pdf_of_d = p_of_env * sky->get_pdf_value(shadow_ray_dir);
+
+                    //This is where we get contribution from skybox
+                    color sky_direct = sky->sample_color(shadow_ray_dir);
+
+                    //Calculate and weight by the chance we scattered in this direction
+                    double mat_pdf = rec.mat->scattering_pdf(r, rec, shadow_ray);
+                    //Geometry term, material
+                    double cos_theta = fmax(0.0, dot(shadow_ray_dir, rec.normal));
+
+                    color bsdf = rec.mat->bsdf(shadow_ray_dir, rec, -r.direction());
+
+                    //Calculate contribution
+                    color contrib = sky_direct * bsdf * cos_theta / pdf_of_d;
+
+                    //MIS weight between chance this was a light selection (it was) and chance it was a material selection
+                    double a2 = pdf_of_d * pdf_of_d;
+                    double b2 = mat_pdf * mat_pdf;
+                    double w_direct = (a2 + b2) > 0 ? (a2 / (a2 + b2)) : 0;
+
+                    //Accumulate result
+                    direct_of_sample = w_direct * contrib;
+                }
+                //Otherwise we keep our 0 contribution
+            }
+            else {
+                //Physical light
+                double shadow_ray_length = light_sample->light_distance(rec.p);
+
+                //If our doesn't hit anything between start and light, we contribute
+                interval shadow_ray_interval = interval(0.001, shadow_ray_length - 0.001);
+                if (!world.hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
+
+                    double p_of_light = light_weight / flux_sum;
+                    double pdf_of_p = p_of_light * light_sample->pdf_A_value();
+
+
+                    //What color our light is
+                    color light_direct = light_sample->m_radiance;
+
+                    //pdf of mat, weight by chance we scattered in this direction
+                    double mat_pdf = rec.mat->scattering_pdf(r, rec, shadow_ray);
+
+                    //Geometry term, ie adjusting weight because of physical light
+                    double dist2 = shadow_ray_length * shadow_ray_length;
+                    vec3 light_normal = light_sample->get_normal();
+                    double cos_light = fmax(0.0, dot(-shadow_ray_dir, light_normal));
+
+
+                    //Reject samples where distance is very small (self intersection)
+                    //Reject samples where light ray would go through itself
+                    if (dist2 > 0.0001 &&  cos_light > 0.0001) {
+                        //Geometry term, material
+                        double cos_theta = fmax(0.0, dot(shadow_ray_dir, rec.normal));
+
+                        //BSDF
+                        color bsdf = rec.mat->bsdf(shadow_ray_dir, rec, -r.direction());
+
+                        //convert
+                        color contrib = bsdf * light_direct * cos_theta * (1.0 / pdf_of_p) * (cos_light / dist2);
+
+                        //Do MIPS weighting
+                        double pdf_of_d = p_of_light * light_sample->pdf_w_value(rec.p);
+                        double a2 = pdf_of_d * pdf_of_d;
+                        double b2 = mat_pdf * mat_pdf;
+                        double w_direct = (a2 + b2) > 0 ? (a2 / (a2 + b2)) : 0;
+
+                        direct_of_sample = w_direct * contrib;
+                    }
+                }
+                //Otherwise we keep our 0 contribution
+            }
+
+            total_direct_light += direct_of_sample;
         }
         color average_direct_light = total_direct_light / n_light_samples_per_bounce;
 
-        return average_direct_light + color_from_emission;
+        //================================================================================
+        // Then we do our indirect step.
+        // If we don't scatter, we just return the others
+        // Then randomly choose a bounce ray along which to calculate indirect contribution
+
+        if (!scattered) return color_from_emission + average_direct_light;
+
+        shared_ptr<pdf> scatter_pdf = srec.pdf_ptr;
+        vec3 scatter_dir = scatter_pdf->generate();
+
+        ray scattered_ray = ray(rec.p, scatter_dir, r.time());
+
+        color bsdf = rec.mat->bsdf(scatter_dir, rec, -r.direction());
+
+        double cos_theta = fmax(0.0, dot(scatter_dir, rec.normal));
+
+        double pdf_mat = rec.mat->scattering_pdf(r, rec, scattered_ray);
+
+        color throughput = bsdf * cos_theta / pdf_mat;
+
+        //TODO: Early terminate bad rays through russian roulette?
+
+        color indirect_contribution = ray_color(scattered_ray, depth - 1, world, lights, sky);
+        color color_from_indirect = indirect_contribution * throughput;
+
+        //TODO: Address skybox weighting
+        double light_pdf = compute_light_pdf_value(lights, sky, rec.p, scatter_dir);
+
+        //MIS heuristic for indirect light
+        double a2 = light_pdf * light_pdf;
+        double b2 = pdf_mat * pdf_mat;
+        double w_indirect = (a2 + b2) > 0 ? (b2 / (a2 + b2)) : 0;
+
+        vec3 weighted_indirect = w_indirect * color_from_indirect;
+
+        color result = color_from_emission + average_direct_light + weighted_indirect;
+
+        std::clog << "sample_color_intensitry:" << result.length() << std::endl;
+        if (result.length() > 20) {
+            std::clog << result.length() << result.length() << std::endl;
+        }
+
+        return color_from_emission + average_direct_light + weighted_indirect;
     }
 
 private:
 
-    color sample_direct_light_for_hit(const ray &r, const hittable &world, const hittable &lights, const shared_ptr<skybox> sky, hit_record& rec) const {
+    //This is the pdf for our direct light selection for an input direction.
+    //The chance we get direct light contribution from this direction
+    //ie if occluded, 0
+    //if un-occluded, the
+    double compute_light_pdf_value(const hittable& lights, const shared_ptr<skybox> sky, const point3& p, const vec3& d) const {
+        ray r(p, d);
+        hit_record rec;
 
-        //Calculate light directly onto this point through samples of scene lights:
-        shared_ptr<light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
+        double sky_weight = sky->get_flux_weight();
+        double light_weight = lights.get_flux_weight();
+        double flux_sum = sky_weight + light_weight;
+        double p_light = light_weight / flux_sum;
+        double p_sky = sky_weight / flux_sum;
 
-        hit_record shadow_rec;
-        vec3 shadow_ray_dir = light_sample->light_direction(rec.p);
-        ray shadow_ray = ray(rec.p, shadow_ray_dir, r.time());
-        double shadow_ray_length = light_sample->light_distance(rec.p);
-        //TODO: Improve?
-        interval shadow_ray_interval = interval(0.001, shadow_ray_length - 0.001);
-        //TODO: Improve? eg what about backface
 
-        color indirect = color(0,0,0);
-        if (!world.hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
-            indirect = light_sample->m_radiance;
-        };
+        if (!lights.hit(r, interval(0.001, infinity), rec)) {
+            //SKYBOX CASE
+            //TODO: Address this case
+            double pdf_w = sky->get_pdf_value(d);
 
-        double pdf_w = light_sample->pdf_w_value(rec.p);
-        if (pdf_w <= 1e-12) {
-            return color(0,0,0);
+            if (pdf_w <= 0.0) return 0.0;
+
+            return pdf_w * p_sky;
         }
 
-        double cos_theta = fmax(0.0, dot(shadow_ray_dir, rec.normal));
-        color atten = rec.mat->get_attenuation(rec);
-        vec3 w_indirect = (atten * cos_theta * indirect) / pdf_w;
-        return w_indirect;
+        //Light case
+        auto pdf_v = rec.pdf_v;
+        auto hit_point = rec.p;
+        double dist2 = (p - hit_point).length_squared();
+        vec3 unit_d = unit_vector(d);
+        double cos_at_light = fmax(0, dot(-unit_d, rec.normal));
+
+        if (pdf_v <= 0.0) return 0.0;
+        if (cos_at_light <= 0.0) return 0.0;
+        if (dist2 <= 0.0) return 0.0;
+        auto pdf_w = pdf_v * dist2 / cos_at_light;
+
+        return pdf_w * p_light;
+
     }
 
     shared_ptr<light_sample> sample_over_flux(const hittable &lights, const shared_ptr<skybox> sky, point3& from) const {

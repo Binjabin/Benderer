@@ -28,6 +28,10 @@ public:
         return make_shared<environment_light_sample>(sample);
     }
 
+    double get_pdf_value(vec3 d) const override {
+        return 1 / (4 * pi);
+    }
+
 private:
     const color m_color;
 };

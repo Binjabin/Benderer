@@ -28,6 +28,11 @@ public:
         return tex->value( rec.u, rec.v, rec.p );
     }
 
+    color bsdf(vec3 d_in, const hit_record &rec, const vec3 &r_out) override {
+        //We don't use sampling for this
+        return get_attenuation(rec) * (1 / 4 * pi);
+    }
+
 private:
     shared_ptr<texture> tex;
 };

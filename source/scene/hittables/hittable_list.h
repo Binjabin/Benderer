@@ -39,14 +39,23 @@ public:
         bool hit_anything = false;
         auto closest_so_far = ray_t.max;
 
-        for ( const auto& object : objects ) {
-            //only check intersections closer than current furthest
+        if (objects.empty()) return false;
+
+        auto closest_object_i = -1;
+        for (int i = 0; i < objects.size(); i++) {
+            auto object = objects[i];
             auto new_interval = interval( ray_t.min, closest_so_far );
             if ( object->hit( r, new_interval, temp_rec ) ) {
                 hit_anything = true;
                 closest_so_far = temp_rec.t;
+                closest_object_i = i;
                 rec = temp_rec;
             }
+        }
+
+        //Combine pdfs in list. We calculate the pdf of the sub-hittable then multiply it by the pdf of choosing this item
+        if (hit_anything) {
+            rec.pdf_v *= get_discrete_flux_pdf(closest_object_i);
         }
 
         return hit_anything;
@@ -115,6 +124,13 @@ public:
     }
 
 private:
+    //The probability a flux based sample selected item i out of the list
+    double get_discrete_flux_pdf(int i) const {
+        double total = get_flux_weight();
+        double p = objects[i]->get_flux_weight() / total;
+        return p;
+    }
+
     aabb bbox;
 };
 

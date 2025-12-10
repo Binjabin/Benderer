@@ -26,6 +26,11 @@ public:
         return albedo;
     }
 
+    color bsdf(vec3 d_in, const hit_record &rec, const vec3 &r_out) override {
+        //We don't use sampling for this
+        return color(0, 0, 0);
+    }
+
 private:
     color albedo;
     double fuzz;

@@ -29,7 +29,7 @@ public:
 
     aabb bounding_box() const override { return bbox; }
 
-    bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
+    bool prim_hit( const ray& r, interval ray_t, hit_record& rec ) const override {
         auto denom = dot( normal, r.direction() );
 
         //no hit if ray is parallel (enough) with plane
@@ -52,11 +52,11 @@ public:
 
         rec.t = t;
         rec.p = intersection;
-        rec.mat = m_mat;
         rec.set_face_normal( r, normal );
 
         return true;
     }
+
 
     virtual bool is_interior( double a, double b, hit_record& rec ) const {
         interval unit_interval = interval( 0, 1 );
@@ -88,8 +88,10 @@ public:
 
         auto distance_squared = rec.t * rec.t * direction.length_squared();
         //cos of our solid angle
-        auto cosine = std::fabs( dot( direction, rec.normal ) / direction.length() );
-        return distance_squared / ( cosine * get_surface_area() );
+        auto cosine =  dot( direction, rec.normal ) / direction.length();
+        if (cosine <= 1e-6) return 0.0;
+        double abs_cos = std::fabs( cosine );
+        return distance_squared / ( abs_cos * get_surface_area() );
     }
 
     vec3 random( const point3& origin ) const override {

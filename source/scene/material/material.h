@@ -32,6 +32,11 @@ public:
         return color(1, 1, 1);
     };
 
+    //The bsdf function. Determines how much light travels from r_in to r_out
+    virtual color bsdf(vec3 d_in, const hit_record& rec, const vec3& r_out) {
+        return color(1, 1, 1);
+    }
+
 protected:
     //TODO: Allow for non-uniform emission...
     color m_radiance = color( 0, 0, 0 );

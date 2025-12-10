@@ -42,7 +42,13 @@ public:
                     pixel_color += itgr.ray_color( r, md, world, lights, skybox );
                 }
 
-                write_color( std::cout, ss * pixel_color );
+                color average = ss * pixel_color;
+                double length = average.length();
+                if (average.length() > 1) {
+                    std::clog << "BIG COLOR" << std::endl;
+                }
+
+                write_color( std::cout, average );
             }
         }
 

@@ -13,9 +13,9 @@ int main() {
 
     scene our_scene = scene_library::cornell_ball();
     our_scene.finalize();
-    image_info info = image_info_library::preview_sol();
+    image_info info = image_info_library::preview();
     //auto itgr = rtw_model();
-    auto itgr = one_step_shadow();
+    auto itgr = mips_model();
     our_scene.render(info, itgr);
 
     return 0;

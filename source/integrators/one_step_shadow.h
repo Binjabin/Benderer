@@ -63,7 +63,7 @@ private:
 
         double cos_theta = fmax(0.0, dot(shadow_ray_dir, rec.normal));
         color atten = rec.mat->get_attenuation(rec);
-        vec3 w_indirect = (atten * cos_theta * indirect) / pdf_w;
+        color w_indirect = (atten * cos_theta * indirect) / pdf_w;
         return w_indirect;
     }
 
