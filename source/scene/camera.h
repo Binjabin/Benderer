@@ -44,6 +44,9 @@ public:
 
                 color average = ss * pixel_color;
                 double length = average.length();
+                if (average.length() > 0.3) {
+                    std::clog << "COLOR: " << average.length() << std::endl;
+                }
                 if (average.length() > 1) {
                     std::clog << "BIG COLOR" << std::endl;
                 }

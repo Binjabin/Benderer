@@ -4,6 +4,8 @@
 
 #ifndef BENDERER_MIPS_MODEL_H
 #define BENDERER_MIPS_MODEL_H
+#include <algorithm>
+
 #include "integrator.h"
 #include "../structures/scatter_record.h"
 #include "../scene/material/material.h"
@@ -11,8 +13,14 @@
 class mips_model : public integrator {
 public:
     const int n_light_samples_per_bounce = 5;
+    const int rr_min_depth = 2;
+    const int rr_min_prob = 0.05;
 
     color ray_color(const ray &r, int depth, const hittable &world, const hittable &lights, const shared_ptr<skybox> sky) const override {
+        return ray_color_rr(r, depth, world, lights, sky, color(1,1,1));
+    }
+
+    color ray_color_rr(const ray &r, int depth, const hittable &world, const hittable &lights, const shared_ptr<skybox> sky, color rr_throughput) const {
         //no more light is gathered
         if ( depth <= 0 ) {
             return color( 0, 0, 0 );
@@ -150,7 +158,13 @@ public:
             }
 
             total_direct_light += direct_of_sample;
+
         }
+
+        if (total_direct_light.length() > 10.0) {
+            std::clog << "BIG COLOR" << std::endl;
+        }
+
         color average_direct_light = total_direct_light / n_light_samples_per_bounce;
 
         //================================================================================
@@ -173,12 +187,25 @@ public:
 
         color throughput = bsdf * cos_theta / pdf_mat;
 
-        //TODO: Early terminate bad rays through russian roulette?
+        //====================================
+        // Check for early termination through russian roulette
+
+        color new_rr_throughput = throughput * rr_throughput;
+
+        double rr_prob = max_component(new_rr_throughput);
+        if (depth > rr_min_depth) {
+            rr_prob = std::clamp(rr_prob, 0.0, 0.999);
+            if (random_double() > rr_prob) {
+                return color_from_emission + average_direct_light;
+            }
+        }
+
+        //Adjust for rr
+        throughput /= rr_prob;
 
         color indirect_contribution = ray_color(scattered_ray, depth - 1, world, lights, sky);
         color color_from_indirect = indirect_contribution * throughput;
 
-        //TODO: Address skybox weighting
         double light_pdf = compute_light_pdf_value(lights, sky, rec.p, scatter_dir);
 
         //MIS heuristic for indirect light
@@ -186,17 +213,18 @@ public:
         double b2 = pdf_mat * pdf_mat;
         double w_indirect = (a2 + b2) > 0 ? (b2 / (a2 + b2)) : 0;
 
-        vec3 weighted_indirect = w_indirect * color_from_indirect;
+        color weighted_indirect = w_indirect * color_from_indirect;
+
+        if (weighted_indirect.length() > 7.0) {
+            std::clog << "BIG COLOR" << std::endl;
+        }
 
         color result = color_from_emission + average_direct_light + weighted_indirect;
 
-        std::clog << "sample_color_intensitry:" << result.length() << std::endl;
-        if (result.length() > 20) {
-            std::clog << result.length() << result.length() << std::endl;
-        }
-
-        return color_from_emission + average_direct_light + weighted_indirect;
+        return result;
     }
+
+
 
 private:
 

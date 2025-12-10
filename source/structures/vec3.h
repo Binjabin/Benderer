@@ -166,6 +166,10 @@ inline vec3 random_in_unit_disk() {
     }
 }
 
+inline double max_component( const vec3& v ) {
+    return std::max( v.e[0], std::max(v.e[1], v.e[2]));
+}
+
 /*
 inline vec3 random_unit_vector() {
     while ( true ) {
