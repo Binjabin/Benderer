@@ -280,9 +280,6 @@ public:
         hittable_list lights;
         lights.add( light );
 
-        //Others to sample
-        lights.add( glass_ball );
-
         auto const skybox = make_shared<solid_color_skybox>((colors::black));
 
         return scene( cam, world, lights, skybox );

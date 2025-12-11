@@ -47,9 +47,13 @@ public:
         // First calculate direct contribution from this point from emission
         // We now only do this for first step, all other light is found through direct light samples
 
-        color color_from_emission = color(0, 0, 0);
-        if (depth == m_max_depth || !rec.is_explicit_light) {
-            color_from_emission = rec.mat->emitted( r, rec, rec.u, rec.v, rec.p );
+        color color_from_emission = rec.mat->emitted( r, rec, rec.u, rec.v, rec.p );
+
+        //Need to apply MIS to this emission here (unless of course we hit the light straight away)
+        //Our structure prevents this from being straight forward so we just ignore emission unless sampled directly now
+
+        if (depth < m_max_depth && rec.is_explicit_light) {
+            color_from_emission = color(0, 0, 0);
         }
 
         //====================================
@@ -234,27 +238,32 @@ public:
         color indirect_contribution = ray_color_rr(scattered_ray, depth - 1, world, lights, sky, rr_throughput);
         color color_from_indirect = indirect_contribution * throughput;
 
-        if (color_from_indirect.length() > 10.0) {
-            std::clog << "SPIKE at depth=" << depth
-                      << " indirect_contrib=" << indirect_contribution.length()
-                      << " throughput=" << throughput.length()
-                      << " bsdf=" << bsdf.length()
-                      << " cos=" << cos_theta
-                      << " pdf=" << pdf_mat << std::endl;
+        //We don't use MIS weight to downweight a sample if we don't hit a light pdf.
+        double w_indirect = 1.0;
+
+        hit_record shadow_rec;
+        ray shadow_test(rec.p, scatter_dir, r.time());
+
+        if (lights.hit(shadow_test, interval(0.001, infinity), shadow_rec)) {
+            double light_pdf = compute_light_pdf_value(lights, sky, rec.p, scatter_dir);
+
+            double a2 = light_pdf * light_pdf;
+            double b2 = pdf_mat * pdf_mat;
+            w_indirect = (a2 + b2) > 0 ? (b2 / (a2 + b2)) : 0;
+
+            if (color_from_indirect.length() > 10.0) {
+                std::clog << "FIREFLY DEBUG:"
+                          << " indirect=" << indirect_contribution.length()
+                          << " light_pdf=" << light_pdf
+                          << " mat_pdf=" << pdf_mat
+                          << " w_indirect=" << w_indirect
+                          << " RATIO=" << (pdf_mat / light_pdf)
+                          << std::endl;
+            }
         }
-
-        double light_pdf = compute_light_pdf_value(lights, sky, rec.p, scatter_dir);
-
-        //MIS heuristic for indirect light
-        double a2 = light_pdf * light_pdf;
-        double b2 = pdf_mat * pdf_mat;
-        double w_indirect = (a2 + b2) > 0 ? (b2 / (a2 + b2)) : 0;
+        //ELSE we are in a multip-bounce path and don't downweight for MIS here
 
         color weighted_indirect = w_indirect * color_from_indirect;
-
-        if (color_from_emission.length() > 1.0) {
-            std::clog << "BIG COLOR" << std::endl;
-        }
 
         color result = color_from_emission + average_direct_light + weighted_indirect;
 
@@ -317,7 +326,7 @@ private:
         double cos_at_light = fmax(0, dot(-unit_d, rec.normal));
 
         if (pdf_v <= 0.0) return 0.0;
-        if (cos_at_light <= 0.0) return 0.0;
+        if (cos_at_light <= 0.0) return 1e-10 * p_light;
         if (dist2 <= 0.0) return 0.0;
         auto pdf_w = pdf_v * dist2 / cos_at_light;
 
