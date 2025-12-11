@@ -17,6 +17,10 @@ public:
         }
     }
 
+    void set_explicit_light(bool is_light) override {
+        m_object->set_explicit_light(is_light);
+    }
+
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
         ray offset_r = transform_ray(r);
 

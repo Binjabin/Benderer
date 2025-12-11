@@ -98,6 +98,12 @@ public:
         set_flux_rgb(sum_flux_rgb);
     }
 
+    void set_explicit_light(bool is_light) override {
+        for (const auto& object : objects) {
+            object->set_explicit_light(is_light);
+        }
+    }
+
     shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
         if (objects.size() <= 0) {
             throw std::runtime_error("No objects in hittable list");

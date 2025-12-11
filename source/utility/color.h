@@ -19,7 +19,7 @@ inline double linear_to_gamma( double linear_component ) {
 }
 
 const vec3 luminance_map = vec3(0.2126, 0.7152, 0.0722);
-inline double flux_weight(const color& rgb) {
+inline double luminance(const color& rgb) {
     return dot(rgb, luminance_map);
 }
 

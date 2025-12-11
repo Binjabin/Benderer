@@ -28,10 +28,15 @@ protected:
         }
     }
 
+    void set_explicit_light(bool is_light) {
+        m_is_explicit_light = is_light;
+    }
+
     bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
         bool h = prim_hit(r, ray_t, rec);
         rec.mat = m_mat;
         rec.pdf_v = local_pdf(rec.p);
+        rec.is_explicit_light = m_is_explicit_light;
         return h;
     }
 
@@ -53,6 +58,10 @@ protected:
         return 1.0 / get_surface_area();
     };
 
+
+
+private:
+   bool m_is_explicit_light = false;
 
 };
 

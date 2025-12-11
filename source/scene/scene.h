@@ -23,6 +23,7 @@ public:
     void finalize() {
         m_world.compute_properties();
         m_lights.compute_properties();
+        m_lights.set_explicit_light(true);
     }
 
 private:

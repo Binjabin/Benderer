@@ -22,6 +22,9 @@ public:
     bool front_face;
     double pdf_v;
 
+    //whether we hit an explicit light
+    bool is_explicit_light;
+
     void set_face_normal( const ray& r, const vec3& outward_normal ) {
         //require outward_normal length is 1
         front_face = dot( r.direction(), outward_normal ) < 0;
@@ -56,10 +59,12 @@ public:
     }
 
     virtual double get_flux_weight() const {
-        return flux_weight(m_flux_rgb);
+        return luminance(m_flux_rgb);
     }
 
     virtual void compute_properties() = 0;
+
+    virtual void set_explicit_light(bool is_light) = 0;
 
     virtual shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const = 0;
 

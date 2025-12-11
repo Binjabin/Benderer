@@ -11,11 +11,11 @@
 int main() {
     freopen( "output.ppm", "w", stdout );
 
-    scene our_scene = scene_library::random_balls();
+    scene our_scene = scene_library::cornell_box();
     our_scene.finalize();
     image_info info = image_info_library::preview_sol();
     //auto itgr = rtw_model();
-    auto itgr = mips_model();
+    auto itgr = mips_model(info.max_depth(), 2, 5);
     our_scene.render(info, itgr);
 
     return 0;

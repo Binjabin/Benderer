@@ -104,6 +104,11 @@ public:
         set_flux_rgb(left->get_flux_rgb() + right->get_flux_rgb());
     }
 
+    void set_explicit_light(bool is_light) override {
+        left->set_explicit_light(is_light);
+        right->set_explicit_light(is_light);
+    }
+
     shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
 
         double l_flux = left->get_flux_weight();
