@@ -53,4 +53,5 @@ add_executable(Benderer source/main.cpp
         source/structures/path_result.h
         unused_source/mips_model_2.h
         source/integrators/simple_path_tracer.h
+        source/scene/world.h
 )

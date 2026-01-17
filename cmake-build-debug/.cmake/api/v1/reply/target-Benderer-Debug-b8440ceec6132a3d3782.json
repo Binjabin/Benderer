@@ -133,7 +133,8 @@
 				46,
 				47,
 				48,
-				49
+				49,
+				50
 			]
 		}
 	],
@@ -388,6 +389,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/integrators/simple_path_tracer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/world.h",
 			"sourceGroupIndex" : 1
 		}
 	],

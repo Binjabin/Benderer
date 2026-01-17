@@ -5,11 +5,13 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "world.h"
 #include "hittables/hittable.h"
 #include "material/material.h"
 #include "../structures/pdf.h"
 #include "../image/image_info.h"
 #include "../integrators/integrator.h"
+
 
 class camera {
 public:
@@ -21,7 +23,7 @@ public:
     double defocus_angle = 0; //variation of angle of rays through each pixel
     double focus_dist = 10; //distance from camera look point to distance of perfect focus
 
-    void render( const hittable& world, const hittable& lights, const shared_ptr<skybox> skybox, image_info info, const integrator& itgr) {
+    void render( const world& world, image_info info, const integrator& itgr) {
         initialize(info);
 
         std::cout << "P3\n" << info.pixel_width() << " " << info.pixel_height() << "\n255\n";
@@ -39,7 +41,7 @@ public:
                 color pixel_color( 0, 0, 0 );
                 for ( int sample = 0; sample < spp; sample++ ) {
                     ray r = get_ray( i, j );
-                    pixel_color += itgr.ray_color( r, md, world, lights, skybox );
+                    pixel_color += itgr.ray_color( r, md, world );
                 }
 
                 color average = ss * pixel_color;

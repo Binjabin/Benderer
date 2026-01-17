@@ -4,7 +4,7 @@
 
 #ifndef BENDERER_SIMPLE_PATH_TRACER_H
 #define BENDERER_SIMPLE_PATH_TRACER_H
-#include "integrator.h"
+#include "../scene/scene.h"
 #include "../scene/material/material.h"
 #include "../structures/path_result.h"
 #include "../structures/path_state.h"
@@ -16,9 +16,10 @@ public:
         : m_max_depth(max_depth) {
     };
 
-    color ray_color(const ray &r, int depth, const hittable &world, const hittable &lights, const shared_ptr<skybox> sky) const override {
+    // Correctly override integrator::ray_color (const-correct signature)
+    color ray_color(const ray &r, int depth, const world& world) const {
         path_state p_state = initial_path_state();
-        path_result res = path_trace(r, world, lights, sky, p_state);
+        path_result res = path_trace(r, world, p_state);
         return res.radiance_from_path;
     }
 
@@ -26,7 +27,7 @@ public:
 private:
     int m_max_depth;
 
-    path_result path_trace(const ray& r, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky, path_state& p_state) const {
+    path_result path_trace(const ray& r, const world& world, path_state& p_state) const {
 
         path_result out_result = path_result();
 
@@ -41,8 +42,8 @@ private:
         hit_record rec;
         interval ray_t = interval(epsilon, infinity);
         //If it doesn't, default to skybox
-        if ( !world.hit( r, ray_t, rec ) ) {
-            color col_from_sky = sky->sample_color(r.direction());
+        if ( !world.m_geometry.hit( r, ray_t, rec ) ) {
+            color col_from_sky = world.m_sky->sample_color(r.direction());
             return color_path_result(col_from_sky);
         }
 
@@ -72,7 +73,15 @@ private:
         // If our ray is scattered, we take another step, an indirect sample
         // Generate a scatter direction, and calculate lighting from that direction down our ray
 
-        path_result indirect_res = empty_path_result();
+        path_result indirect_res = get_indirect_result(r, world, p_state, srec, rec);
+
+        out_result = indirect_res;
+        out_result.radiance_from_path += color_from_light;
+        return out_result;
+    }
+
+    path_result get_indirect_result(const ray& r, const world& world, path_state& p_state, const scatter_record& srec, const hit_record& rec) const {
+        path_result indirect_res;
         path_state child_state = p_state;
         child_state.depth++;
         if (srec.skip_pdf) {
@@ -84,7 +93,7 @@ private:
 
             //attenuation is like the throughput of spec surfaces
             child_state.overall_throughput = srec.attenuation * child_state.overall_throughput;
-            indirect_res = path_trace(scattered_ray, world, lights, sky, child_state);
+            indirect_res = path_trace(scattered_ray, world, child_state);
             indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.attenuation;
         }
         else {
@@ -103,14 +112,12 @@ private:
             child_state.prev_bsdf_pdf = pdf_mat;
             child_state.overall_throughput = throughput * child_state.overall_throughput;
 
-            indirect_res = path_trace(scattered_ray, world, lights, sky, child_state);
+            indirect_res = path_trace(scattered_ray, world, child_state);
 
             indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;
         }
 
-        out_result = indirect_res;
-        out_result.radiance_from_path += color_from_light;
-        return out_result;
+        return indirect_res;
     }
 
 

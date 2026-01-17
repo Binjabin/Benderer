@@ -6,13 +6,13 @@
 #define BENDERER_INTEGRATOR_H
 
 #include "../benderer.h"
-#include "../scene/hittables/hittable.h"
-#include "../scene/skyboxes/skybox.h"
+
+class scene;
 
 class integrator {
 public:
     virtual ~integrator() = default;
-    virtual color ray_color( const ray& r, int depth, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky ) const {
+    virtual color ray_color( const ray& r, int depth, const world& world ) const {
         return color(0,0,0);
     }
 };
