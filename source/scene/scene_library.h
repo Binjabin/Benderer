@@ -215,14 +215,14 @@ public:
         auto red = make_shared<lambertian>( colors::n_red );
         auto white = make_shared<lambertian>( colors::n_white );
         auto green = make_shared<lambertian>( colors::n_green );
-        auto aluminum = make_shared<metal>( colors::metal_grey, 0.01 );
+        auto aluminum = make_shared<metal>( colors::n_orange, 0.01 );
         world.add( make_shared<quad>( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
         world.add( make_shared<quad>( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
         world.add( make_shared<quad>( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
         world.add( make_shared<quad>( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
         world.add( make_shared<quad>( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
         shared_ptr<hittable> box1 = box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), aluminum );
-        box1 = make_shared<rotate_y>( box1, 15 );
+        box1 = make_shared<rotate_y>( box1, 20 );
         box1 = make_shared<translate>( box1, vec3( 265, 0, 295 ) );
         world.add( box1 );
         shared_ptr<hittable> box2 = box( point3( 0, 0, 0 ), point3( 165, 165, 165 ), white );

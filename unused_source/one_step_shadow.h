@@ -16,7 +16,7 @@ public:
         }
 
         hit_record rec;
-        auto ray_interval = interval( 0.001, infinity );
+        auto ray_interval = interval( epsilon, infinity );
 
         //Check our ray hits ANYTHING
         if ( !world.hit( r, ray_interval, rec ) ) {
@@ -41,14 +41,14 @@ private:
     color sample_direct_light_for_hit(const ray &r, const hittable &world, const hittable &lights, const shared_ptr<skybox> sky, hit_record& rec) const {
 
         //Calculate light directly onto this point through samples of scene lights:
-        shared_ptr<light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
+        shared_ptr<local_light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
 
         hit_record shadow_rec;
-        vec3 shadow_ray_dir = light_sample->light_direction(rec.p);
+        vec3 shadow_ray_dir = light_sample->m_direction;
         ray shadow_ray = ray(rec.p, shadow_ray_dir, r.time());
-        double shadow_ray_length = light_sample->light_distance(rec.p);
+        double shadow_ray_length = light_sample->m_distance;
         //TODO: Improve?
-        interval shadow_ray_interval = interval(0.001, shadow_ray_length - 0.001);
+        interval shadow_ray_interval = interval(epsilon, shadow_ray_length - epsilon);
         //TODO: Improve? eg what about backface
 
         color indirect = color(0,0,0);
@@ -56,7 +56,7 @@ private:
             indirect = light_sample->m_radiance;
         };
 
-        double pdf_w = light_sample->pdf_w_value(rec.p);
+        double pdf_w = light_sample->m_pdf_w;
         if (pdf_w <= 1e-12) {
             return color(0,0,0);
         }
@@ -67,7 +67,7 @@ private:
         return w_indirect;
     }
 
-    shared_ptr<light_sample> sample_over_flux(const hittable &lights, const shared_ptr<skybox> sky, point3& from) const {
+    shared_ptr<local_light_sample> sample_over_flux(const hittable &lights, const shared_ptr<skybox> sky, point3& from) const {
         double sky_weight = sky->get_flux_weight();
         double lights_weight = lights.get_flux_weight();
         double flux_sum = sky_weight + lights_weight;
@@ -77,11 +77,13 @@ private:
         if (sample < sky_weight) {
             //Sample from sky
             double p = sky_weight / flux_sum;
-            return sky->sample_light_over_flux(p);
+            auto nl_sample = sky->sample_light_over_flux(p);
+            return make_shared<local_light_sample>(nl_sample.to_local_sample(from));
         }
         double new_seed = (sample - sky_weight) / lights_weight;
         double p = lights_weight / flux_sum;
-        return lights.sample_light_over_flux(new_seed, p);
+        auto nl_sample = lights.sample_light_over_flux(new_seed, p);
+        return make_shared<local_light_sample>(nl_sample.to_local_sample(from));
     }
 
 

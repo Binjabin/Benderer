@@ -28,7 +28,7 @@ public:
         if ( !boundary.hit( r, interval::universe, rec1 ) ) return false;
 
         //make sure we exit the volume
-        if ( !boundary->hit( r, interval( rec1.t + 0.0001, infinity ), rec2 ) ) return false;
+        if ( !boundary->hit( r, interval( rec1.t + epsilon, infinity ), rec2 ) ) return false;
 
         //crop enter and exit points to the section of the ray we are checking
         if ( rec1.t < ray_t.min ) rec1.t = ray_t.min;
@@ -57,6 +57,8 @@ public:
         rec.normal = vec3( 1, 0, 0 ); //arbitrary normal and front face
         rec.front_face = true;
         rec.mat = phase_function;
+
+        rec.time = r.time();
 
         return true;
     }

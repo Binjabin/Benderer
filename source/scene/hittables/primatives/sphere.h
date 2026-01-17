@@ -36,7 +36,7 @@ public:
         // Only works for stationary spheres
 
         hit_record rec;
-        if ( !this->hit( ray( origin, direction ), interval( 0.001, infinity ), rec ) ) {
+        if ( !this->hit( ray( origin, direction ), interval( epsilon, infinity ), rec ) ) {
             return 0;
         }
 

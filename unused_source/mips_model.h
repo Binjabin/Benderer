@@ -6,9 +6,9 @@
 #define BENDERER_MIPS_MODEL_H
 #include <algorithm>
 
-#include "integrator.h"
-#include "../structures/scatter_record.h"
-#include "../scene/material/material.h"
+#include "../source/integrators/integrator.h"
+#include "../source/structures/scatter_record.h"
+#include "../source/scene/material/material.h"
 
 class mips_model : public integrator {
 
@@ -35,7 +35,7 @@ public:
         }
 
         hit_record rec;
-        auto ray_interval = interval( 0.001, infinity );
+        auto ray_interval = interval( epsilon, infinity );
 
         //===========================
         //Check our ray hits ANYTHING
@@ -83,11 +83,11 @@ public:
             for (int i = 0; i < m_num_light_samples_per_bounce; i++) {
 
                 //Calculate light directly onto this point through samples of scene lights:
-                shared_ptr<light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
+                shared_ptr<local_light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
 
                 hit_record shadow_rec;
 
-                vec3 shadow_ray_dir = light_sample->light_direction(rec.p);
+                vec3 shadow_ray_dir = light_sample->m_direction;
                 ray shadow_ray = ray(rec.p, shadow_ray_dir, r.time());
 
                 //Values for MIS/pdfs
@@ -98,8 +98,8 @@ public:
                 color direct_of_sample = color(0,0,0);
 
                 //First handle skybox sample case:
-                if (light_sample->is_environment_light()) {
-                    interval shadow_ray_interval = interval(0.001, infinity);
+                if (light_sample->m_is_env_light) {
+                    interval shadow_ray_interval = interval(epsilon, infinity);
 
                     //If our doesn't hit anything between start and light, we contribute
                     if (!world.hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
@@ -132,14 +132,14 @@ public:
                 }
                 else {
                     //Physical light
-                    double shadow_ray_length = light_sample->light_distance(rec.p);
+                    double shadow_ray_length = light_sample->m_distance;
 
                     //If our doesn't hit anything between start and light, we contribute
-                    interval shadow_ray_interval = interval(0.001, shadow_ray_length - 0.001);
+                    interval shadow_ray_interval = interval(epsilon, shadow_ray_length - epsilon);
                     if (!world.hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
 
                         double p_of_light = light_weight / flux_sum;
-                        double pdf_of_p = p_of_light * light_sample->pdf_A_value();
+                        double pdf_of_p = p_of_light * light_sample->m_pdf_w;
 
                         if (pdf_of_p <= 1e-8) {
                             std::clog << "PDF VALUE SMALL: " << std::endl;
@@ -156,36 +156,29 @@ public:
                         }
 
                         //Geometry term, ie adjusting weight because of physical light
-                        double dist2 = shadow_ray_length * shadow_ray_length;
-                        vec3 light_normal = light_sample->get_normal();
-                        double cos_light = fmax(0.0, dot(-shadow_ray_dir, light_normal));
 
 
-                        //Reject samples where distance is very small (self intersection)
-                        //Reject samples where light ray would go through itself
-                        if (dist2 > 0.0001 &&  cos_light > 0.0001) {
-                            //Geometry term, material
-                            double cos_theta = fmax(0.0, dot(shadow_ray_dir, rec.normal));
+                        //Geometry term, material
+                        double cos_theta = fmax(0.0, dot(shadow_ray_dir, rec.normal));
 
-                            //BSDF
-                            color bsdf = rec.mat->bsdf(shadow_ray_dir, rec, -r.direction());
+                        //BSDF
+                        color bsdf = rec.mat->bsdf(shadow_ray_dir, rec, -r.direction());
 
-                            //convert
-                            color contrib = bsdf * light_direct * cos_theta * (1.0 / pdf_of_p) * (cos_light / dist2);
+                        //convert
+                        color contrib = bsdf * light_direct * cos_theta * (1.0 / pdf_of_p) * light_sample->m_geometry_term;
 
-                            //Do MIPS weighting
-                            double pdf_of_d = p_of_light * light_sample->pdf_w_value(rec.p);
-                            double a2 = pdf_of_d * pdf_of_d;
-                            double b2 = mat_pdf * mat_pdf;
+                        //Do MIPS weighting
+                        double pdf_of_d = p_of_light * light_sample->m_pdf_w;
+                        double a2 = pdf_of_d * pdf_of_d;
+                        double b2 = mat_pdf * mat_pdf;
 
-                            if (a2 + b2 <= 1e-8) {
-                                std::clog << "PDF VALUE SMALL: " << std::endl;
-                            }
-
-                            double w_direct = (a2 + b2) > 0 ? (a2 / (a2 + b2)) : 0;
-
-                            direct_of_sample = w_direct * contrib;
+                        if (a2 + b2 <= 1e-8) {
+                            std::clog << "PDF VALUE SMALL: " << std::endl;
                         }
+
+                        double w_direct = (a2 + b2) > 0 ? (a2 / (a2 + b2)) : 0;
+
+                        direct_of_sample = w_direct * contrib;
                     }
                     //Otherwise we keep our 0 contribution
                 }
@@ -244,7 +237,7 @@ public:
         hit_record shadow_rec;
         ray shadow_test(rec.p, scatter_dir, r.time());
 
-        if (lights.hit(shadow_test, interval(0.001, infinity), shadow_rec)) {
+        if (lights.hit(shadow_test, interval(epsilon, infinity), shadow_rec)) {
             double light_pdf = compute_light_pdf_value(lights, sky, rec.p, scatter_dir);
 
             double a2 = light_pdf * light_pdf;
@@ -308,7 +301,7 @@ private:
         double p_sky = sky_weight / flux_sum;
 
 
-        if (!lights.hit(r, interval(0.001, infinity), rec)) {
+        if (!lights.hit(r, interval(epsilon, infinity), rec)) {
             //SKYBOX CASE
             //TODO: Address this case
             double pdf_w = sky->get_pdf_value(d);
@@ -334,7 +327,7 @@ private:
 
     }
 
-    shared_ptr<light_sample> sample_over_flux(const hittable &lights, const shared_ptr<skybox> sky, point3& from) const {
+    shared_ptr<local_light_sample> sample_over_flux(const hittable &lights, const shared_ptr<skybox> sky, point3& from) const {
         double sky_weight = sky->get_flux_weight();
         double lights_weight = lights.get_flux_weight();
         double flux_sum = sky_weight + lights_weight;
@@ -344,11 +337,13 @@ private:
         if (sample < sky_weight) {
             //Sample from sky
             double p = sky_weight / flux_sum;
-            return sky->sample_light_over_flux(p);
+            auto nl_sample = sky->sample_light_over_flux(p);
+            return make_shared<local_light_sample>(nl_sample.to_local_sample(from));
         }
         double new_seed = (sample - sky_weight) / lights_weight;
         double p = lights_weight / flux_sum;
-        return lights.sample_light_over_flux(new_seed, p);
+        auto nl_sample = lights.sample_light_over_flux(new_seed, p);
+        return make_shared<local_light_sample>(nl_sample.to_local_sample(from));
     }
 };
 

@@ -22,6 +22,8 @@ public:
     bool front_face;
     double pdf_v;
 
+    double time;
+
     //whether we hit an explicit light
     bool is_explicit_light;
 
@@ -66,7 +68,7 @@ public:
 
     virtual void set_explicit_light(bool is_light) = 0;
 
-    virtual shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const = 0;
+    virtual surface_light_sample sample_light_over_flux(double seed, double running_prob) const = 0;
 
 protected:
     void set_flux_rgb(const vec3& flux_rgb) {

@@ -84,10 +84,9 @@ public:
 
 private:
     void pad_to_minimums() {
-        double delta = 0.0001;
-        if ( x.size() < delta ) x = x.expand( delta );
-        if ( y.size() < delta ) y = y.expand( delta );
-        if ( z.size() < delta ) z = z.expand( delta );
+        if ( x.size() < epsilon ) x = x.expand( epsilon );
+        if ( y.size() < epsilon ) y = y.expand( epsilon );
+        if ( z.size() < epsilon ) z = z.expand( epsilon );
     }
 };
 

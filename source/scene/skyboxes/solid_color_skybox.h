@@ -20,12 +20,17 @@ public:
         return 4 * pi * m_color;
     }
 
-    shared_ptr<environment_light_sample> sample_light_over_flux(double running_p) const override {
+    environment_light_sample sample_light_over_flux(double running_p) const override {
         auto d = random_unit_vector();
         //TODO: Make neater
-        auto pdf_omega = running_p / (4.0 * pi);
-        environment_light_sample sample = environment_light_sample(m_color, pdf_omega, d);
-        return make_shared<environment_light_sample>(sample);
+        auto pdf_w = running_p / (4.0 * pi);
+
+        environment_light_sample result;
+        result.m_radiance = m_color;
+        result.m_direction = d;
+        result.m_pdf_w = pdf_w;
+
+        return result;
     }
 
     double get_pdf_value(vec3 d) const override {

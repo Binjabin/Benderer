@@ -109,7 +109,7 @@ public:
         right->set_explicit_light(is_light);
     }
 
-    shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
+    surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
 
         double l_flux = left->get_flux_weight();
         double r_flux = right->get_flux_weight();

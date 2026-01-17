@@ -70,7 +70,7 @@ public:
         //PDF value is 0 if it doesn't hit this object
         hit_record rec;
         ray r = ray( origin, direction );
-        interval r_interval = interval( 0.001, infinity );
+        interval r_interval = interval( epsilon, infinity );
         if ( !this->hit( r, r_interval, rec ) ) {
             return 0;
         }

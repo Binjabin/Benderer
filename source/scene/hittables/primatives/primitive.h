@@ -37,19 +37,22 @@ protected:
         rec.mat = m_mat;
         rec.pdf_v = local_pdf(rec.p);
         rec.is_explicit_light = m_is_explicit_light;
+        rec.time = r.time();
         return h;
     }
 
     virtual bool prim_hit( const ray& r, interval ray_t, hit_record& rec ) const = 0;
 
-    shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
-        auto p = sample_over_surface();
-        auto n = get_normal(p);
-        color radiance = m_mat->get_radiance();
+    surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
 
-        auto pdf_a = local_pdf(p) * running_prob;
+        vec3 p = sample_over_surface();
+        surface_light_sample result;
+        result.m_radiance = m_mat->get_radiance();
+        result.m_light_p = p;
+        result.m_normal = get_normal(p);
+        result.m_pdf_A = local_pdf(p) * running_prob;
 
-        return make_shared<surface_light_sample>(radiance, p, n, pdf_a);
+        return result;
     }
 
     virtual point3 sample_over_surface() const = 0;

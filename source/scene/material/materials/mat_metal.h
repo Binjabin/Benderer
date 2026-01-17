@@ -17,7 +17,7 @@ public:
         srec.attenuation = get_attenuation(rec);
         srec.pdf_ptr = nullptr;
         srec.skip_pdf = true;
-        srec.skip_pdf_ray = ray( rec.p, reflected, r_in.time() );
+        srec.skip_pdf_ray = ray( rec.p + reflected * epsilon, reflected, r_in.time() );
 
         return true;
     }

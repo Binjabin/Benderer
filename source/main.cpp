@@ -1,8 +1,6 @@
 #include "benderer.h"
 #include "image/image_info_library.h"
-#include "integrators/mips_model.h"
-#include "integrators/one_step_shadow.h"
-#include "integrators/rtw_model.h"
+#include "integrators/simple_path_tracer.h"
 
 #include "scene/hittables/bvh.h"
 #include "scene/scene.h"
@@ -13,9 +11,10 @@ int main() {
 
     scene our_scene = scene_library::cornell_box();
     our_scene.finalize();
-    image_info info = image_info_library::preview();
+    image_info info = image_info_library::micro_ultra();
     //auto itgr = rtw_model();
-    auto itgr = mips_model(info.max_depth(), 2, 5);
+    //auto itgr = mips_model(info.max_depth(), 2, 16);
+    auto itgr = simple_path_tracer(info.max_depth());
     our_scene.render(info, itgr);
 
     return 0;

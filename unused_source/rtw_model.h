@@ -4,10 +4,10 @@
 
 #ifndef BENDERER_RTW_MODEL_H
 #define BENDERER_RTW_MODEL_H
-#include "integrator.h"
-#include "../structures/pdf.h"
-#include "../structures/scatter_record.h"
-#include "../scene/material/material.h"
+#include "../source/integrators/integrator.h"
+#include "../source/structures/pdf.h"
+#include "../source/structures/scatter_record.h"
+#include "../source/scene/material/material.h"
 
 class rtw_model : public integrator {
 public:
@@ -18,7 +18,7 @@ public:
         }
 
         hit_record rec;
-        auto ray_interval = interval( 0.001, infinity );
+        auto ray_interval = interval( epsilon, infinity );
 
         if ( !world.hit( r, ray_interval, rec ) ) {
             return sky->sample_color(r.direction());

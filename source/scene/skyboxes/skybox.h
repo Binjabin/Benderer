@@ -18,7 +18,7 @@ public:
         return luminance(get_flux_rgb());
     };
 
-    virtual shared_ptr<environment_light_sample> sample_light_over_flux(double running_p) const = 0;
+    virtual environment_light_sample sample_light_over_flux(double running_p) const = 0;
 
     virtual double get_pdf_value(vec3 d) const = 0;
 };

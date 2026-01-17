@@ -20,14 +20,18 @@ public:
         return 4 * pi * ( m_top + m_bottom ) * 0.5;
     }
 
-    //TODO: improve?
-    shared_ptr<environment_light_sample> sample_light_over_flux(double running_p) const override {
+    //TODO: improve? Doesn't currently sample over entire gradient
+    environment_light_sample sample_light_over_flux(double running_p) const override {
         auto d = random_unit_vector();
         auto c = sample_color(d);
         //TODO: Make neater
-        auto pdf_omega = running_p / (4.0 * pi);
-        environment_light_sample sample = environment_light_sample(c, pdf_omega, d);
-        return make_shared<environment_light_sample>(sample);
+        auto pdf_w = running_p / (4.0 * pi);
+
+        environment_light_sample result;
+        result.m_radiance = c;
+        result.m_direction = d;
+        result.m_pdf_w = pdf_w;
+        return result;
     }
 
     double get_pdf_value(vec3 d) const override {

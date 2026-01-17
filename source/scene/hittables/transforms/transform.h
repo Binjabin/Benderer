@@ -41,13 +41,11 @@ public:
 
     virtual vec3 reverse_transform_normal(const vec3& n) const = 0;
 
-    shared_ptr<surface_light_sample> sample_light_over_flux(double seed, double running_prob) const override {
-        shared_ptr<surface_light_sample> child_sample = m_object->sample_light_over_flux(seed, running_prob);
-        point3 p = reverse_transform_point(child_sample->m_light_p);
-        vec3 n = reverse_transform_normal(child_sample->m_normal);
-        auto rad = child_sample->m_radiance;
-        auto a = child_sample->m_pdf_a_value;
-        return make_shared<surface_light_sample>(rad, p, n, a);
+    surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
+        surface_light_sample child_sample = m_object->sample_light_over_flux(seed, running_prob);
+        child_sample.m_light_p = reverse_transform_point(child_sample.m_light_p);
+        child_sample.m_normal = reverse_transform_normal(child_sample.m_normal);
+        return child_sample;
     }
 
 protected:

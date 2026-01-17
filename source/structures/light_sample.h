@@ -7,94 +7,80 @@
 
 #include "../benderer.h"
 
-class light_sample {
-public:
-    virtual ~light_sample() = default;
 
-    light_sample(color r)
-        : m_radiance(r) {}
-
+//A sample given a position
+struct local_light_sample {
     color m_radiance;
-    //pdf value over solid angle steradians
-    virtual bool is_environment_light() const = 0;
-
-    virtual vec3 light_direction(point3 o) const = 0;
-
-    virtual double light_distance(point3 o) const = 0;
-
-    virtual double pdf_w_value(point3 o) const = 0;
-
-    virtual double pdf_A_value() const {
-        return 0.0;
-    };
-
-    virtual vec3 get_normal() const {
-        return vec3(0, 0, 0);
-    }
-};
-
-class environment_light_sample : public light_sample {
-public:
-    environment_light_sample(const color& r, double w_v, const vec3& d)
-        : light_sample(r), m_pdf_w_value(w_v), m_direction(d) {}
-
-    bool is_environment_light() const override {
-        return true;
-    }
-
-    vec3 light_direction(point3 o) const override {
-        return m_direction;
-    };
-
-    double pdf_w_value(point3 o) const override {
-        return m_pdf_w_value;
-    }
-
-    double light_distance(point3 o) const override {
-        return infinity;
-    }
-private:
     vec3 m_direction;
-    double m_pdf_w_value;
+    double m_pdf_w;
+    double m_distance;
+    //Accounts for the facing direction and distance of physically based lights. Should just be 1 for environment lights.
+    double m_geometry_term;
+
+    bool m_is_env_light;
 };
 
-class surface_light_sample : public light_sample {
-public:
-    surface_light_sample(const color& radiance, const point3& p, const vec3 n, const double a_v)
-        : light_sample(radiance), m_light_p(p), m_normal(n), m_pdf_a_value(a_v) {}
+struct environment_light_sample {
+    color m_radiance;
+    vec3 m_direction;
+    double m_pdf_w;
 
-    bool is_environment_light() const override {
-        return false;
+    local_light_sample to_local_sample(point3 from) const {
+        local_light_sample res;
+        res.m_radiance = m_radiance;
+        res.m_direction = m_direction;
+        res.m_pdf_w = m_pdf_w;
+        res.m_distance = infinity;
+        res.m_geometry_term = 1;
+        res.m_is_env_light = true;
+        return res;
     }
+};
 
-    vec3 light_direction(point3 o) const override {
+struct surface_light_sample {
+    color m_radiance;
+    point3 m_light_p;
+    vec3 m_normal;
+    double m_pdf_A;
+
+    //Direction from o to the light
+    vec3 direction(point3 o) const {
         return unit_vector(m_light_p - o);
     }
 
-    double light_distance(point3 o) const override {
+    double distance(point3 o) const {
         return (o - m_light_p).length();
     }
 
-    double pdf_w_value(point3 o) const override {
-        auto d = light_distance(o);
-        auto scalar = d * d / std::abs(dot(m_normal, -light_direction(o)));
-        auto pdf_w = m_pdf_a_value * scalar;
-        return pdf_w;
+    double squared_distance(point3 o) const {
+        return (o - m_light_p).length_squared();
     }
 
-    vec3 get_normal() const override {
-        return m_normal;
+    double pdf_w(point3 from) const {
+        double dist2 = squared_distance(from);
+        double cos_theta = dot(m_normal, -direction(from));
+        if (cos_theta <= epsilon) return 0;
+        return m_pdf_A * dist2 / cos_theta;
     }
 
-    double pdf_A_value() const override {
-        return m_pdf_a_value;
+    double geometry_term(point3 from) const {
+        double dist2 = squared_distance(from);
+        double cos_theta = dot(m_normal, -direction(from));
+        if (cos_theta <= epsilon) return 0;
+        return (cos_theta / dist2);
     }
 
-    double m_pdf_a_value;
-    point3 m_light_p;
-    vec3 m_normal;
+    local_light_sample to_local_sample(point3 from) const {
+        local_light_sample res;
+        res.m_radiance = m_radiance;
+        res.m_direction = direction(from);
+        res.m_pdf_w = pdf_w(from);
+        res.m_distance = distance(from);
+        res.m_geometry_term = geometry_term(from);
+        res.m_is_env_light = false;
+        return res;
+    }
 };
-
 
 
 #endif //BENDERER_LIGHT_SAMPLE_H

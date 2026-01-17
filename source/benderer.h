@@ -17,6 +17,7 @@ using std::shared_ptr;
 
 //CONSTS
 const double infinity = std::numeric_limits<double>::infinity();
+const double epsilon = 1e-8;
 const double pi = 3.1415926535897932385;
 
 //INLINES

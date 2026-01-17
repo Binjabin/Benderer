@@ -42,11 +42,15 @@ add_executable(Benderer source/main.cpp
         source/scene/hittables/transforms/transform.h
         source/scene/hittables/transforms/translate.h
         source/scene/hittables/transforms/rotate_y.h
-        source/integrators/rtw_model.h
+        unused_source/rtw_model.h
         source/integrators/integrator.h
         source/scene/skyboxes/skybox.h
         source/scene/skyboxes/gradient_skybox.h
         source/scene/skyboxes/solid_color_skybox.h
-        source/integrators/mips_model.h
-        source/integrators/one_step_shadow.h
+        unused_source/mips_model.h
+        unused_source/one_step_shadow.h
+        source/structures/path_state.h
+        source/structures/path_result.h
+        unused_source/mips_model_2.h
+        source/integrators/simple_path_tracer.h
 )
