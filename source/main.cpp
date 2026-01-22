@@ -6,15 +6,15 @@
 #include "scene/scene_library.h"
 #include "scene/world.h"
 #include "utility/time.h"
+#include "image/writer/psix_writer.h"
 #include "image/writer/png_writer.h"
 #include "image/post/post_process.h"
 
 int main() {
-    freopen( "output.ppm", "w", stdout );
 
     scene our_scene = scene_library::cornell_ball();
     our_scene.finalize();
-    image_info info = image_info_library::micro_sol();
+    image_info info = image_info_library::micro_ultra();
     //auto itgr = rtw_model();
     //auto itgr = mips_model(info.max_depth(), 2, 16);
     auto itgr = simple_path_tracer(info.max_depth());
@@ -26,11 +26,15 @@ int main() {
     int h = info.pixel_height();
     post_process post = post_process(w, h);
     png_writer image_maker = png_writer(w, h);
+    psix_writer preview_image_maker = psix_writer(w, h);
 
     std::string filename = "output_";
     filename += get_time_string();
-    filename += ".png";
-    our_scene.render( filename.data(), info, itgr, post, image_maker);
+
+    our_scene.render( filename, info, itgr, post, preview_image_maker, image_maker);
+
+    //Close Window
+    std::system("pkill feh");
 
     return 0;
 }

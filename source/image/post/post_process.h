@@ -32,9 +32,9 @@ public:
             b = std::clamp(b, 0.0, 1.0);
 
             //Tonemap
-            r = tonemap(r);
-            g = tonemap(g);
-            b = tonemap(b);
+            //r = tonemap(r);
+            //g = tonemap(g);
+            //b = tonemap(b);
 
             if (m_gamma > 0.0) {
                 r = gamma(r);

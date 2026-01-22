@@ -25,10 +25,8 @@ public:
     double defocus_angle = 0; //variation of angle of rays through each pixel
     double focus_dist = 10; //distance from camera look point to distance of perfect focus
 
-    void render(const char* filename, const world& world, image_info info, const integrator& itgr, post_process& post, const image_writer& writer) {
+    void render(const std::string& filename, const world& world, image_info info, const integrator& itgr, post_process& post, const image_writer& preview_writer, const image_writer& result_writer) {
         initialize(info);
-
-        std::cout << "P3\n" << info.pixel_width() << " " << info.pixel_height() << "\n255\n";
 
         int ph = info.pixel_height();
         int pw = info.pixel_width();
@@ -36,33 +34,48 @@ public:
         int md = info.max_depth();
         double ss = info.sample_scale();
 
-        std::vector<double> framebuffer;
-        framebuffer.resize( size_t(pw) * size_t(ph) * 3 );
+        size_t pixel_area = size_t(pw) * size_t(ph);
 
-        for ( int j = 0; j < ph ; j++ ) {
-            std::clog << "\rScanlines remaining: " << ( ph - j ) << ' ' << std::flush;
+        std::vector<double> display_buff;
+        display_buff.resize( pixel_area * 3 );
+        std::vector<double> accum_buff;
+        accum_buff.resize( pixel_area * 3 );
 
-            for ( int i = 0; i < pw ; i++ ) {
-                color pixel_color( 0, 0, 0 );
-                for ( int sample = 0; sample < spp; sample++ ) {
+        const int preview_update_frequency = 40000;
+        int work_until_update = 0;
+
+        for ( int sample = 0; sample < spp; sample++ ) {
+
+            std::clog << "\rSamples remaining: " << ( spp - sample ) << ' ' << std::flush;
+
+            for ( int j = 0; j < ph ; j++ ) {
+
+                for ( int i = 0; i < pw ; i++ ) {
+                    color pixel_color( 0, 0, 0 );
                     ray r = get_ray( i, j );
                     pixel_color += itgr.ray_color( r, md, world );
+
+                    const size_t idx = (size_t(j) * size_t(pw) + size_t(i)) * 3;
+
+                    accum_buff[idx + 0] += pixel_color.x(); //R
+                    accum_buff[idx + 1] += pixel_color.y(); //G
+                    accum_buff[idx + 2] += pixel_color.z(); //B
+
+                    work_until_update++;
+                    if (work_until_update >= preview_update_frequency) {
+                        work_until_update = 0;
+                        update_preview(display_buff, accum_buff, post, preview_writer, pixel_area, (sample+1));
+                    }
                 }
-
-                color average = ss * pixel_color;
-                double length = average.length();
-
-                const size_t idx = (size_t(j) * size_t(pw) + size_t(i)) * 3.0;
-
-                framebuffer[idx + 0] = average.x(); //R
-                framebuffer[idx + 1] = average.y(); //G
-                framebuffer[idx + 2] = average.z(); //B
             }
         }
 
-        post.apply_post(framebuffer);
-        writer.write(filename, framebuffer);
+        //Reset preview:
+        std::vector<double> black(ph * pw * 3, 0.0);
+        preview_writer.write("preview", black);
 
+        accum_to_display(display_buff, accum_buff, post, pixel_area, ss);
+        result_writer.write(filename, display_buff);
         std::clog << "\rDone. \n";
     }
 
@@ -131,6 +144,25 @@ private:
         return center + ( p[0] * defocus_disk_u ) + ( p[1] * defocus_disk_v );
     }
 
+    void update_preview(std::vector<double>& display_buff, const std::vector<double>& accum_buff, post_process& post, const image_writer& preview_writer, size_t size, int samples) {
+        // compute averaged display buffer (do not modify accum)
+        double ss = (1.0 / double(samples));
+
+        accum_to_display(display_buff, accum_buff, post, size, ss);
+
+        preview_writer.write("preview", display_buff);
+    }
+
+    void accum_to_display(std::vector<double>& display_buff, const std::vector<double>& accum_buff, post_process& post, size_t size, double fac) {
+        for (size_t p = 0; p < size; ++p) {
+            size_t base = p * 3;
+            display_buff[base + 0] = accum_buff[base + 0] * fac;
+            display_buff[base + 1] = accum_buff[base + 1] * fac;
+            display_buff[base + 2] = accum_buff[base + 2] * fac;
+        }
+
+        post.apply_post(display_buff);
+    }
 };
 
 #endif //CAMERA_H

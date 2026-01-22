@@ -56,6 +56,13 @@ build CMakeFiles/Benderer.dir/source/main.cpp.o: CXX_COMPILER__Benderer_unscanne
   OBJECT_DIR = CMakeFiles/Benderer.dir
   OBJECT_FILE_DIR = CMakeFiles/Benderer.dir/source
 
+build CMakeFiles/Benderer.dir/source/image/writer/stb_impl.cpp.o: CXX_COMPILER__Benderer_unscanned_Debug /home/binjabin/Coding/Oxford/Project/Benderer/source/image/writer/stb_impl.cpp || cmake_object_order_depends_target_Benderer
+  CONFIG = Debug
+  DEP_FILE = CMakeFiles/Benderer.dir/source/image/writer/stb_impl.cpp.o.d
+  FLAGS = -g -std=gnu++20 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles/Benderer.dir
+  OBJECT_FILE_DIR = CMakeFiles/Benderer.dir/source/image/writer
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Benderer
@@ -64,7 +71,7 @@ build CMakeFiles/Benderer.dir/source/main.cpp.o: CXX_COMPILER__Benderer_unscanne
 #############################################
 # Link the executable Benderer
 
-build Benderer: CXX_EXECUTABLE_LINKER__Benderer_Debug CMakeFiles/Benderer.dir/source/main.cpp.o
+build Benderer: CXX_EXECUTABLE_LINKER__Benderer_Debug CMakeFiles/Benderer.dir/source/main.cpp.o CMakeFiles/Benderer.dir/source/image/writer/stb_impl.cpp.o
   CONFIG = Debug
   DEP_FILE = CMakeFiles/Benderer.dir/link.d
   FLAGS = -g

@@ -71,4 +71,6 @@ add_executable(Benderer source/main.cpp
         source/image/post/post_process.h
         source/utility/benderer_image.h
         source/utility/time.h
+        source/image/writer/stb_impl.cpp
+        source/image/writer/stb_impl.h
 )

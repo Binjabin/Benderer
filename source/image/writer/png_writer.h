@@ -2,10 +2,9 @@
 // Created by binjabin on 1/22/26.
 //
 
-#ifndef BENDERER_PNG_H
-#define BENDERER_PNG_H
+#ifndef BENDERER_PNG_WRITER_H
+#define BENDERER_PNG_WRITER_H
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
@@ -20,12 +19,12 @@ public:
     }
 
     //Convert accumulated light to pixel values
-    void write(const char* filename, const std::vector<double>& double_buf) const override {
+    void write(const std::string& filename, const std::vector<double>& double_buf) const override {
 
         auto data = double_buf.data();
         if (!data) throw std::invalid_argument("float_buf is null");
 
-        std::vector<u_int8_t> byte_buffer;
+        std::vector<uint8_t> byte_buffer;
         byte_buffer.resize( size_t(m_width) * size_t(m_height) * 3 );
 
         const int pxCount = m_height * m_width;
@@ -47,9 +46,14 @@ public:
         }
 
         int stride = m_width * m_channels;
-        stbi_write_png(filename, m_width, m_height, 3, byte_buffer.data(), stride);
+        std::string name_with_tag = filename + ".png";
+        const char* name = name_with_tag.data();
+        stbi_write_png(name, m_width, m_height, 3, byte_buffer.data(), stride);
     }
 
+    std::string extention() override {
+        return ".png";
+    }
 
 private:
     const int m_width, m_height;
@@ -61,6 +65,7 @@ private:
         return static_cast<uint8_t>(iv);
     }
 
+
 };
 
-#endif //BENDERER_PNG_H
+#endif //BENDERER_PNG_WRITER_H

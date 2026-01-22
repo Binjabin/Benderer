@@ -26,8 +26,8 @@ public:
         m_world.m_lights.set_explicit_light(true);
     }
 
-    void render(const char* filename, const image_info& info, const integrator& itgr, post_process& post, const image_writer& writer) {
-        m_cam.render(filename, m_world, info, itgr, post, writer);
+    void render(const std::string& filename, const image_info& info, const integrator& itgr, post_process& post, const image_writer& preview_writer, const image_writer& result_writer) {
+        m_cam.render(filename, m_world, info, itgr, post, preview_writer, result_writer);
     }
 
     camera m_cam;
