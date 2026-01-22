@@ -4,17 +4,15 @@
 
 #ifndef BENDERER_TRANSLATE_H
 #define BENDERER_TRANSLATE_H
+#include <memory>
+
 #include "transform.h"
+#include "../../structures/ray.h"
 
 class translate : public transform {
 public:
-    translate( shared_ptr<hittable> object, const vec3& offset )
-        : transform(object), offset( offset ) {
-        bbox = object->bounding_box() + offset;
-    }
-
-    aabb bounding_box() const override {
-        return bbox;
+    translate(const vec3 &offset)
+        : offset(offset) {
     }
 
     ray transform_ray(const ray &r) const override {
@@ -29,9 +27,12 @@ public:
         return n;
     }
 
+    aabb transform_bbox(const aabb &bbox) override {
+        return bbox + offset;
+    }
+
 private:
     vec3 offset;
-    aabb bbox;
 };
 
 #endif //BENDERER_TRANSLATE_H

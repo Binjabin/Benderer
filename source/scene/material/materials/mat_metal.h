@@ -10,23 +10,23 @@ public:
     metal( const color& albedo, double fuzz ) : albedo( albedo ), fuzz( fuzz < 1 ? fuzz : 1 ) {
     }
 
-    bool scatter( const ray& r_in, const hit_record& rec, scatter_record& srec ) const override {
-        vec3 reflected = reflect( r_in.direction(), rec.normal );
+    bool scatter( const ray& r_in, const surface_hit& rec, scatter_record& srec ) const override {
+        vec3 reflected = reflect( r_in.direction(), rec.get_normal() );
         reflected = unit_vector( reflected ) + ( fuzz * random_unit_vector() );
 
         srec.attenuation = get_attenuation(rec);
         srec.pdf_ptr = nullptr;
         srec.skip_pdf = true;
-        srec.skip_pdf_ray = ray( rec.p + reflected * epsilon, reflected, r_in.time() );
+        srec.skip_pdf_ray = ray( rec.get_p() + reflected * epsilon, reflected, r_in.time() );
 
         return true;
     }
 
-    color get_attenuation(const hit_record &rec) const override {
+    color get_attenuation(const surface_hit &rec) const override {
         return albedo;
     }
 
-    color bsdf(vec3 d_in, const hit_record &rec, const vec3 &r_out) override {
+    color bsdf(vec3 d_in, const surface_hit &rec, const vec3 &r_out) override {
         //We don't use sampling for this
         return color(0, 0, 0);
     }

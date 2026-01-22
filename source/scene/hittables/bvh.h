@@ -50,7 +50,7 @@ public:
         int count_sum = 0;
         double area_sum = 0;
         vec3 flux_sum = vec3(0,0,0);
-        for (int i = 0; i < objects.size(); i++) {
+        for ( size_t i = start; i < end; i++ ) {
             count_sum += objects[i]->get_count();
             area_sum += objects[i]->get_surface_area();
             flux_sum += objects[i]->get_flux_rgb();
@@ -61,15 +61,15 @@ public:
     }
 
     //check if we hit any objects in the subtree
-    bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
+    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
         if ( !bbox.hit( r, ray_t ) )
             return false;
 
-        hit_record l_rec = hit_record();
+        surface_hit l_rec = surface_hit();
         bool hit_left = left->hit( r, ray_t, l_rec );
 
-        hit_record r_rec = hit_record();
-        interval right_ray_t = interval( ray_t.min, hit_left ? l_rec.t : ray_t.max );
+        surface_hit r_rec = surface_hit();
+        interval right_ray_t = interval( ray_t.min, hit_left ? l_rec.get_t() : ray_t.max );
         bool hit_right = right->hit( r, right_ray_t, r_rec );
 
         if (!hit_left && !hit_right) {
@@ -84,12 +84,12 @@ public:
         if (hit_right) {
             auto p = r_p / total;
             rec = r_rec;
-            rec.pdf_v *= p;
+            rec.m_pdf_v *= p;
         }
         else if (hit_left) {
             auto p = l_p / total;
             rec = l_rec;
-            rec.pdf_v *= p;
+            rec.m_pdf_v *= p;
         }
 
         return hit_left || hit_right;

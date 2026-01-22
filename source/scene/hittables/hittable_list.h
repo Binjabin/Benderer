@@ -34,8 +34,8 @@ public:
         set_flux_rgb(get_flux_rgb() + object->get_flux_rgb());
     }
 
-    bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
-        hit_record temp_rec;
+    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
+        surface_hit temp_rec;
         bool hit_anything = false;
         auto closest_so_far = ray_t.max;
 
@@ -47,7 +47,7 @@ public:
             auto new_interval = interval( ray_t.min, closest_so_far );
             if ( object->hit( r, new_interval, temp_rec ) ) {
                 hit_anything = true;
-                closest_so_far = temp_rec.t;
+                closest_so_far = temp_rec.get_t();
                 closest_object_i = i;
                 rec = temp_rec;
             }
@@ -55,7 +55,7 @@ public:
 
         //Combine pdfs in list. We calculate the pdf of the sub-hittable then multiply it by the pdf of choosing this item
         if (hit_anything) {
-            rec.pdf_v *= get_discrete_flux_pdf(closest_object_i);
+            rec.m_pdf_v *= get_discrete_flux_pdf(closest_object_i);
         }
 
         return hit_anything;

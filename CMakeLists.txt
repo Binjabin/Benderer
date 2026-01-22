@@ -8,7 +8,7 @@ add_executable(Benderer source/main.cpp
         source/utility/color.h
         source/structures/ray.h
         source/scene/hittables/hittable.h
-        source/scene/hittables/primatives/sphere.h
+        unused_source/sphere_prim.h
         source/scene/hittables/hittable_list.h
         source/benderer.h
         source/structures/interval.h
@@ -19,8 +19,8 @@ add_executable(Benderer source/main.cpp
         source/scene/texture/texture.h
         source/utility/benderer_stb_image.h
         source/utility/perlin.h
-        source/scene/hittables/primatives/quad.h
-        source/scene/hittables/constant_medium.h
+        unused_source/quad_prim.h
+        unused_source/constant_medium.h
         source/structures/onb.h
         source/structures/pdf.h
         source/scene/texture/textures/tex_solid_colour.h
@@ -35,13 +35,13 @@ add_executable(Benderer source/main.cpp
         source/scene/scene.h
         source/scene/scene_library.h
         source/image/image_info.h
-        source/structures/scatter_record.h
+        source/records/scatter_record.h
         source/image/image_info_library.h
-        source/structures/light_sample.h
-        source/scene/hittables/primatives/primitive.h
-        source/scene/hittables/transforms/transform.h
-        source/scene/hittables/transforms/translate.h
-        source/scene/hittables/transforms/rotate_y.h
+        source/records/light_sample.h
+        source/scene/hittables/primitive.h
+        source/scene/transforms/transform.h
+        source/scene/transforms/translate.h
+        source/scene/transforms/rotate_y.h
         unused_source/rtw_model.h
         source/integrators/integrator.h
         source/scene/skyboxes/skybox.h
@@ -49,9 +49,23 @@ add_executable(Benderer source/main.cpp
         source/scene/skyboxes/solid_color_skybox.h
         unused_source/mips_model.h
         unused_source/one_step_shadow.h
-        source/structures/path_state.h
-        source/structures/path_result.h
+        source/records/path_state.h
+        source/records/path_result.h
         unused_source/mips_model_2.h
         source/integrators/simple_path_tracer.h
         source/scene/world.h
+        source/records/surface_hit.h
+        source/scene/mediums/medium.h
+        source/records/medium_hit.h
+        source/scene/mediums/phase_functions/phase_function.h
+        source/scene/shapes/shape.h
+        source/records/intersection.h
+        source/records/interaction.h
+        source/scene/shapes/solids/sphere.h
+        source/scene/shapes/flats/quad.h
+        source/scene/shapes/flats/flat.h
+        source/scene/shapes/solids/solid.h
+        source/scene/hittables/transformed.h
+        source/scene/object_library.h
+        source/utility/benderer_stb_image_impl.cpp
 )

@@ -6,8 +6,8 @@
 #define BENDERER_SIMPLE_PATH_TRACER_H
 #include "../scene/scene.h"
 #include "../scene/material/material.h"
-#include "../structures/path_result.h"
-#include "../structures/path_state.h"
+#include "../records/path_result.h"
+#include "../records/path_state.h"
 
 class simple_path_tracer : public integrator {
 
@@ -27,7 +27,7 @@ public:
 private:
     int m_max_depth;
 
-    path_result path_trace(const ray& r, const world& world, path_state& p_state) const {
+    path_result path_trace(const ray& r, const world& world, const path_state& p_state) const {
 
         path_result out_result = path_result();
 
@@ -39,7 +39,7 @@ private:
 
         //---------------------------------------
         // First check that our ray hits anything
-        hit_record rec;
+        surface_hit rec;
         interval ray_t = interval(epsilon, infinity);
         //If it doesn't, default to skybox
         if ( !world.m_geometry.hit( r, ray_t, rec ) ) {
@@ -49,7 +49,7 @@ private:
 
         //---------------------------------------
         // Get surface emittance
-        color color_from_light = rec.mat->emitted(r, rec, rec.u, rec.v, rec.p);
+        color color_from_light = rec.m_mat->emitted(r, rec, rec.get_u(), rec.get_v(), rec.get_p());
 
         //---------------------------------------
         // We have a max depth. Terminate if the next sample would exceed that depth.
@@ -61,7 +61,7 @@ private:
         // Otherwise, calculate ray "scatter". Either absorb ray (just return emittance, no more bounces) or calculate the scatter direction
 
         scatter_record srec;
-        bool scattered = rec.mat->scatter(r, rec, srec);
+        bool scattered = rec.m_mat->scatter(r, rec, srec);
 
         //If we don't scatter, then we exit early
         if (!scattered) {
@@ -80,8 +80,8 @@ private:
         return out_result;
     }
 
-    path_result get_indirect_result(const ray& r, const world& world, path_state& p_state, const scatter_record& srec, const hit_record& rec) const {
-        path_result indirect_res;
+    path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const scatter_record& srec, const surface_hit& rec) const {
+        path_result indirect_res = empty_path_result();
         path_state child_state = p_state;
         child_state.depth++;
         if (srec.skip_pdf) {
@@ -98,14 +98,16 @@ private:
         }
         else {
             vec3 scatter_dir = srec.pdf_ptr->generate();
-            ray scattered_ray = ray(rec.p, scatter_dir, r.time());
+            ray scattered_ray = ray(rec.get_p() + scatter_dir * epsilon, scatter_dir, r.time());
 
-            double pdf_mat = rec.mat->scattering_pdf(r, rec, scattered_ray);
+            double pdf_mat = rec.m_mat->scattering_pdf(r, rec, scattered_ray);
             //If pdf is 0 or close, stop. Generated impossible sample. Probably shouldn't happen!
             if (pdf_mat <= epsilon) return empty_path_result();
 
-            color bsdf = rec.mat->bsdf(scatter_dir, rec, -r.direction());
-            double cos_theta = fmax(0.0, dot(scatter_dir, rec.normal));
+            color bsdf = rec.m_mat->bsdf(scatter_dir, rec, -r.direction());
+            //If a volume, this is meaningless, just carry on
+            //TODO: We had volume cos-theta stuff here. We handle this differently now!
+            double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
             //Throughput at this point (from a scattered direction, out at a ray direction)
             color throughput = bsdf * cos_theta / pdf_mat;
 

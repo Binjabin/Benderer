@@ -5,8 +5,6 @@
 #ifndef BENDERER_PATH_RESULT_H
 #define BENDERER_PATH_RESULT_H
 
-
-
 struct path_result {
     color radiance_from_path;
     bool terminated_on_light;

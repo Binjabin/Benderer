@@ -5,12 +5,12 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "../hittable.h"
-#include "../../../structures/onb.h"
+#include "../source/scene/hittables/hittable.h"
+#include "../source/structures/onb.h"
 
-class sphere : public primitive {
+class sphere_prim : public primitive {
 public:
-    sphere( const point3& static_center, double radius, shared_ptr<material> mat ) :
+    sphere_prim( const point3& static_center, double radius, shared_ptr<material> mat ) :
     primitive(mat),
     center( static_center, vec3( 0, 0, 0 ) ),
     radius( std::fmax( 0, radius ) ), mat( mat ) {
@@ -18,7 +18,7 @@ public:
         bbox = aabb( static_center - rvec, static_center + rvec );
     }
 
-    sphere( const point3& center1, const point3& center2, double radius, shared_ptr<material> mat ) :
+    sphere_prim( const point3& center1, const point3& center2, double radius, shared_ptr<material> mat ) :
     primitive(mat),
     center( center1, center2 - center1 ),
     radius( std::fmax( 0, radius ) ), mat( mat ) {
@@ -35,7 +35,7 @@ public:
     double pdf_value( const point3& origin, const vec3& direction ) const override {
         // Only works for stationary spheres
 
-        hit_record rec;
+        surface_hit rec;
         if ( !this->hit( ray( origin, direction ), interval( epsilon, infinity ), rec ) ) {
             return 0;
         }
@@ -72,7 +72,7 @@ public:
         return center.origin() + local;
     }
 
-    bool prim_hit( const ray& r, interval ray_t, hit_record& rec ) const override {
+    bool prim_hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
         point3 current_center = center.at( r.time() );
         vec3 oc = current_center - r.origin();
         auto a = r.direction().length_squared();
@@ -110,16 +110,7 @@ private:
     shared_ptr<material> mat;
     aabb bbox;
 
-    static void get_sphere_uv( const point3& p, double& u, double& v ) {
-        // p: a given point on the sphere of radius one
-        // u, v are the returned latitude and longitude
 
-        auto theta = std::acos( -p.y() );
-        auto phi = std::atan2( -p.z(), p.x() ) + pi;
-
-        u = phi / ( 2 * pi );
-        v = theta / pi;
-    }
 
     static vec3 random_to_sphere( double radius, double distance_squared ) {
         auto r1 = random_double();

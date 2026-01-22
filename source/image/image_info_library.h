@@ -28,6 +28,15 @@ public:
             );
     }
 
+    static image_info micro_sol() {
+        return image_info(
+            1.0,
+            64,
+            1024,
+            64
+            );
+    }
+
     static image_info small_low() {
         return image_info(
             1.0,

@@ -5,27 +5,29 @@
 #ifndef CONSTANT_MEDIUM_H
 #define CONSTANT_MEDIUM_H
 
-#include "hittable.h"
-#include "../material/material.h"
-#include "../texture/texture.h"
+#include "../source/scene/hittables/hittable.h"
+#include "../source/scene/material/material.h"
+#include "../source/scene/material/materials/mat_isotropic.h"
+#include "../source/scene/shapes/solids/solid.h"
+#include "../source/scene/texture/texture.h"
 
 class constant_medium : public hittable {
 public:
-    constant_medium( shared_ptr<hittable> boundary, double density, shared_ptr<texture> tex )
-        : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotopic>( tex ) ) {
+    constant_medium( shared_ptr<solid> boundary, double density, shared_ptr<texture> tex )
+        : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotropic>( tex ) ) {
         set_count(boundary->get_count());
     }
 
     constant_medium( shared_ptr<hittable> boundary, double density, const color& albedo )
-        : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotopic>( albedo ) ) {
+        : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotropic>( albedo ) ) {
         set_count(boundary->get_count());
     }
 
-    bool hit( const ray& r, interval ray_t, hit_record& rec ) const override {
-        hit_record rec1, rec2;
+    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
+        surface_hit rec1, rec2;
 
         //make sure we actually hit the boundary
-        if ( !boundary.hit( r, interval::universe, rec1 ) ) return false;
+        if ( !boundary->hit( r, interval::universe, rec1 ) ) return false;
 
         //make sure we exit the volume
         if ( !boundary->hit( r, interval( rec1.t + epsilon, infinity ), rec2 ) ) return false;
@@ -59,11 +61,28 @@ public:
         rec.mat = phase_function;
 
         rec.time = r.time();
+        rec.is_volume = true;
 
         return true;
     }
 
     aabb bounding_box() const override { return boundary->bounding_box(); }
+
+    // Volume is not an emitting surface itself; mirror the boundary properties
+    void compute_properties() override {
+        boundary->compute_properties();
+        set_count(boundary->get_count());
+        set_surface_area(boundary->get_surface_area());
+        set_flux_rgb(boundary->get_flux_rgb());
+    }
+
+    void set_explicit_light(bool is_light) override {
+        boundary->set_explicit_light(is_light);
+    }
+
+    surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
+        return boundary->sample_light_over_flux(seed, running_prob);
+    }
 
 private:
     shared_ptr<hittable> boundary;

@@ -4,7 +4,7 @@
 
 #ifndef BENDERER_PATH_STATE_H
 #define BENDERER_PATH_STATE_H
-#include "vec3.h"
+#include "../structures/vec3.h"
 
 struct path_state {
     vec3 prev_vertex_position;

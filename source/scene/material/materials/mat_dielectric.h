@@ -10,33 +10,35 @@ public:
     dielectric( double refraction_index ) : refraction_index( refraction_index ) {
     }
 
-    bool scatter( const ray& r_in, const hit_record& rec, scatter_record& srec ) const override {
+    bool scatter( const ray& r_in, const surface_hit& rec, scatter_record& srec ) const override {
         srec.attenuation = color( 1.0, 1.0, 1.0 );
         srec.pdf_ptr = nullptr;
         srec.skip_pdf = true;
 
-        double ri = rec.front_face ? ( 1.0 / refraction_index ) : refraction_index;
+        double ri = rec.get_front_face() ? ( 1.0 / refraction_index ) : refraction_index;
 
         vec3 unit_direction = unit_vector( r_in.direction() );
-        double cos_theta = std::fmin( dot( -unit_direction, rec.normal ), 1.0 );
+        double cos_theta = std::fmin( dot( -unit_direction, rec.get_normal() ), 1.0 );
         double sin_theta = std::sqrt( 1.0 - cos_theta * cos_theta );
 
         bool cannot_refract = ri * sin_theta > 1.0;
         vec3 direction;
 
-        if ( cannot_refract ) {
-            direction = reflect( unit_direction, rec.normal );
+        double r = reflectance( cos_theta, ri );
+
+        if ( cannot_refract || random_double() < r) {
+            direction = reflect( unit_direction, rec.get_normal() );
         }
         else {
-            direction = refract( unit_direction, rec.normal, ri );
+            direction = refract( unit_direction, rec.get_normal(), ri );
         }
 
-        srec.skip_pdf_ray = ray( rec.p, direction, r_in.time() );
+        srec.skip_pdf_ray = ray( rec.get_p() + direction * epsilon, direction, r_in.time() );
 
         return true;
     }
 
-    color bsdf(vec3 d_in, const hit_record &rec, const vec3 &r_out) override {
+    color bsdf(vec3 d_in, const surface_hit &rec, const vec3 &r_out) override {
         //Don't use monte carlo here
         return color(0, 0, 0);
     }

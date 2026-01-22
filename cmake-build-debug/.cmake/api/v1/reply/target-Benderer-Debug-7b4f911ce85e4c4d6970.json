@@ -49,7 +49,8 @@
 			},
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				64
 			]
 		}
 	],
@@ -78,7 +79,8 @@
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				0
+				0,
+				64
 			]
 		},
 		{
@@ -134,7 +136,21 @@
 				47,
 				48,
 				49,
-				50
+				50,
+				51,
+				52,
+				53,
+				54,
+				55,
+				56,
+				57,
+				58,
+				59,
+				60,
+				61,
+				62,
+				63,
+				65
 			]
 		}
 	],
@@ -168,7 +184,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/primatives/sphere.h",
+			"path" : "unused_source/sphere_prim.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -223,12 +239,12 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/primatives/quad.h",
+			"path" : "unused_source/quad_prim.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/constant_medium.h",
+			"path" : "unused_source/constant_medium.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -303,7 +319,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/structures/scatter_record.h",
+			"path" : "source/records/scatter_record.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -313,27 +329,27 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/structures/light_sample.h",
+			"path" : "source/records/light_sample.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/primatives/primitive.h",
+			"path" : "source/scene/hittables/primitive.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/transforms/transform.h",
+			"path" : "source/scene/transforms/transform.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/transforms/translate.h",
+			"path" : "source/scene/transforms/translate.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/transforms/rotate_y.h",
+			"path" : "source/scene/transforms/rotate_y.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -373,12 +389,12 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/structures/path_state.h",
+			"path" : "source/records/path_state.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/structures/path_result.h",
+			"path" : "source/records/path_result.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -394,6 +410,82 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/scene/world.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/surface_hit.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/mediums/medium.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/medium_hit.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/mediums/phase_functions/phase_function.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/shapes/shape.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/intersection.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/interaction.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/shapes/solids/sphere.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/shapes/flats/quad.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/shapes/flats/flat.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/shapes/solids/solid.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/transformed.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/object_library.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "source/utility/benderer_stb_image_impl.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/utility/benderer_stb_image_impl.h",
 			"sourceGroupIndex" : 1
 		}
 	],

@@ -1,8 +1,9 @@
+#define BENDERER_STB_IMAGE_IMPLEMENTATION
+
 #include "benderer.h"
 #include "image/image_info_library.h"
 #include "integrators/simple_path_tracer.h"
 
-#include "scene/hittables/bvh.h"
 #include "scene/scene.h"
 #include "scene/scene_library.h"
 #include "scene/world.h"
@@ -10,9 +11,9 @@
 int main() {
     freopen( "output.ppm", "w", stdout );
 
-    scene our_scene = scene_library::cornell_box();
+    scene our_scene = scene_library::cornell_ball();
     our_scene.finalize();
-    image_info info = image_info_library::micro_ultra();
+    image_info info = image_info_library::micro_sol();
     //auto itgr = rtw_model();
     //auto itgr = mips_model(info.max_depth(), 2, 16);
     auto itgr = simple_path_tracer(info.max_depth());

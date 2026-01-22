@@ -7,7 +7,7 @@
 #include "../source/integrators/integrator.h"
 #include "../source/scene/material/material.h"
 #include "../source/structures/path_result.h"
-#include "../source/structures/path_state.h"
+#include "../source/records/path_state.h"
 
 class mips_model_2 : public integrator {
 
@@ -42,7 +42,7 @@ private:
         //---------------------------------------
         // First check that our ray hits anything
 
-        hit_record rec;
+        surface_hit rec;
         interval ray_t = interval(epsilon, infinity);
         if ( !world.hit( r, ray_t, rec ) ) {
             out_result.radiance_from_path = sky->sample_color(r.direction());
@@ -129,7 +129,7 @@ private:
         return final_res;
     }
 
-    color path_trace_direct(const ray& in_ray, hit_record& rec, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky) const {
+    color path_trace_direct(const ray& in_ray, surface_hit& rec, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky) const {
 
         color total_direct_light = color(0,0,0);
 
@@ -139,7 +139,7 @@ private:
             local_light_sample l_sample = sample_over_flux(lights, sky, rec.p);
 
             //Cast shadow ray towards the point
-            hit_record shadow_rec;
+            surface_hit shadow_rec;
             ray shadow_ray = ray(rec.p, l_sample.m_direction, rec.time);
             interval shadow_ray_interval = interval(epsilon, l_sample.m_distance - epsilon);
             bool obstructed = world.hit(shadow_ray, shadow_ray_interval, shadow_rec);
@@ -183,7 +183,7 @@ private:
         return total_direct_light / m_num_light_samples_per_bounce;
     }
 
-    path_result path_trace_indirect(const ray& scatter_r, const ray& in_r, hit_record& rec, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky, path_state& p_state) const {
+    path_result path_trace_indirect(const ray& scatter_r, const ray& in_r, surface_hit& rec, const hittable& world, const hittable& lights, const shared_ptr<skybox> sky, path_state& p_state) const {
 
         //If a material for which we deterministic generate a scatter like a specular material, fallback to in-built direction
         //Otherwise, sample direction from pdf

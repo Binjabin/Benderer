@@ -7,7 +7,7 @@
 #include <algorithm>
 
 #include "../source/integrators/integrator.h"
-#include "../source/structures/scatter_record.h"
+#include "../source/records/scatter_record.h"
 #include "../source/scene/material/material.h"
 
 class mips_model : public integrator {
@@ -34,7 +34,7 @@ public:
             return color( 0, 0, 0 );
         }
 
-        hit_record rec;
+        surface_hit rec;
         auto ray_interval = interval( epsilon, infinity );
 
         //===========================
@@ -85,7 +85,7 @@ public:
                 //Calculate light directly onto this point through samples of scene lights:
                 shared_ptr<local_light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
 
-                hit_record shadow_rec;
+                surface_hit shadow_rec;
 
                 vec3 shadow_ray_dir = light_sample->m_direction;
                 ray shadow_ray = ray(rec.p, shadow_ray_dir, r.time());
@@ -234,7 +234,7 @@ public:
         //We don't use MIS weight to downweight a sample if we don't hit a light pdf.
         double w_indirect = 1.0;
 
-        hit_record shadow_rec;
+        surface_hit shadow_rec;
         ray shadow_test(rec.p, scatter_dir, r.time());
 
         if (lights.hit(shadow_test, interval(epsilon, infinity), shadow_rec)) {
@@ -292,7 +292,7 @@ private:
     //if un-occluded, the
     double compute_light_pdf_value(const hittable& lights, const shared_ptr<skybox> sky, const point3& p, const vec3& d) const {
         ray r(p, d);
-        hit_record rec;
+        surface_hit rec;
 
         double sky_weight = sky->get_flux_weight();
         double light_weight = lights.get_flux_weight();

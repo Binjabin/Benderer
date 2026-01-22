@@ -11,6 +11,9 @@
 class texture {
 public:
     virtual ~texture() = default;
+    color value (const intersection& isect) {
+        return value(isect.m_u, isect.m_v, isect.get_p());
+    }
     virtual color value( double u, double v, const point3& p ) const = 0;
     virtual color get_base_color() const {
         return value(0, 0, point3(0,0,0));

@@ -6,38 +6,13 @@
 #define HITTABLE_H
 
 #include "../../structures/aabb.h"
-#include "../../structures/light_sample.h"
-
-//tell compiler we handle what this is later
-class material;
-
-class hit_record {
-public:
-    point3 p;
-    vec3 normal;
-    shared_ptr<material> mat;
-    double t;
-    double u;
-    double v;
-    bool front_face;
-    double pdf_v;
-
-    double time;
-
-    //whether we hit an explicit light
-    bool is_explicit_light;
-
-    void set_face_normal( const ray& r, const vec3& outward_normal ) {
-        //require outward_normal length is 1
-        front_face = dot( r.direction(), outward_normal ) < 0;
-        normal = front_face ? outward_normal : -outward_normal;
-    }
-};
+#include "../../records/light_sample.h"
+#include "../../records/surface_hit.h"
 
 class hittable {
 public:
     virtual ~hittable() = default;
-    virtual bool hit( const ray& r, interval ray_t, hit_record& rec ) const = 0;
+    virtual bool hit( const ray& r, interval ray_t, surface_hit& rec ) const = 0;
     virtual aabb bounding_box() const = 0;
 
     virtual double pdf_value(const point3& origin, const vec3& direction) const {

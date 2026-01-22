@@ -6,7 +6,7 @@
 #define BENDERER_RTW_MODEL_H
 #include "../source/integrators/integrator.h"
 #include "../source/structures/pdf.h"
-#include "../source/structures/scatter_record.h"
+#include "../source/records/scatter_record.h"
 #include "../source/scene/material/material.h"
 
 class rtw_model : public integrator {
@@ -17,7 +17,7 @@ public:
             return color( 0, 0, 0 );
         }
 
-        hit_record rec;
+        surface_hit rec;
         auto ray_interval = interval( epsilon, infinity );
 
         if ( !world.hit( r, ray_interval, rec ) ) {
