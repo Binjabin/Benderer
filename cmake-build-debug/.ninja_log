@@ -1,5 +1,9 @@
 # ninja log v6
-2	34	1769103309644066758	/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/cmake_install.cmake	887a5d1ce1b23164
-2	34	1769103309645066771	build.ninja	887a5d1ce1b23164
-2	1646	1769103221940946639	CMakeFiles/Benderer.dir/source/main.cpp.o	68cb0d85f1a185d4
-1646	1724	1769103223584967619	Benderer	80dae2c026edcb17
+1770	1849	1769111216252188921	Benderer	80dae2c026edcb17
+2	1770	1769111214484168070	CMakeFiles/Benderer.dir/source/main.cpp.o	68cb0d85f1a185d4
+0	27	1769111394669293151	build.ninja	887a5d1ce1b23164
+0	27	1769111394669293151	/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/cmake_install.cmake	887a5d1ce1b23164
+1	25	1769111394669293151	build.ninja	887a5d1ce1b23164
+1	25	1769111394669293151	/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/cmake_install.cmake	887a5d1ce1b23164
+1	1802	1769111394677293245	CMakeFiles/Benderer.dir/source/main.cpp.o	68cb0d85f1a185d4
+1802	1880	1769111396478314487	Benderer	80dae2c026edcb17

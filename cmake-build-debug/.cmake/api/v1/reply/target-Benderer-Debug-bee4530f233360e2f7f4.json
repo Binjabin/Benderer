@@ -49,8 +49,7 @@
 			},
 			"sourceIndexes" : 
 			[
-				0,
-				64
+				0
 			]
 		}
 	],
@@ -79,8 +78,7 @@
 			"name" : "Source Files",
 			"sourceIndexes" : 
 			[
-				0,
-				64
+				0
 			]
 		},
 		{
@@ -150,7 +148,10 @@
 				61,
 				62,
 				63,
-				65
+				64,
+				65,
+				66,
+				67
 			]
 		}
 	],
@@ -225,11 +226,6 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/scene/texture/texture.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "source/utility/benderer_stb_image.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -479,13 +475,27 @@
 		},
 		{
 			"backtrace" : 1,
-			"compileGroupIndex" : 0,
-			"path" : "source/utility/benderer_stb_image_impl.cpp",
-			"sourceGroupIndex" : 0
+			"path" : "source/image/writer/png_writer.h",
+			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/utility/benderer_stb_image_impl.h",
+			"path" : "source/image/writer/image_writer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/image/post/post_process.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/utility/benderer_image.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/utility/time.h",
 			"sourceGroupIndex" : 1
 		}
 	],

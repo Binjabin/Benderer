@@ -1,4 +1,11 @@
 //
+// Created by binjabin on 1/22/26.
+//
+
+#ifndef BENDERER_BENDERER_IMAGE_H
+#define BENDERER_BENDERER_IMAGE_H
+
+//
 // Created by binjabin on 7/8/25.
 //
 
@@ -111,3 +118,5 @@ private:
 #endif
 
 #endif //BENDERER_STB_IMAGE_H
+
+#endif //BENDERER_BENDERER_IMAGE_H

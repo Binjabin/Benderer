@@ -5,6 +5,8 @@
 #ifndef TEX_IMAGE_H
 #define TEX_IMAGE_H
 
+#include "../../../utility/benderer_image.h"
+
 class image_texture : public texture {
 public:
     image_texture(const char* filename) : image(filename) {}

@@ -6,6 +6,8 @@
 #define SCENE_H
 #include "camera.h"
 #include "world.h"
+#include "../image/writer/image_writer.h"
+#include "../image/post/post_process.h"
 #include "hittables/hittable.h"
 #include "hittables/hittable_list.h"
 #include "skyboxes/skybox.h"
@@ -24,8 +26,8 @@ public:
         m_world.m_lights.set_explicit_light(true);
     }
 
-    void render(const image_info& info, const integrator& itgr) {
-        m_cam.render(m_world, info, itgr);
+    void render(const char* filename, const image_info& info, const integrator& itgr, post_process& post, const image_writer& writer) {
+        m_cam.render(filename, m_world, info, itgr, post, writer);
     }
 
     camera m_cam;

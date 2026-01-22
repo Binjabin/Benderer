@@ -4,7 +4,6 @@
 
 #ifndef TEXTURE_H
 #define TEXTURE_H
-#include "../../utility/benderer_stb_image.h"
 #include "../../utility/perlin.h"
 #include "../../structures/vec3.h"
 

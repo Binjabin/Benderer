@@ -11,6 +11,8 @@
 #include "../structures/pdf.h"
 #include "../image/image_info.h"
 #include "../integrators/integrator.h"
+#include "../image/writer/image_writer.h"
+#include "../image/post/post_process.h"
 
 
 class camera {
@@ -23,7 +25,7 @@ public:
     double defocus_angle = 0; //variation of angle of rays through each pixel
     double focus_dist = 10; //distance from camera look point to distance of perfect focus
 
-    void render( const world& world, image_info info, const integrator& itgr) {
+    void render(const char* filename, const world& world, image_info info, const integrator& itgr, post_process& post, const image_writer& writer) {
         initialize(info);
 
         std::cout << "P3\n" << info.pixel_width() << " " << info.pixel_height() << "\n255\n";
@@ -33,6 +35,9 @@ public:
         int spp = info.samples_per_pixel();
         int md = info.max_depth();
         double ss = info.sample_scale();
+
+        std::vector<double> framebuffer;
+        framebuffer.resize( size_t(pw) * size_t(ph) * 3 );
 
         for ( int j = 0; j < ph ; j++ ) {
             std::clog << "\rScanlines remaining: " << ( ph - j ) << ' ' << std::flush;
@@ -46,16 +51,17 @@ public:
 
                 color average = ss * pixel_color;
                 double length = average.length();
-                if (average.length() > 0.3) {
-                    //std::clog << "COLOR: " << average.length() << std::endl;
-                }
-                if (average.length() > 1) {
-                    //std::clog << "BIG COLOR" << std::endl;
-                }
 
-                write_color( std::cout, average );
+                const size_t idx = (size_t(j) * size_t(pw) + size_t(i)) * 3.0;
+
+                framebuffer[idx + 0] = average.x(); //R
+                framebuffer[idx + 1] = average.y(); //G
+                framebuffer[idx + 2] = average.z(); //B
             }
         }
+
+        post.apply_post(framebuffer);
+        writer.write(filename, framebuffer);
 
         std::clog << "\rDone. \n";
     }

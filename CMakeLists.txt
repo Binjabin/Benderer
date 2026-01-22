@@ -17,7 +17,6 @@ add_executable(Benderer source/main.cpp
         source/structures/aabb.h
         source/scene/hittables/bvh.h
         source/scene/texture/texture.h
-        source/utility/benderer_stb_image.h
         source/utility/perlin.h
         unused_source/quad_prim.h
         unused_source/constant_medium.h
@@ -67,5 +66,9 @@ add_executable(Benderer source/main.cpp
         source/scene/shapes/solids/solid.h
         source/scene/hittables/transformed.h
         source/scene/object_library.h
-        source/utility/benderer_stb_image_impl.cpp
+        source/image/writer/png_writer.h
+        source/image/writer/image_writer.h
+        source/image/post/post_process.h
+        source/utility/benderer_image.h
+        source/utility/time.h
 )
