@@ -50,7 +50,7 @@
 			"sourceIndexes" : 
 			[
 				0,
-				68
+				58
 			]
 		}
 	],
@@ -80,7 +80,7 @@
 			"sourceIndexes" : 
 			[
 				0,
-				68
+				58
 			]
 		},
 		{
@@ -144,7 +144,6 @@
 				55,
 				56,
 				57,
-				58,
 				59,
 				60,
 				61,
@@ -153,8 +152,7 @@
 				64,
 				65,
 				66,
-				67,
-				69
+				67
 			]
 		}
 	],
@@ -188,16 +186,6 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "unused_source/sphere_prim.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "source/scene/hittables/hittable_list.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
 			"path" : "source/benderer.h",
 			"sourceGroupIndex" : 1
 		},
@@ -223,27 +211,12 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/bvh.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
 			"path" : "source/scene/texture/texture.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
 			"path" : "source/utility/perlin.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "unused_source/quad_prim.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "unused_source/constant_medium.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -333,7 +306,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/primitive.h",
+			"path" : "source/scene/hittables/surfaces/primitive_surface.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -349,11 +322,6 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/scene/transforms/rotate_y.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "unused_source/rtw_model.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -378,27 +346,12 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "unused_source/mips_model.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "unused_source/one_step_shadow.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
 			"path" : "source/records/path_state.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
 			"path" : "source/records/path_result.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "unused_source/mips_model_2.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -413,22 +366,17 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/records/surface_hit.h",
+			"path" : "source/records/surface_hit_rec.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/mediums/medium.h",
+			"path" : "source/scene/hittables/mediums/medium.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/records/medium_hit.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "source/scene/mediums/phase_functions/phase_function.h",
+			"path" : "source/records/medium_hit_rec.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -468,7 +416,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/hittables/transformed.h",
+			"path" : "source/scene/hittables/surfaces/transformed_surface.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -509,7 +457,47 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/image/writer/stb_impl.h",
+			"path" : "source/scene/hittables/surfaces/surface.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/surfaces/surface_tree.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/surfaces/surface_list.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/mediums/primitive_medium.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/mediums/transformed_medium.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/material/medium_material.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/material/medium_material/medium_mat_constant.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/mediums/medium_list.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/hittables/mediums/medium_tree.h",
 			"sourceGroupIndex" : 1
 		}
 	],

@@ -1,28 +1,28 @@
 //
-// Created by binjabin on 7/8/25.
+// Created by binjabin on 1/23/26.
 //
 
-#ifndef BVH_H
-#define BVH_H
+#ifndef BENDERER_SURFACE_TREE_H
+#define BENDERER_SURFACE_TREE_H
 
-#include "hittable.h"
-#include "hittable_list.h"
 
-#include <algorithm> //for sort
+#include <algorithm>
 
+#include "surface.h"
+#include "surface_list.h"
 
 //acceleration structure for handling lots of objects in sub-linear time
-class bvh_node : public hittable {
+class surface_tree_node : public surface {
 public:
-    bvh_node( hittable_list list ) : bvh_node( list.objects, 0, list.objects.size() ) {
+    surface_tree_node( surface_list list ) : surface_tree_node( list.surfaces, 0, list.surfaces.size() ) {
     }
 
     //construct leaf node. list of hittable objects
-    bvh_node( std::vector<shared_ptr<hittable>>& objects, size_t start, size_t end ) {
+    surface_tree_node( std::vector<shared_ptr<surface>>& surfaces, size_t start, size_t end ) {
         //create a bounding box of all source items
         bbox = aabb::empty;
         for ( size_t object_index = start; object_index < end; object_index++ ) {
-            bbox = aabb(bbox, objects[object_index]->bounding_box());
+            bbox = aabb(bbox, surfaces[object_index]->bounding_box());
         }
 
         //select random axis to sort along, and get function for sorting
@@ -32,28 +32,28 @@ public:
 
         //if there are 1 or 2 objects, just split them the obvious way, and make the subtrees just the objects
         if ( object_span == 1 ) {
-            left = right = objects[start];
+            left = right = surfaces[start];
         }
         else if ( object_span == 2 ) {
-            left = objects[start];
-            right = objects[start + 1];
+            left = surfaces[start];
+            right = surfaces[start + 1];
         }
         else {
             //sort along some axis (from comparator)
-            std::sort( std::begin( objects ) + start, std::begin( objects ) + end, comparator );
+            std::sort( std::begin( surfaces ) + start, std::begin( surfaces ) + end, comparator );
             //then split in through the middle into left and right subtrees
             auto mid = start + object_span / 2;
-            left = make_shared<bvh_node>( objects, start, mid );
-            right = make_shared<bvh_node>( objects, mid, end );
+            left = make_shared<surface_tree_node>( surfaces, start, mid );
+            right = make_shared<surface_tree_node>( surfaces, mid, end );
         }
 
         int count_sum = 0;
         double area_sum = 0;
         vec3 flux_sum = vec3(0,0,0);
         for ( size_t i = start; i < end; i++ ) {
-            count_sum += objects[i]->get_count();
-            area_sum += objects[i]->get_surface_area();
-            flux_sum += objects[i]->get_flux_rgb();
+            count_sum += surfaces[i]->get_count();
+            area_sum += surfaces[i]->get_surface_area();
+            flux_sum += surfaces[i]->get_flux_rgb();
         }
         set_count(count_sum);
         set_surface_area(area_sum);
@@ -61,16 +61,16 @@ public:
     }
 
     //check if we hit any objects in the subtree
-    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
+    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
         if ( !bbox.hit( r, ray_t ) )
             return false;
 
-        surface_hit l_rec = surface_hit();
-        bool hit_left = left->hit( r, ray_t, l_rec );
+        surface_hit_rec l_rec = surface_hit_rec();
+        bool hit_left = left->surface_hit( r, ray_t, l_rec );
 
-        surface_hit r_rec = surface_hit();
+        surface_hit_rec r_rec = surface_hit_rec();
         interval right_ray_t = interval( ray_t.min, hit_left ? l_rec.get_t() : ray_t.max );
-        bool hit_right = right->hit( r, right_ray_t, r_rec );
+        bool hit_right = right->surface_hit( r, right_ray_t, r_rec );
 
         if (!hit_left && !hit_right) {
             return false;
@@ -127,8 +127,8 @@ public:
     }
 
 private:
-    shared_ptr<hittable> left;
-    shared_ptr<hittable> right;
+    shared_ptr<surface> left;
+    shared_ptr<surface> right;
     aabb bbox;
 
     static bool box_compare( const shared_ptr<hittable> a, const shared_ptr<hittable> b, int axis_index ) {
@@ -151,5 +151,4 @@ private:
     }
 };
 
-
-#endif //BVH_H
+#endif //BENDERER_SURFACE_TREE_H

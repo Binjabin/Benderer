@@ -10,7 +10,7 @@ public:
     metal( const color& albedo, double fuzz ) : albedo( albedo ), fuzz( fuzz < 1 ? fuzz : 1 ) {
     }
 
-    bool scatter( const ray& r_in, const surface_hit& rec, scatter_record& srec ) const override {
+    bool scatter( const ray& r_in, const surface_hit_rec& rec, scatter_record& srec ) const override {
         vec3 reflected = reflect( r_in.direction(), rec.get_normal() );
         reflected = unit_vector( reflected ) + ( fuzz * random_unit_vector() );
 
@@ -22,11 +22,11 @@ public:
         return true;
     }
 
-    color get_attenuation(const surface_hit &rec) const override {
+    color get_attenuation(const surface_hit_rec &rec) const override {
         return albedo;
     }
 
-    color bsdf(vec3 d_in, const surface_hit &rec, const vec3 &r_out) override {
+    color bsdf(vec3 d_in, const surface_hit_rec &rec, const vec3 &r_out) override {
         //We don't use sampling for this
         return color(0, 0, 0);
     }

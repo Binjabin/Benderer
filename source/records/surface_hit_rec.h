@@ -10,7 +10,7 @@
 class material;
 
 //The record of a collision with an object
-class surface_hit {
+class surface_hit_rec {
 public:
     //Probability density of surface in the scene
     double m_pdf_v;
@@ -28,7 +28,7 @@ public:
     double get_v() const { return m_intersection.m_v; }
     bool get_front_face() const { return m_intersection.m_front_face; }
 
-    void transform_to(point3& pos, vec3& normal) {
+    void transform_to(const point3& pos, const vec3& normal) {
         m_intersection.m_interaction.m_p = pos;
         m_intersection.m_normal = unit_vector(normal);
     }

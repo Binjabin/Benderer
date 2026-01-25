@@ -8,10 +8,9 @@
 
 #include "camera.h"
 #include "hittables/hittable.h"
-#include "hittables/hittable_list.h"
-#include "hittables/bvh.h"
-#include "hittables/primitive.h"
+#include "hittables/surfaces/primitive_surface.h"
 #include "object_library.h"
+#include "hittables/mediums/medium_list.h"
 
 #include "transforms/translate.h"
 #include "transforms/rotate_y.h"
@@ -24,6 +23,7 @@
 #include "material/materials/mat_dielectric.h"
 #include "material/materials/mat_diffuse_light.h"
 #include "material/materials/mat_metal.h"
+#include "material/medium_material/medium_mat_constant.h"
 #include "skyboxes/gradient_skybox.h"
 #include "skyboxes/solid_color_skybox.h"
 
@@ -41,17 +41,19 @@ public:
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
-        hittable_list world;
+        surface_list surfaces;
         auto checker = make_shared<checker_texture>( 0.32, colors::n_teal, colors::n_white );
 
-        world.add( object_library::make_sphere( point3( 0, -10, 0 ), 10, make_shared<lambertian>( checker ) ) );
-        world.add( object_library::make_sphere( point3( 0, 10, 0 ), 10, make_shared<lambertian>( checker ) ) );
+        surfaces.add( object_library::make_sphere( point3( 0, -10, 0 ), 10, make_shared<lambertian>( checker ) ) );
+        surfaces.add( object_library::make_sphere( point3( 0, 10, 0 ), 10, make_shared<lambertian>( checker ) ) );
 
-        hittable_list lights;
+        medium_list mediums;
+
+        surface_list lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 
     static scene earth() {
@@ -62,17 +64,19 @@ public:
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
-        hittable_list world;
+        surface_list surfaces;
         auto earth_texture = make_shared<image_texture>( "earthmap.jpg" );
         auto earth_surface = make_shared<lambertian>( earth_texture );
         auto globe = object_library::make_sphere( point3( 0, 0, 0 ), 2, earth_surface );
-        world.add( globe );
+        surfaces.add( globe );
 
-        hittable_list lights;
+        medium_list mediums;
+
+        surface_list lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 
     static scene random_balls() {
@@ -84,10 +88,10 @@ public:
         cam.defocus_angle = 0.6;
         cam.focus_dist = 10.0;
 
-        hittable_list world;
+        surface_list surfaces;
         auto check_tex = make_shared<checker_texture>( 0.2, colors::gray, colors::n_white );
         auto ground_material = make_shared<lambertian>( check_tex );
-        world.add( object_library::make_sphere( point3( 0, -1000, -1 ), 1000, ground_material ) );
+        surfaces.add( object_library::make_sphere( point3( 0, -1000, -1 ), 1000, ground_material ) );
         for ( int a = -11; a < 11; a++ ) {
             for ( int b = -11; b < 11; b++ ) {
                 auto choose_mat = random_double();
@@ -102,36 +106,38 @@ public:
                         sphere_material = make_shared<lambertian>( albedo );
 
                         // Use static spheres only per instruction
-                        world.add( object_library::make_sphere( center, 0.2, sphere_material ) );
+                        surfaces.add( object_library::make_sphere( center, 0.2, sphere_material ) );
                     }
                     else if ( choose_mat < 0.95 ) {
                         // metal
                         auto albedo = color::random( 0.5, 1 );
                         auto fuzz = random_double( 0, 0.5 );
                         sphere_material = make_shared<metal>( albedo, fuzz );
-                        world.add( object_library::make_sphere( center, 0.2, sphere_material ) );
+                        surfaces.add( object_library::make_sphere( center, 0.2, sphere_material ) );
                     }
                     else {
                         // glass
                         sphere_material = make_shared<dielectric>( 1.5 );
-                        world.add( object_library::make_sphere( center, 0.2, sphere_material ) );
+                        surfaces.add( object_library::make_sphere( center, 0.2, sphere_material ) );
                     }
                 }
             }
         }
         auto material1 = make_shared<dielectric>( 1.5 );
-        world.add( object_library::make_sphere( point3( 0, 1, 0 ), 1.0, material1 ) );
+        surfaces.add( object_library::make_sphere( point3( 0, 1, 0 ), 1.0, material1 ) );
         auto material2 = make_shared<lambertian>( color( 0.4, 0.2, 0.1 ) );
-        world.add( object_library::make_sphere( point3( -4, 1, 0 ), 1.0, material2 ) );
+        surfaces.add( object_library::make_sphere( point3( -4, 1, 0 ), 1.0, material2 ) );
         auto material3 = make_shared<metal>( color( 0.7, 0.6, 0.5 ), 0.0 );
-        world.add( object_library::make_sphere( point3( 4, 1, 0 ), 1.0, material3 ) );
-        world = hittable_list( make_shared<bvh_node>( world ) );
+        surfaces.add( object_library::make_sphere( point3( 4, 1, 0 ), 1.0, material3 ) );
+        surfaces = surface_list( make_shared<surface_list>( surfaces ) );
 
-        hittable_list lights;
+        medium_list mediums;
+
+        surface_list lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 
     static scene perlin_spheres() {
@@ -142,16 +148,18 @@ public:
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
-        hittable_list world;
+        surface_list surfaces;
         auto pertext = make_shared<noise_texture>( 4 );
-        world.add( object_library::make_sphere( point3( 0, -1000, 0 ), 1000, make_shared<lambertian>( pertext ) ) );
-        world.add( object_library::make_sphere( point3( 0, 2, 0 ), 2, make_shared<lambertian>( pertext ) ) );
+        surfaces.add( object_library::make_sphere( point3( 0, -1000, 0 ), 1000, make_shared<lambertian>( pertext ) ) );
+        surfaces.add( object_library::make_sphere( point3( 0, 2, 0 ), 2, make_shared<lambertian>( pertext ) ) );
 
-        hittable_list lights;
+        medium_list mediums;
+
+        surface_list lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 
     static scene quads() {
@@ -162,7 +170,7 @@ public:
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
-        hittable_list world;
+        surface_list surfaces;
         // Materials
         auto left_red = make_shared<lambertian>( colors::n_red );
         auto back_green = make_shared<lambertian>( colors::n_green );
@@ -170,17 +178,19 @@ public:
         auto upper_orange = make_shared<lambertian>( colors::n_orange );
         auto lower_teal = make_shared<lambertian>( colors::n_teal );
         // Quads
-        world.add( object_library::make_quad( point3( -3, -2, 5 ), vec3( 0, 0, -4 ), vec3( 0, 4, 0 ), left_red ) );
-        world.add( object_library::make_quad( point3( -2, -2, 0 ), vec3( 4, 0, 0 ), vec3( 0, 4, 0 ), back_green ) );
-        world.add( object_library::make_quad( point3( 3, -2, 1 ), vec3( 0, 0, 4 ), vec3( 0, 4, 0 ), right_blue ) );
-        world.add( object_library::make_quad( point3( -2, 3, 1 ), vec3( 4, 0, 0 ), vec3( 0, 0, 4 ), upper_orange ) );
-        world.add( object_library::make_quad( point3( -2, -3, 5 ), vec3( 4, 0, 0 ), vec3( 0, 0, -4 ), lower_teal ) );
+        surfaces.add( object_library::make_quad( point3( -3, -2, 5 ), vec3( 0, 0, -4 ), vec3( 0, 4, 0 ), left_red ) );
+        surfaces.add( object_library::make_quad( point3( -2, -2, 0 ), vec3( 4, 0, 0 ), vec3( 0, 4, 0 ), back_green ) );
+        surfaces.add( object_library::make_quad( point3( 3, -2, 1 ), vec3( 0, 0, 4 ), vec3( 0, 4, 0 ), right_blue ) );
+        surfaces.add( object_library::make_quad( point3( -2, 3, 1 ), vec3( 4, 0, 0 ), vec3( 0, 0, 4 ), upper_orange ) );
+        surfaces.add( object_library::make_quad( point3( -2, -3, 5 ), vec3( 4, 0, 0 ), vec3( 0, 0, -4 ), lower_teal ) );
 
-        hittable_list lights;
+        medium_list mediums;
+
+        surface_list lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 
     static scene simple_light() {
@@ -191,22 +201,24 @@ public:
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
-        hittable_list world;
+        surface_list surfaces;
         auto pertext = make_shared<noise_texture>( 4 );
-        world.add( object_library::make_sphere( point3( 0, -1000, 0 ), 1000, make_shared<lambertian>( pertext ) ) );
-        world.add( object_library::make_sphere( point3( 0, 2, 0 ), 2, make_shared<lambertian>( pertext ) ) );
+        surfaces.add( object_library::make_sphere( point3( 0, -1000, 0 ), 1000, make_shared<lambertian>( pertext ) ) );
+        surfaces.add( object_library::make_sphere( point3( 0, 2, 0 ), 2, make_shared<lambertian>( pertext ) ) );
 
         auto light_mat = make_shared<diffuse_light>( colors::dim_light );
         auto light_quad = object_library::make_quad( point3( 3, 1, -2 ), vec3( 2, 0, 0 ), vec3( 0, 2, 0 ), light_mat );
 
-        world.add( light_quad );
+        surfaces.add( light_quad );
 
-        hittable_list lights;
+        medium_list mediums;
+
+        surface_list lights;
         lights.add( light_quad );
 
         auto const skybox = make_shared<solid_color_skybox>(colors::black);
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 
     static scene cornell_box() {
@@ -217,36 +229,38 @@ public:
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
-        hittable_list world;
+        surface_list surfaces;
         auto red = make_shared<lambertian>( colors::n_red );
         auto white = make_shared<lambertian>( colors::n_white );
         auto green = make_shared<lambertian>( colors::n_green );
         auto aluminum = make_shared<metal>( colors::n_orange, 0.01 );
-        world.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
-        world.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
-        world.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
-        world.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
-        world.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
-        shared_ptr<hittable> box1 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), aluminum );
+        surfaces.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
+        shared_ptr<surface> box1 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), aluminum );
         box1 = object_library::make_rotate( box1, 20 );
         box1 = object_library::make_translate( box1, vec3( 265, 0, 295 ) );
-        world.add( box1 );
-        shared_ptr<hittable> box2 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 165, 165 ), white );
+        surfaces.add( box1 );
+        shared_ptr<surface> box2 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 165, 165 ), white );
         box2 = object_library::make_rotate( box2, -18 );
         box2 = object_library::make_translate( box2, vec3( 130, 0, 65 ) );
-        world.add( box2 );
+        surfaces.add( box2 );
 
         auto light_mat = make_shared<diffuse_light>( colors::bright_light );
         auto light = object_library::make_quad( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
 
-        world.add( light );
+        surfaces.add( light );
 
-        hittable_list lights;
+        medium_list mediums;
+
+        surface_list lights;
         lights.add( light );
 
         auto const skybox = make_shared<solid_color_skybox>(colors::black);
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 
     static scene cornell_ball() {
@@ -257,38 +271,44 @@ public:
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
-        hittable_list world;
+        surface_list surfaces;
         auto red = make_shared<lambertian>( colors::n_red );
         auto white = make_shared<lambertian>( colors::n_white );
         auto green = make_shared<lambertian>( colors::n_green );
         auto aluminum = make_shared<metal>( colors::metal_grey, 0.01 );
-        world.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
-        world.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
-        world.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
-        world.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
-        world.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
         // Box
-        shared_ptr<hittable> box1 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), white );
+        shared_ptr<surface> box1 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), white );
         box1 = object_library::make_rotate( box1, 15 );
         box1 = object_library::make_translate( box1, vec3( 265, 0, 295 ) );
-        world.add( box1 );
+        surfaces.add( box1 );
         // Glass Sphere
         auto glass_mat = make_shared<dielectric>( 1.5 );
         auto glass_ball = object_library::make_sphere( point3( 190, 90, 190 ), 90, glass_mat );
-        world.add( glass_ball );
+        surfaces.add( glass_ball );
 
         // Light Sources
         auto light_mat = make_shared<diffuse_light>( colors::bright_light );
 
         auto light = object_library::make_quad( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
         // Light
-        world.add( light );
-        hittable_list lights;
+        surfaces.add( light );
+
+        medium_list mediums;
+        auto frosted_mat = make_shared<medium_mat_constant>(colors::blue);
+        auto frosted = object_library::make_sphere_medium(point3( 190, 90, 190 ), 90, frosted_mat);
+        mediums.add(frosted);
+
+        surface_list lights;
         lights.add( light );
 
         auto const skybox = make_shared<solid_color_skybox>((colors::black));
 
-        return scene( cam, world, lights, skybox );
+        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
     }
 };
 

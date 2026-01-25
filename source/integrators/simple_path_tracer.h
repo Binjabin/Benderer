@@ -39,10 +39,10 @@ private:
 
         //---------------------------------------
         // First check that our ray hits anything
-        surface_hit rec;
+        surface_hit_rec rec;
         interval ray_t = interval(epsilon, infinity);
         //If it doesn't, default to skybox
-        if ( !world.m_geometry.hit( r, ray_t, rec ) ) {
+        if ( !world.m_surfaces->surface_hit( r, ray_t, rec ) ) {
             color col_from_sky = world.m_sky->sample_color(r.direction());
             return color_path_result(col_from_sky);
         }
@@ -80,7 +80,7 @@ private:
         return out_result;
     }
 
-    path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const scatter_record& srec, const surface_hit& rec) const {
+    path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const scatter_record& srec, const surface_hit_rec& rec) const {
         path_result indirect_res = empty_path_result();
         path_state child_state = p_state;
         child_state.depth++;

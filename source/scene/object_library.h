@@ -6,10 +6,12 @@
 #define BENDERER_OBJECT_LIBRARY_H
 
 #include "hittables/hittable.h"
-#include "hittables/hittable_list.h"
-#include "hittables/primitive.h"
-#include "hittables/transformed.h"
+#include "hittables/mediums/primitive_medium.h"
+#include "hittables/mediums/transformed_medium.h"
+#include "hittables/surfaces/primitive_surface.h"
+#include "hittables/surfaces/transformed_surface.h"
 #include "material/material.h"
+#include "material/medium_material.h"
 
 #include "transforms/translate.h"
 #include "transforms/rotate_y.h"
@@ -19,18 +21,23 @@
 
 namespace object_library {
 
-    inline shared_ptr<hittable> make_sphere( const point3& o, double r, shared_ptr<material> mat ) {
-        auto ball = make_shared<primitive>(make_shared<sphere>(r), mat);
-        return make_shared<transformed>(ball, make_shared<translate>(o));
+    inline shared_ptr<surface> make_sphere( const point3& o, double r, shared_ptr<material> mat ) {
+        auto ball = make_shared<primitive_surface>(make_shared<sphere>(r), mat);
+        return make_shared<transformed_surface>(ball, make_shared<translate>(o));
     }
 
-    inline shared_ptr<hittable> make_quad(const point3& o, const vec3& u, const vec3& v, shared_ptr<material> mat) {
-        auto ball = make_shared<primitive>(make_shared<quad>(u, v), mat);
-        return make_shared<transformed>(ball, make_shared<translate>(o));
+    inline shared_ptr<medium> make_sphere_medium( const point3& o, double r, shared_ptr<medium_material> mat ) {
+        auto ball = make_shared<primitive_medium>(make_shared<sphere>(r), mat);
+        return make_shared<transformed_medium>(ball, make_shared<translate>(o));
     }
 
-    inline shared_ptr<hittable> make_box(const point3& a, const point3& b, shared_ptr<material> mat) {
-        auto sides = make_shared<hittable_list>();
+    inline shared_ptr<surface> make_quad(const point3& o, const vec3& u, const vec3& v, shared_ptr<material> mat) {
+        auto ball = make_shared<primitive_surface>(make_shared<quad>(u, v), mat);
+        return make_shared<transformed_surface>(ball, make_shared<translate>(o));
+    }
+
+    inline shared_ptr<surface> make_box(const point3& a, const point3& b, shared_ptr<material> mat) {
+        auto sides = make_shared<surface_list>();
 
         // Construct the two opposite vertices with the minimum and maximum coordinates.
         auto min = point3( std::fmin( a.x(), b.x() ), std::fmin( a.y(), b.y() ), std::fmin( a.z(), b.z() ) );
@@ -50,12 +57,12 @@ namespace object_library {
         return sides;
     }
 
-    inline shared_ptr<hittable> make_rotate(shared_ptr<hittable> obj, double theta) {
-        return make_shared<transformed>(obj, make_shared<rotate_y>(theta));
+    inline shared_ptr<surface> make_rotate(shared_ptr<surface> obj, double theta) {
+        return make_shared<transformed_surface>(obj, make_shared<rotate_y>(theta));
     }
 
-    inline shared_ptr<hittable> make_translate(shared_ptr<hittable> obj, const vec3& offset) {
-        return make_shared<transformed>(obj, make_shared<translate>(offset));
+    inline shared_ptr<surface> make_translate(shared_ptr<surface> obj, const vec3& offset) {
+        return make_shared<transformed_surface>(obj, make_shared<translate>(offset));
     }
 
 }

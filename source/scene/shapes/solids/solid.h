@@ -8,6 +8,7 @@
 
 //Shapes with volume
 class solid : public shape {
+public:
     virtual bool contains(const point3& p) const = 0;
 };
 

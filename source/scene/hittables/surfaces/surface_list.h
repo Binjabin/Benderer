@@ -1,51 +1,46 @@
 //
-// Created by binjabin on 6/24/25.
+// Created by binjabin on 1/23/26.
 //
 
-#ifndef HITTABLE_LIST_H
-#define HITTABLE_LIST_H
-
-#include "hittable.h"
-
+#ifndef BENDERER_SURFACE_LIST_H
+#define BENDERER_SURFACE_LIST_H
 #include <vector>
 
+#include "surface.h"
 
-class hittable_list : public hittable {
+
+class surface_list : public surface {
 public:
-    std::vector<shared_ptr<hittable>> objects;
+    std::vector<shared_ptr<surface>> surfaces;
 
-    hittable_list() {
+    surface_list() {
     }
 
-    hittable_list( shared_ptr<hittable> object ) {
-        add( object );
-        set_count(object->get_count());
-        set_surface_area(object->get_surface_area());
-        set_flux_rgb(object->get_flux_rgb());
+    surface_list( shared_ptr<surface> surface ) {
+        add( surface );
+        set_count(surface->get_count());
     }
 
-    void clear() { objects.clear(); }
+    void clear() { surfaces.clear(); }
 
-    void add( shared_ptr<hittable> object ) {
-        objects.push_back( object );
-        bbox = aabb( bbox, object->bounding_box() );
-        set_count(get_count() + object->get_count());
-        set_surface_area(get_surface_area() + object->get_surface_area());
-        set_flux_rgb(get_flux_rgb() + object->get_flux_rgb());
+    void add( shared_ptr<surface> surface ) {
+        surfaces.push_back( surface );
+        bbox = aabb( bbox, surface->bounding_box() );
+        set_count(get_count() + surface->get_count());
     }
 
-    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
-        surface_hit temp_rec;
+    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
+        surface_hit_rec temp_rec;
         bool hit_anything = false;
         auto closest_so_far = ray_t.max;
 
-        if (objects.empty()) return false;
+        if (surfaces.empty()) return false;
 
         auto closest_object_i = -1;
-        for (int i = 0; i < objects.size(); i++) {
-            auto object = objects[i];
+        for (int i = 0; i < surfaces.size(); i++) {
+            auto surface = surfaces[i];
             auto new_interval = interval( ray_t.min, closest_so_far );
-            if ( object->hit( r, new_interval, temp_rec ) ) {
+            if ( surface->surface_hit( r, new_interval, temp_rec ) ) {
                 hit_anything = true;
                 closest_so_far = temp_rec.get_t();
                 closest_object_i = i;
@@ -64,21 +59,23 @@ public:
     aabb bounding_box() const override { return bbox; }
 
     double pdf_value(const point3& origin, const vec3& direction) const override {
-        auto weight = 1.0 / objects.size();
+        auto weight = 1.0 / surfaces.size();
         auto sum = 0.0;
 
-        for (const auto& object : objects) {
+        for (const auto& object : surfaces) {
             sum += weight * object->pdf_value( origin, direction );
         }
 
         return sum;
     }
 
+    /*
     vec3 random(const point3& origin) const override {
-        auto int_size = int(objects.size());
-        auto obj = objects[random_int(0, int_size-1)];
+        auto int_size = int(surfaces.size());
+        auto obj = surfaces[random_int(0, int_size-1)];
         return obj->random(origin);
     }
+    */
 
     void compute_properties() override {
 
@@ -86,11 +83,11 @@ public:
         double sum_area = 0;
         vec3 sum_flux_rgb = vec3(0,0,0);
 
-        for (const auto& object : objects) {
-            object->compute_properties();
-            sum_count += object->get_count();
-            sum_area += object->get_surface_area();
-            sum_flux_rgb += object->get_flux_rgb();
+        for (const auto& surface : surfaces) {
+            surface->compute_properties();
+            sum_count += surface->get_count();
+            sum_area += surface->get_surface_area();
+            sum_flux_rgb += surface->get_flux_rgb();
         }
 
         set_count(sum_count);
@@ -99,13 +96,13 @@ public:
     }
 
     void set_explicit_light(bool is_light) override {
-        for (const auto& object : objects) {
-            object->set_explicit_light(is_light);
+        for (const auto& surface : surfaces) {
+            surface->set_explicit_light(is_light);
         }
     }
 
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
-        if (objects.size() <= 0) {
+        if (surfaces.size() <= 0) {
             throw std::runtime_error("No objects in hittable list");
         }
 
@@ -113,11 +110,11 @@ public:
         auto sample = seed * total_flux;
 
         double bottom = 0;
-        double top = objects[0]->get_flux_weight();
+        double top = surfaces[0]->get_flux_weight();
         double interval_range = top;
         int i = 0;
-        while (top < sample && i + 1 < objects.size()) {
-            top += objects[i+1]->get_flux_weight();
+        while (top < sample && i + 1 < surfaces.size()) {
+            top += surfaces[i+1]->get_flux_weight();
             bottom += interval_range;
             interval_range = top - bottom;
         }
@@ -125,7 +122,7 @@ public:
         //We end under a specific item
         double new_seed = (sample - bottom) / interval_range;
         double prob = interval_range / total_flux;
-        return objects[i]->sample_light_over_flux(new_seed, running_prob * prob);
+        return surfaces[i]->sample_light_over_flux(new_seed, running_prob * prob);
 
     }
 
@@ -133,12 +130,11 @@ private:
     //The probability a flux based sample selected item i out of the list
     double get_discrete_flux_pdf(int i) const {
         double total = get_flux_weight();
-        double p = objects[i]->get_flux_weight() / total;
+        double p = surfaces[i]->get_flux_weight() / total;
         return p;
     }
 
     aabb bbox;
 };
 
-
-#endif //HITTABLE_LIST_H
+#endif //BENDERER_SURFACE_LIST_H

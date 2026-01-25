@@ -34,12 +34,12 @@ public:
             return color( 0, 0, 0 );
         }
 
-        surface_hit rec;
+        surface_hit_rec rec;
         auto ray_interval = interval( epsilon, infinity );
 
         //===========================
         //Check our ray hits ANYTHING
-        if ( !world.hit( r, ray_interval, rec ) ) {
+        if ( !world.surface_hit( r, ray_interval, rec ) ) {
             return sky->sample_color(r.direction());
         }
 
@@ -85,7 +85,7 @@ public:
                 //Calculate light directly onto this point through samples of scene lights:
                 shared_ptr<local_light_sample> light_sample = sample_over_flux(lights, sky, rec.p);
 
-                surface_hit shadow_rec;
+                surface_hit_rec shadow_rec;
 
                 vec3 shadow_ray_dir = light_sample->m_direction;
                 ray shadow_ray = ray(rec.p, shadow_ray_dir, r.time());
@@ -102,7 +102,7 @@ public:
                     interval shadow_ray_interval = interval(epsilon, infinity);
 
                     //If our doesn't hit anything between start and light, we contribute
-                    if (!world.hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
+                    if (!world.surface_hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
 
                         double p_of_env = sky_weight / flux_sum;
                         double pdf_of_d = p_of_env * sky->get_pdf_value(shadow_ray_dir);
@@ -136,7 +136,7 @@ public:
 
                     //If our doesn't hit anything between start and light, we contribute
                     interval shadow_ray_interval = interval(epsilon, shadow_ray_length - epsilon);
-                    if (!world.hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
+                    if (!world.surface_hit(shadow_ray, shadow_ray_interval, shadow_rec)) {
 
                         double p_of_light = light_weight / flux_sum;
                         double pdf_of_p = p_of_light * light_sample->m_pdf_w;
@@ -234,10 +234,10 @@ public:
         //We don't use MIS weight to downweight a sample if we don't hit a light pdf.
         double w_indirect = 1.0;
 
-        surface_hit shadow_rec;
+        surface_hit_rec shadow_rec;
         ray shadow_test(rec.p, scatter_dir, r.time());
 
-        if (lights.hit(shadow_test, interval(epsilon, infinity), shadow_rec)) {
+        if (lights.surface_hit(shadow_test, interval(epsilon, infinity), shadow_rec)) {
             double light_pdf = compute_light_pdf_value(lights, sky, rec.p, scatter_dir);
 
             double a2 = light_pdf * light_pdf;
@@ -292,7 +292,7 @@ private:
     //if un-occluded, the
     double compute_light_pdf_value(const hittable& lights, const shared_ptr<skybox> sky, const point3& p, const vec3& d) const {
         ray r(p, d);
-        surface_hit rec;
+        surface_hit_rec rec;
 
         double sky_weight = sky->get_flux_weight();
         double light_weight = lights.get_flux_weight();
@@ -301,7 +301,7 @@ private:
         double p_sky = sky_weight / flux_sum;
 
 
-        if (!lights.hit(r, interval(epsilon, infinity), rec)) {
+        if (!lights.surface_hit(r, interval(epsilon, infinity), rec)) {
             //SKYBOX CASE
             //TODO: Address this case
             double pdf_w = sky->get_pdf_value(d);

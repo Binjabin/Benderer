@@ -10,7 +10,7 @@ public:
     dielectric( double refraction_index ) : refraction_index( refraction_index ) {
     }
 
-    bool scatter( const ray& r_in, const surface_hit& rec, scatter_record& srec ) const override {
+    bool scatter( const ray& r_in, const surface_hit_rec& rec, scatter_record& srec ) const override {
         srec.attenuation = color( 1.0, 1.0, 1.0 );
         srec.pdf_ptr = nullptr;
         srec.skip_pdf = true;
@@ -38,7 +38,7 @@ public:
         return true;
     }
 
-    color bsdf(vec3 d_in, const surface_hit &rec, const vec3 &r_out) override {
+    color bsdf(vec3 d_in, const surface_hit_rec &rec, const vec3 &r_out) override {
         //Don't use monte carlo here
         return color(0, 0, 0);
     }

@@ -18,7 +18,7 @@ public:
         m_radiance = emit;
     }
 
-    color emitted( const ray& r_in, const surface_hit& rec, double u, double v, const point3& p ) const override {
+    color emitted( const ray& r_in, const surface_hit_rec& rec, double u, double v, const point3& p ) const override {
         if ( !rec.get_front_face() ) {
             return color( 0, 0, 0 );
         }
@@ -27,7 +27,7 @@ public:
 
     //TODO: Consider reflectance off emissive materials...
 
-    color bsdf(vec3 d_in, const surface_hit &rec, const vec3 &r_out) override {
+    color bsdf(vec3 d_in, const surface_hit_rec &rec, const vec3 &r_out) override {
         //Don't use monte carlo here
         return color(0, 0, 0);
     }

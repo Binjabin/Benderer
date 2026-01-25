@@ -4,14 +4,15 @@
 
 #ifndef BENDERER_PRIMITIVE_H
 #define BENDERER_PRIMITIVE_H
-#include "hittable.h"
-#include "../../structures/ray.h"
-#include "../shapes/shape.h"
+#include "surface.h"
+#include "../hittable.h"
+#include "../../../structures/ray.h"
+#include "../../shapes/shape.h"
 
-class primitive : public hittable {
+class primitive_surface : public surface {
 
 public:
-    primitive(shared_ptr<shape> shape, shared_ptr< material> mat)
+    primitive_surface(shared_ptr<shape> shape, shared_ptr< material> mat)
         : m_shape(shape),  m_mat(mat) {
         set_count(1);
         bbox = m_shape->bounding_box();
@@ -29,7 +30,7 @@ public:
         m_is_explicit_light = is_light;
     }
 
-    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
+    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
         intersection isect;
         bool h = m_shape->intersect(r, ray_t, isect);
 

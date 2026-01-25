@@ -6,19 +6,21 @@
 #define BENDERER_WORLD_H
 
 #include "hittables/hittable.h"
-#include "hittables/hittable_list.h"
+#include "hittables/mediums/medium.h"
+#include "hittables/surfaces/surface_list.h"
 #include "skyboxes/skybox.h"
 
 class world {
 public:
     ~world() = default;
 
-    world( const hittable_list& geometry, const hittable_list& lights, const shared_ptr<skybox> skybox)
-        : m_geometry( geometry ), m_lights( lights ), m_sky( skybox ) {
+    world( shared_ptr<surface> surfaces, shared_ptr<medium> mediums, shared_ptr<surface> lights, const shared_ptr<skybox> skybox)
+        : m_surfaces( surfaces ), m_mediums(mediums), m_lights( lights ), m_sky( skybox ) {
     }
 
-    hittable_list m_geometry;
-    hittable_list m_lights;
+    shared_ptr<surface> m_surfaces;
+    shared_ptr<medium> m_mediums;
+    shared_ptr<surface> m_lights;
     const shared_ptr<skybox> m_sky;
 };
 

@@ -58,9 +58,11 @@ private:
     onb uvw;
 };
 
-class hittable_pdf : public pdf {
+/*
+
+class surface_pdf : public pdf {
 public:
-    hittable_pdf(const hittable &objects, const point3 &origin)
+    surface_pdf(const surface &objects, const point3 &origin)
         : objects(objects), origin(origin) {
     }
 
@@ -75,9 +77,10 @@ public:
     bool trivial() const override { return (objects.get_count() <= 0); }
 
 private:
-    const hittable &objects;
+    const surface &objects;
     point3 origin;
 };
+*/
 
 class mixture_pdf : public pdf {
 public:

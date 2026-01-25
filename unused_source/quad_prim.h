@@ -5,11 +5,11 @@
 #ifndef QUAD_H
 #define QUAD_H
 
-#include "../source/scene/hittables/primitive.h"
+#include "../source/scene/hittables/surfaces/primitive_surface.h"
 #include "../source/scene/hittables/hittable.h"
 #include "../source/scene/shapes/flats/quad.h"
 
-class quad_prim : public primitive {
+class quad_prim : public primitive_surface {
 public:
 
     quad_prim( const vec3& u, const vec3& v, shared_ptr<material> mat )

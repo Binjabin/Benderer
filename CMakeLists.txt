@@ -8,18 +8,13 @@ add_executable(Benderer source/main.cpp
         source/utility/color.h
         source/structures/ray.h
         source/scene/hittables/hittable.h
-        unused_source/sphere_prim.h
-        source/scene/hittables/hittable_list.h
         source/benderer.h
         source/structures/interval.h
         source/scene/camera.h
         source/scene/material/material.h
         source/structures/aabb.h
-        source/scene/hittables/bvh.h
         source/scene/texture/texture.h
         source/utility/perlin.h
-        unused_source/quad_prim.h
-        unused_source/constant_medium.h
         source/structures/onb.h
         source/structures/pdf.h
         source/scene/texture/textures/tex_solid_colour.h
@@ -37,26 +32,21 @@ add_executable(Benderer source/main.cpp
         source/records/scatter_record.h
         source/image/image_info_library.h
         source/records/light_sample.h
-        source/scene/hittables/primitive.h
+        source/scene/hittables/surfaces/primitive_surface.h
         source/scene/transforms/transform.h
         source/scene/transforms/translate.h
         source/scene/transforms/rotate_y.h
-        unused_source/rtw_model.h
         source/integrators/integrator.h
         source/scene/skyboxes/skybox.h
         source/scene/skyboxes/gradient_skybox.h
         source/scene/skyboxes/solid_color_skybox.h
-        unused_source/mips_model.h
-        unused_source/one_step_shadow.h
         source/records/path_state.h
         source/records/path_result.h
-        unused_source/mips_model_2.h
         source/integrators/simple_path_tracer.h
         source/scene/world.h
-        source/records/surface_hit.h
-        source/scene/mediums/medium.h
-        source/records/medium_hit.h
-        source/scene/mediums/phase_functions/phase_function.h
+        source/records/surface_hit_rec.h
+        source/scene/hittables/mediums/medium.h
+        source/records/medium_hit_rec.h
         source/scene/shapes/shape.h
         source/records/intersection.h
         source/records/interaction.h
@@ -64,7 +54,7 @@ add_executable(Benderer source/main.cpp
         source/scene/shapes/flats/quad.h
         source/scene/shapes/flats/flat.h
         source/scene/shapes/solids/solid.h
-        source/scene/hittables/transformed.h
+        source/scene/hittables/surfaces/transformed_surface.h
         source/scene/object_library.h
         source/image/writer/png_writer.h
         source/image/writer/image_writer.h
@@ -72,5 +62,13 @@ add_executable(Benderer source/main.cpp
         source/utility/benderer_image.h
         source/utility/time.h
         source/image/writer/stb_impl.cpp
-        source/image/writer/stb_impl.h
+        source/scene/hittables/surfaces/surface.h
+        source/scene/hittables/surfaces/surface_tree.h
+        source/scene/hittables/surfaces/surface_list.h
+        source/scene/hittables/mediums/primitive_medium.h
+        source/scene/hittables/mediums/transformed_medium.h
+        source/scene/material/medium_material.h
+        source/scene/material/medium_material/medium_mat_constant.h
+        source/scene/hittables/mediums/medium_list.h
+        source/scene/hittables/mediums/medium_tree.h
 )

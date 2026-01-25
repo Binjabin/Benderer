@@ -4,35 +4,35 @@
 
 #ifndef BENDERER_TRANSFORMED_H
 #define BENDERER_TRANSFORMED_H
-#include "hittable.h"
-#include "../transforms/transform.h"
+#include "../hittable.h"
+#include "../../transforms/transform.h"
 
-class transformed : public hittable {
+class transformed_surface : public surface {
 public:
-    transformed(shared_ptr<hittable> object, shared_ptr<transform> transform)
-        : m_object(object), m_transform(transform) {
-        bbox = m_transform->transform_bbox(m_object->bounding_box());
+    transformed_surface(shared_ptr<surface> object, shared_ptr<transform> transform)
+        : m_surface(object), m_transform(transform) {
+        bbox = m_transform->transform_bbox(m_surface->bounding_box());
     }
 
 
     void compute_properties() override {
-        if (m_object){
-            m_object->compute_properties();
-            set_count(m_object->get_count());
-            set_surface_area(m_object->get_surface_area());
-            set_flux_rgb(m_object->get_flux_rgb());
+        if (m_surface){
+            m_surface->compute_properties();
+            set_count(m_surface->get_count());
+            set_surface_area(m_surface->get_surface_area());
+            set_flux_rgb(m_surface->get_flux_rgb());
         }
     }
 
     void set_explicit_light(bool is_light) override {
-        m_object->set_explicit_light(is_light);
+        m_surface->set_explicit_light(is_light);
     }
 
-    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
+    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
         ray offset_r = m_transform->transform_ray(r);
 
         //Probability defers to sub-item here
-        if ( !m_object->hit( offset_r, ray_t, rec ) ) {
+        if ( !m_surface->surface_hit( offset_r, ray_t, rec ) ) {
             return false;
         }
 
@@ -45,7 +45,7 @@ public:
     }
 
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
-        surface_light_sample child_sample = m_object->sample_light_over_flux(seed, running_prob);
+        surface_light_sample child_sample = m_surface->sample_light_over_flux(seed, running_prob);
         child_sample.m_light_p = m_transform->reverse_transform_point(child_sample.m_light_p);
         child_sample.m_normal = m_transform->reverse_transform_normal(child_sample.m_normal);
         return child_sample;
@@ -56,7 +56,7 @@ public:
     }
 
 private:
-    shared_ptr<hittable> m_object;
+    shared_ptr<surface> m_surface;
     shared_ptr<transform> m_transform;
     aabb bbox;
 };

@@ -11,26 +11,26 @@
 #include "../source/scene/shapes/solids/solid.h"
 #include "../source/scene/texture/texture.h"
 
-class constant_medium : public hittable {
+class primative_medium : public hittable {
 public:
-    constant_medium( shared_ptr<solid> boundary, double density, shared_ptr<texture> tex )
+    primative_medium( shared_ptr<solid> boundary, double density, shared_ptr<texture> tex )
         : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotropic>( tex ) ) {
         set_count(boundary->get_count());
     }
 
-    constant_medium( shared_ptr<hittable> boundary, double density, const color& albedo )
+    primative_medium( shared_ptr<hittable> boundary, double density, const color& albedo )
         : boundary( boundary ), neg_inv_density( -1 / density ), phase_function( make_shared<isotropic>( albedo ) ) {
         set_count(boundary->get_count());
     }
 
-    bool hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
+    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
         surface_hit rec1, rec2;
 
         //make sure we actually hit the boundary
-        if ( !boundary->hit( r, interval::universe, rec1 ) ) return false;
+        if ( !boundary->surface_hit( r, interval::universe, rec1 ) ) return false;
 
         //make sure we exit the volume
-        if ( !boundary->hit( r, interval( rec1.t + epsilon, infinity ), rec2 ) ) return false;
+        if ( !boundary->surface_hit( r, interval( rec1.t + epsilon, infinity ), rec2 ) ) return false;
 
         //crop enter and exit points to the section of the ray we are checking
         if ( rec1.t < ray_t.min ) rec1.t = ray_t.min;

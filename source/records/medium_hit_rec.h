@@ -10,19 +10,19 @@
 //tell compiler we handle what this is later
 class material;
 
-class medium_hit {
+class medium_hit_rec {
 public:
-    medium_hit(const interaction& interaction)
-        : m_interaction(interaction){
+    medium_hit_rec()
+        : m_interaction(interaction()){
     }
 
-    ~medium_hit() = default;
+    ~medium_hit_rec() = default;
 
-    double m_t(){ return m_interaction.t; };
+    double m_t() const { return m_interaction.m_t; };
 
-    double m_p(){ return m_interaction.p; }
+    point3 m_p() const { return m_interaction.m_p; }
 
-    double m_time(){ return m_interaction.time; }
+    double m_time() const { return m_interaction.m_time; }
 
     interaction m_interaction;
 
@@ -31,5 +31,9 @@ public:
 
     //???????
     //double pdf_v = 0.0;
+
+    void transform_to(const point3& pos) {
+        m_interaction.m_p = pos;
+    }
 };
 #endif //BENDERER_MEDIUM_HIT_RECORD_H

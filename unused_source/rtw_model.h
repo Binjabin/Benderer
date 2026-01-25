@@ -17,10 +17,10 @@ public:
             return color( 0, 0, 0 );
         }
 
-        surface_hit rec;
+        surface_hit_rec rec;
         auto ray_interval = interval( epsilon, infinity );
 
-        if ( !world.hit( r, ray_interval, rec ) ) {
+        if ( !world.surface_hit( r, ray_interval, rec ) ) {
             return sky->sample_color(r.direction());
         }
 
@@ -40,7 +40,7 @@ public:
             return srec.attenuation * ray_color( srec.skip_pdf_ray, depth - 1, world, lights, sky );
         }
 
-        auto light_ptr = make_shared<hittable_pdf>( lights, rec.p );
+        auto light_ptr = make_shared<surface_pdf>( lights, rec.p );
         mixture_pdf p( light_ptr, srec.pdf_ptr );
 
         ray scattered = ray( rec.p, p.generate(), r.time() );

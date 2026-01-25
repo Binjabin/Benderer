@@ -35,7 +35,7 @@ public:
     double pdf_value( const point3& origin, const vec3& direction ) const override {
         // Only works for stationary spheres
 
-        surface_hit rec;
+        surface_hit_rec rec;
         if ( !this->hit( ray( origin, direction ), interval( epsilon, infinity ), rec ) ) {
             return 0;
         }
@@ -72,7 +72,7 @@ public:
         return center.origin() + local;
     }
 
-    bool prim_hit( const ray& r, interval ray_t, surface_hit& rec ) const override {
+    bool prim_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
         point3 current_center = center.at( r.time() );
         vec3 oc = current_center - r.origin();
         auto a = r.direction().length_squared();
