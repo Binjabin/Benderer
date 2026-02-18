@@ -5,13 +5,13 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Benderer source/main.cpp
         source/structures/vec3.h
-        source/utility/color.h
+        source/utility/Color/color.h
         source/structures/ray.h
         source/scene/hittables/hittable.h
         source/benderer.h
         source/structures/interval.h
         source/scene/camera.h
-        source/scene/material/material.h
+        source/scene/material/surface_material.h
         source/structures/aabb.h
         source/scene/texture/texture.h
         source/utility/perlin.h
@@ -22,14 +22,14 @@ add_executable(Benderer source/main.cpp
         source/scene/texture/textures/tex_image.h
         source/scene/texture/textures/tex_noise.h
         source/scene/material/materials/mat_lambertian.h
-        source/scene/material/materials/mat_isotropic.h
+        unused_source/mat_isotropic.h
         source/scene/material/materials/mat_dielectric.h
         source/scene/material/materials/mat_metal.h
         source/scene/material/materials/mat_diffuse_light.h
         source/scene/scene.h
         source/scene/scene_library.h
         source/image/image_info.h
-        source/records/scatter_record.h
+        source/records/surface_scatter_rec.h
         source/image/image_info_library.h
         source/records/light_sample.h
         source/scene/hittables/surfaces/primitive_surface.h
@@ -46,7 +46,7 @@ add_executable(Benderer source/main.cpp
         source/scene/world.h
         source/records/surface_hit_rec.h
         source/scene/hittables/mediums/medium.h
-        source/records/medium_hit_rec.h
+        source/records/medium_intersection.h
         source/scene/shapes/shape.h
         source/records/intersection.h
         source/records/interaction.h
@@ -67,8 +67,18 @@ add_executable(Benderer source/main.cpp
         source/scene/hittables/surfaces/surface_list.h
         source/scene/hittables/mediums/primitive_medium.h
         source/scene/hittables/mediums/transformed_medium.h
-        source/scene/material/medium_material.h
-        source/scene/material/medium_material/medium_mat_constant.h
+        unused_source/medium_material.h
+        unused_source/medium_mat_constant.h
         source/scene/hittables/mediums/medium_list.h
         source/scene/hittables/mediums/medium_tree.h
+        source/integrators/simple_medium_path_tracer.h
+        source/records/medium_scatter_rec.h
+        source/scene/material/medium_material.h
+        source/scene/material/medium_material/medium_mat_constant.h
+        source/samplers/medium_sampler.h
+        source/records/medium_hit_rec.h
+        source/records/pdf_rec.h
+        source/utility/Color/spectrum.h
+        source/utility/Color/sampled_spectrum.h
+        source/utility/Color/spectra/constant_spectrum.h
 )

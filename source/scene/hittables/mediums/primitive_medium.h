@@ -5,7 +5,7 @@
 #ifndef BENDERER_CONSTANT_MEDIUM_H
 #define BENDERER_CONSTANT_MEDIUM_H
 #include "medium.h"
-#include "../../../records/medium_hit_rec.h"
+#include "../../../records/medium_intersection.h"
 #include "../../material/medium_material.h"
 #include "../../shapes/solids/solid.h"
 
@@ -23,15 +23,12 @@ public:
         return m_bbox;
     }
 
-    bool medium_hit(const ray &r, const interval& r_t, medium_hit_rec &rec) const override {
+    bool medium_hit(const ray &r, const interval& r_t, medium_intersections& rec) const override {
         bool start_inside = m_boundary->contains(r.origin());
-
-
-        double start_t = 0.0;
-        double after_entry_t = 0.0;
+        double start_t = r_t.min;
+        double after_entry_t = r_t.min;
 
         if (!start_inside) {
-
             intersection entry;
             if (!m_boundary->intersect(r, r_t, entry)) {
                 return false;
@@ -43,17 +40,21 @@ public:
 
         //find exit
         intersection exit;
-        interval r2_t = interval(after_entry_t, r_t.max);
-        ray r2 = ray(r.origin(), r.direction());
-        if (!m_boundary->intersect(r2, r2_t, exit)) {
+        //We clamp the upper end later
+        interval r2_t = interval(after_entry_t, infinity);
+        if (!m_boundary->intersect(r, r2_t, exit)) {
             //Shouldn't happen!
             return false;
         }
 
         interval medium_interval = interval(start_t, exit.get_t());
+        interval cropped = medium_interval.crop(r_t.min, r_t.max);
 
-        m_mat->sample(r, medium_interval, rec);
+        if (cropped.size() <= 0.0) {
+            return false;
+        }
 
+        rec.add(m_mat, cropped);
         return true;
     }
 

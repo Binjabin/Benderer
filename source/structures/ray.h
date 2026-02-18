@@ -14,6 +14,8 @@ public:
 
     ray( const point3& origin, const vec3& direction, double time )
         : orig( origin ), dir( direction ), tm( time ) {
+        t_len = direction.length();
+        inv_t_len = (t_len > 0) ? 1.0 / t_len : 0.0;
     }
 
     ray( const point3& origin, const vec3& direction )
@@ -29,10 +31,17 @@ public:
         return orig + t * dir;
     }
 
+    //Convert a ray param t into a global distance (and vice versa)
+    double t_to_distance(double t) const { return t * t_len; }
+    double distance_to_t(double dist) const {return dist * inv_t_len; }
+
+
 private:
     point3 orig;
     vec3 dir;
     double tm;
+    double t_len;
+    double inv_t_len;
 };
 
 

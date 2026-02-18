@@ -152,7 +152,17 @@
 				64,
 				65,
 				66,
-				67
+				67,
+				68,
+				69,
+				70,
+				71,
+				72,
+				73,
+				74,
+				75,
+				76,
+				77
 			]
 		}
 	],
@@ -171,7 +181,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/utility/color.h",
+			"path" : "source/utility/Color/color.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -201,7 +211,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/material/material.h",
+			"path" : "source/scene/material/surface_material.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -256,7 +266,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/material/materials/mat_isotropic.h",
+			"path" : "unused_source/mat_isotropic.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -291,7 +301,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/records/scatter_record.h",
+			"path" : "source/records/surface_scatter_rec.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -376,7 +386,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/records/medium_hit_rec.h",
+			"path" : "source/records/medium_intersection.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -482,12 +492,12 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/material/medium_material.h",
+			"path" : "unused_source/medium_material.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/material/medium_material/medium_mat_constant.h",
+			"path" : "unused_source/medium_mat_constant.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -498,6 +508,56 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/scene/hittables/mediums/medium_tree.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/integrators/simple_medium_path_tracer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/medium_scatter_rec.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/material/medium_material.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/scene/material/medium_material/medium_mat_constant.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/samplers/medium_sampler.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/medium_hit_rec.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/pdf_rec.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/utility/Color/spectrum.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/utility/Color/sampled_spectrum.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/utility/Color/spectra/constant_spectrum.h",
 			"sourceGroupIndex" : 1
 		}
 	],

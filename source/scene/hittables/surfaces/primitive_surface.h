@@ -12,7 +12,7 @@
 class primitive_surface : public surface {
 
 public:
-    primitive_surface(shared_ptr<shape> shape, shared_ptr< material> mat)
+    primitive_surface(shared_ptr<shape> shape, shared_ptr<surface_material> mat)
         : m_shape(shape),  m_mat(mat) {
         set_count(1);
         bbox = m_shape->bounding_box();
@@ -33,6 +33,7 @@ public:
     bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
         intersection isect;
         bool h = m_shape->intersect(r, ray_t, isect);
+        if(!h) { return false; }
 
         rec.m_intersection = isect;
         rec.m_mat = m_mat;
@@ -60,7 +61,7 @@ public:
 private:
     bool m_is_explicit_light = false;
     shared_ptr<shape> m_shape;
-    shared_ptr<material> m_mat;
+    shared_ptr<surface_material> m_mat;
     aabb bbox;
 
 

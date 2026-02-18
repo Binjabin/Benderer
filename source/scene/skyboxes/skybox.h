@@ -4,7 +4,7 @@
 
 #ifndef BENDERER_SKYBOX_H
 #define BENDERER_SKYBOX_H
-#include "../../utility/color.h"
+#include "../../utility/Color/color.h"
 
 class skybox {
 public:

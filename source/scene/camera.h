@@ -7,7 +7,7 @@
 
 #include "world.h"
 #include "hittables/hittable.h"
-#include "material/material.h"
+#include "material/surface_material.h"
 #include "../structures/pdf.h"
 #include "../image/image_info.h"
 #include "../integrators/integrator.h"
@@ -46,7 +46,7 @@ public:
 
         for ( int sample = 0; sample < spp; sample++ ) {
 
-            std::clog << "\rSamples remaining: " << ( spp - sample ) << ' ' << std::flush;
+            std::clog << "\rSamples: " << ( sample ) << ' ' << std::flush;
 
             for ( int j = 0; j < ph ; j++ ) {
 

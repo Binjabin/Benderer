@@ -5,12 +5,12 @@
 #ifndef MAT_ISOTROPIC_H
 #define MAT_ISOTROPIC_H
 
-#include "../material.h"
-#include "../../texture/texture.h"
-#include "../../texture/textures/tex_solid_colour.h"
-#include "../../../structures/pdf.h"
+#include "../source/scene/material/surface_material.h"
+#include "../source/scene/texture/texture.h"
+#include "../source/scene/texture/textures/tex_solid_colour.h"
+#include "../source/structures/pdf.h"
 
-class isotropic : public material {
+class isotropic : public surface_material {
 public:
     isotropic( const color& albedo ) : tex( make_shared<solid_color>( albedo ) ) {
     }
@@ -18,10 +18,16 @@ public:
     isotropic( shared_ptr<texture> tex ) : tex( tex ) {
     }
 
-    bool scatter( const ray& r_in, const surface_hit_rec& rec, scatter_record& srec ) const override {
+    bool scatter( const ray& r_in, const surface_hit_rec& rec, surface_scatter_rec& srec ) const override {
+
         srec.attenuation = tex->value( rec.m_intersection );
-        srec.pdf_ptr = make_shared<sphere_pdf>();
-        srec.skip_pdf = false;
+
+        sphere_pdf scatter_pdf = sphere_pdf();
+        vec3 scattered_dir = scatter_pdf.sample();
+        srec.s_ray = ray(rec.get_p() + scattered_dir * epsilon, scattered_dir);
+
+        srec.w_pdf =  scatter_pdf.value(scattered_dir);
+
         return true;
     }
 

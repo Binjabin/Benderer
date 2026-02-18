@@ -5,7 +5,7 @@
 #ifndef BENDERER_SIMPLE_PATH_TRACER_H
 #define BENDERER_SIMPLE_PATH_TRACER_H
 #include "../scene/scene.h"
-#include "../scene/material/material.h"
+#include "../scene/material/surface_material.h"
 #include "../records/path_result.h"
 #include "../records/path_state.h"
 
@@ -60,7 +60,7 @@ private:
         //---------------------------------------
         // Otherwise, calculate ray "scatter". Either absorb ray (just return emittance, no more bounces) or calculate the scatter direction
 
-        scatter_record srec;
+        surface_scatter_rec srec;
         bool scattered = rec.m_mat->scatter(r, rec, srec);
 
         //If we don't scatter, then we exit early
@@ -80,41 +80,35 @@ private:
         return out_result;
     }
 
-    path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const scatter_record& srec, const surface_hit_rec& rec) const {
+    path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const surface_scatter_rec& srec, const surface_hit_rec& rec) const {
         path_result indirect_res = empty_path_result();
         path_state child_state = p_state;
         child_state.depth++;
-        if (srec.skip_pdf) {
-            //Don't use a pdf, just take the specified ray
-            ray scattered_ray = srec.skip_pdf_ray;
+        if (srec.is_spec) {
 
             //prev bsdf is meaningless for specular. Just keep sensible.
             child_state.prev_bsdf_pdf = 1.0;
 
             //attenuation is like the throughput of spec surfaces
-            child_state.overall_throughput = srec.attenuation * child_state.overall_throughput;
-            indirect_res = path_trace(scattered_ray, world, child_state);
-            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.attenuation;
+            child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
+            indirect_res = path_trace(srec.s_ray, world, child_state);
+            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf;
         }
         else {
-            vec3 scatter_dir = srec.pdf_ptr->generate();
-            ray scattered_ray = ray(rec.get_p() + scatter_dir * epsilon, scatter_dir, r.time());
-
-            double pdf_mat = rec.m_mat->scattering_pdf(r, rec, scattered_ray);
+            vec3 scatter_dir = srec.s_ray.direction();
             //If pdf is 0 or close, stop. Generated impossible sample. Probably shouldn't happen!
-            if (pdf_mat <= epsilon) return empty_path_result();
+            if (srec.w_pdf <= epsilon) return empty_path_result();
 
-            color bsdf = rec.m_mat->bsdf(scatter_dir, rec, -r.direction());
             //If a volume, this is meaningless, just carry on
             //TODO: We had volume cos-theta stuff here. We handle this differently now!
             double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
             //Throughput at this point (from a scattered direction, out at a ray direction)
-            color throughput = bsdf * cos_theta / pdf_mat;
+            color throughput = srec.bsdf * cos_theta / srec.w_pdf;
 
-            child_state.prev_bsdf_pdf = pdf_mat;
+            child_state.prev_bsdf_pdf = srec.w_pdf;
             child_state.overall_throughput = throughput * child_state.overall_throughput;
 
-            indirect_res = path_trace(scattered_ray, world, child_state);
+            indirect_res = path_trace(srec.s_ray, world, child_state);
 
             indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;
         }

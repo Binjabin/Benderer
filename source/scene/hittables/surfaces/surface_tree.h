@@ -122,7 +122,7 @@ public:
             return left->sample_light_over_flux(new_seed, running_prob * prob);
         }
         auto new_seed = (sample - l_flux) / total_flux;
-        double prob = l_flux / total_flux;
+        double prob = r_flux / total_flux;
         return right->sample_light_over_flux(new_seed, running_prob * prob);
     }
 

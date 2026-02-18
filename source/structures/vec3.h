@@ -4,7 +4,7 @@
 
 #ifndef VEC3_H
 #define VEC3_H
-#include "../utility/color.h"
+#include "../utility/Color/color.h"
 
 class vec3 {
 public:
@@ -50,6 +50,13 @@ public:
         e[0] *= t;
         e[1] *= t;
         e[2] *= t;
+        return *this;
+    }
+
+    vec3& operator*=( const vec3& v ) {
+        e[0] *= v.e[0];
+        e[1] *= v.e[1];
+        e[2] *= v.e[2];
         return *this;
     }
 
@@ -170,6 +177,13 @@ inline double max_component( const vec3& v ) {
     return std::max( v.e[0], std::max(v.e[1], v.e[2]));
 }
 
+inline vec3 exp( const vec3& v ) {
+    double x = exp(v.x());
+    double y = exp(v.y());
+    double z = exp(v.z());
+    return vec3(x, y, z);
+}
+
 /*
 inline vec3 random_unit_vector() {
     while ( true ) {
@@ -239,5 +253,9 @@ inline vec3 random_cosine_direction() {
 
     return vec3(x, y, z);
 }
+
+
+const vec3 uninit_vec = vec3(uninit, uninit, uninit);
+
 
 #endif //VEC3_H

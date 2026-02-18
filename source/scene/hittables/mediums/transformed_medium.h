@@ -19,16 +19,13 @@ public:
         return bbox;
     }
 
-    bool medium_hit(const ray& r, const interval& ray_t, medium_hit_rec& rec) const override {
+    bool medium_hit(const ray& r, const interval& ray_t, medium_intersections& rec) const override {
         ray offset_r = m_transform->transform_ray(r);
 
         //Probability defers to sub-item here
         if ( !m_medium->medium_hit( offset_r, ray_t, rec ) ) {
             return false;
         }
-
-        point3 new_p = m_transform->reverse_transform_point( rec.m_p() );
-        rec.transform_to(new_p);
 
         return true;
     }

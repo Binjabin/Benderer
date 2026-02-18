@@ -19,12 +19,12 @@ public:
     }
 
     //For texture co-ordinates
-    double m_u;
-    double m_v;
+    double m_u = uninit;
+    double m_v = uninit;
     //normal at surface
-    vec3 m_normal;
+    vec3 m_normal = uninit_vec;
     //Is this intersection "landing" on the outside face
-    bool m_front_face;
+    bool m_front_face = false;
     interaction m_interaction;
 
     double get_t() const { return m_interaction.m_t; }

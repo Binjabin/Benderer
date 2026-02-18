@@ -5,6 +5,7 @@
 #ifndef PDF_H
 #define PDF_H
 #include "../benderer.h"
+#include "../records/pdf_rec.h"
 #include "../structures/onb.h"
 
 class pdf {
@@ -12,9 +13,9 @@ public:
     virtual ~pdf() {
     }
 
-    virtual double value(const vec3 &direction) const = 0;
+    virtual double value(const vec3& direction) const = 0;
 
-    virtual vec3 generate() const = 0;
+    virtual void sample(pdf_rec& rec) const = 0;
 
     //Do we actually have a value we can sample, or is it a trivial pdf?
     //Example, if we have no in-scene lights
@@ -30,26 +31,28 @@ public:
         return 1 / (4 * pi);
     }
 
-    vec3 generate() const override {
-        return random_unit_vector();
+    void sample(pdf_rec& rec) const override {
+        rec.direction = random_unit_vector();
+        rec.pdf = 1 / (4 * pi);
     }
-
 
     bool trivial() const override { return false; }
 };
 
 class cosine_pdf : public pdf {
 public:
-    cosine_pdf(const vec3 &w) : uvw(w) {
+    cosine_pdf(const vec3& w) : uvw(w) {
     }
 
-    double value(const vec3 &direction) const override {
+    double value(const vec3& direction) const override {
         auto cosine_theta = dot(unit_vector(direction), uvw.w());
         return std::fmax(0, cosine_theta / pi);
     }
 
-    vec3 generate() const override {
-        return uvw.transform(random_cosine_direction());
+    void sample(pdf_rec& rec) const override {
+        auto d = uvw.transform(random_cosine_direction());
+        rec.direction = d;
+        rec.pdf = value(d);
     }
 
     bool trivial() const override { return false; }
@@ -102,20 +105,23 @@ public:
         return 0.5 * p[0]->value(direction) + 0.5 * p[1]->value(direction);
     }
 
-    vec3 generate() const override {
+    void sample(pdf_rec& rec) const override {
         if (p[0]->trivial() && p[1]->trivial()) {
             throw std::runtime_error("Tried to generate from trivial distribution!");
         }
         if (p[0]->trivial()) {
-            return p[1]->generate();
+            p[1]->sample(rec);
+            return;
         }
         if (p[1]->trivial()) {
-            return p[0]->generate();
+            p[0]->sample(rec);
+            return;
         }
         if (random_double() < 0.5) {
-            return p[0]->generate();
+            p[0]->sample(rec);
+            return;
         }
-        return p[1]->generate();
+        p[1]->sample(rec);
     }
 
     bool trivial() const override { return (p[0]->trivial() && p[1]->trivial()); }

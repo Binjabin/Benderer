@@ -18,7 +18,7 @@
 #include "shapes/flats/quad.h"
 #include "shapes/solids/sphere.h"
 
-#include "material/material.h"
+#include "material/surface_material.h"
 #include "material/materials/mat_lambertian.h"
 #include "material/materials/mat_dielectric.h"
 #include "material/materials/mat_diffuse_light.h"
@@ -98,7 +98,7 @@ public:
                 point3 center( a + 0.9 * random_double(), 0.2, b + 0.9 * random_double() );
 
                 if ( ( center - point3( 4, 0.2, 0 ) ).length() > 0.9 ) {
-                    shared_ptr<material> sphere_material;
+                    shared_ptr<surface_material> sphere_material;
 
                     if ( choose_mat < 0.8 ) {
                         // diffuse
@@ -299,7 +299,7 @@ public:
         surfaces.add( light );
 
         medium_list mediums;
-        auto frosted_mat = make_shared<medium_mat_constant>(colors::blue);
+        auto frosted_mat = make_shared<medium_mat_constant>(colors::blue, 0.01, colors::black);
         auto frosted = object_library::make_sphere_medium(point3( 190, 90, 190 ), 90, frosted_mat);
         mediums.add(frosted);
 

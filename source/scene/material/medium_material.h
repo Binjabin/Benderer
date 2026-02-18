@@ -1,27 +1,41 @@
 //
-// Created by binjabin on 1/23/26.
+// Created by binjabin on 1/29/26.
 //
 
 #ifndef BENDERER_MEDIUM_MATERIAL_H
 #define BENDERER_MEDIUM_MATERIAL_H
 
-#include "../../utility/color.h"
+#include "../../records/medium_hit_rec.h"
+#include "../../records/medium_scatter_rec.h"
+#include "../../records/pdf_rec.h"
+#include "../hittables/hittable.h"
+#include "../../structures/vec3.h"
+#include "../../records/surface_scatter_rec.h"
 
 class medium_material {
 public:
     virtual ~medium_material() = default;
+    //The probability density of absorption
+    virtual color sigma_a(const point3& p) const = 0;
 
-    virtual color emitted(const point3& x) const = 0;
+    //The probability density of scattering
+    //Can be in scattering or out scattering
+    virtual color sigma_s(const point3&) const = 0;
 
-    virtual color sigma_a(const point3& x) const = 0;
+    //Emittance per unit distance
+    virtual color emission(const point3&) const = 0;
 
-    virtual color sigma_s(const point3& x) const = 0;
+    //Total of sigma_a and sigma_s
+    virtual color sigma_t(const point3&) const = 0;
 
-    virtual color sigma_t(const point3& x) const = 0;
+    //Sigma_a/Sigma_t. Chance of scattering (compared to absorption)
+    virtual color albedo(const point3&) const = 0;
 
-    virtual double sigma_t_maj(const ray &r, const interval& ray_t) const = 0;
+    virtual color sigma_maj() const = 0;
 
-    virtual bool sample(const ray& r, const interval& ray_t, medium_hit_rec& rec) const = 0;
+    //Generate a scatter direction (Phase function)
+    virtual void scatter(const vec3& in_dir, medium_scatter_rec& srec) const = 0;
+
 };
 
 #endif //BENDERER_MEDIUM_MATERIAL_H

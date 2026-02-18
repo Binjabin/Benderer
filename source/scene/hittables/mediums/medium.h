@@ -6,15 +6,15 @@
 #define BENDERER_MEDIUM_H
 
 #include "../hittable.h"
-#include "../../../records/medium_hit_rec.h"
+#include "../../../records/medium_intersection.h"
 #include "../../../structures/ray.h"
-#include "../../../utility/color.h"
+#include "../../../utility/Color/color.h"
 
 class medium : public hittable {
 public:
     virtual ~medium() = default;
 
-    virtual bool medium_hit(const ray& r, const interval& ray_t, medium_hit_rec& rec) const = 0;
+    virtual bool medium_hit(const ray& r, const interval& ray_t, medium_intersections& rec) const = 0;
 };
 
 #endif //BENDERER_MEDIUM_H

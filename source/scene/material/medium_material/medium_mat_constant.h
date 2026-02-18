@@ -1,58 +1,67 @@
 //
-// Created by binjabin on 1/23/26.
+// Created by binjabin on 1/30/26.
 //
 
 #ifndef BENDERER_MEDIUM_MAT_CONSTANT_H
 #define BENDERER_MEDIUM_MAT_CONSTANT_H
 #include "../medium_material.h"
-#include "../../../structures/interval.h"
-#include "../../../records/medium_hit_rec.h"
 
 class medium_mat_constant : public medium_material {
 public:
-    medium_mat_constant(const color& c)
-        : m_sigma_t(c), m_sigma_a(c * 0.5), m_sigma_s(c * 0.5), m_maj(max_component(c)) {
+    medium_mat_constant(color albedo, double density, color emission)
+        : m_albedo(albedo), m_density(density), m_emission(emission) {
+
+        m_sigma_a = density * (vec3(1.0, 1.0, 1.0) - albedo);
+        m_sigma_s = density * albedo;
+        m_sigma_t = m_sigma_a + m_sigma_s;
     }
 
-    color emitted(const point3& x) const override {
-        return vec3(0, 0, 0);
-    }
-
-    color sigma_a(const point3& x) const override {
+    color sigma_a(const point3& p) const override {
         return m_sigma_a;
     }
 
-    color sigma_s(const point3& x) const override {
+    color sigma_s(const point3& p) const override {
         return m_sigma_s;
     }
 
-    color sigma_t(const point3& x) const override {
+    color sigma_t(const point3& p) const override {
         return m_sigma_t;
     }
 
-    double sigma_t_maj(const ray& r, const interval& ray_t) const override {
-        return m_maj;
+    color albedo(const point3& p) const override {
+        return m_albedo;
     }
 
-    bool sample(const ray& r, const interval& ray_t, medium_hit_rec& rec) const override {
-        if (m_maj <= 0.0) return false;
+    color emission(const point3& p) const override {
+        return m_emission;
+    }
 
-        double u = random_double();
-        double dist = -std::log(1.0 - u) / m_maj;
+    color sigma_maj() const override {
+        return m_sigma_t;
+    }
 
-        //Leaves volume, no intersect
-        double t = ray_t.min + dist;
-        if (t >= ray_t.max) return false;
+    void scatter(const vec3& in_dir, medium_scatter_rec &srec) const override {
+        sphere_pdf d_pdf = sphere_pdf();
+        pdf_rec prec;
+        d_pdf.sample(prec);
 
-
-        return true;
+        srec.w_pdf = prec.pdf;
+        srec.s_dir = prec.direction;
+        srec.phase_pdf = 1.0 / (4.0 * pi);
     }
 
 private:
-    color m_sigma_t;
-    color m_sigma_a;
-    color m_sigma_s;
-    double m_maj;
+    color m_albedo;
+    float m_density;
+
+    //Absorption Co-Efficient
+    color m_sigma_a = uninit_vec;
+    //Scattering Co-Efficient
+    color m_sigma_s = uninit_vec;
+    color m_sigma_t = uninit_vec;
+
+    color m_emission = uninit_vec;
+    sphere_pdf pdf;
 };
 
 #endif //BENDERER_MEDIUM_MAT_CONSTANT_H

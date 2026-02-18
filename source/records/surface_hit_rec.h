@@ -7,17 +7,17 @@
 #include "intersection.h"
 
 //tell compiler we handle what this is later
-class material;
+class surface_material;
 
 //The record of a collision with an object
 class surface_hit_rec {
 public:
     //Probability density of surface in the scene
-    double m_pdf_v;
+    double m_pdf_v = uninit;
     //The material of the object
-    shared_ptr<material> m_mat;
+    shared_ptr<surface_material> m_mat;
     //whether the object is a light
-    bool m_is_explicit_light;
+    bool m_is_explicit_light = false;
 
     double get_t() const { return m_intersection.m_interaction.m_t; }
     point3 get_p() const { return m_intersection.m_interaction.m_p; }

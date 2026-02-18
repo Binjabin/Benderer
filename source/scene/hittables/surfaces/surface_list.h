@@ -117,6 +117,7 @@ public:
             top += surfaces[i+1]->get_flux_weight();
             bottom += interval_range;
             interval_range = top - bottom;
+            i++;
         }
 
         //We end under a specific item

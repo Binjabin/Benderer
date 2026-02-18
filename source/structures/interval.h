@@ -44,6 +44,11 @@ public:
         return interval(min - padding, max + padding);
     }
 
+    interval crop(double min, double max) {
+        interval cropped(clamp(min),clamp(max));
+        return cropped;
+    }
+
     static const interval empty, universe;
 };
 

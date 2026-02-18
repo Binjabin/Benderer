@@ -8,7 +8,7 @@
 #include "../../texture/texture.h"
 #include "../../texture/textures/tex_solid_colour.h"
 
-class lambertian : public material {
+class lambertian : public surface_material {
 public:
     lambertian( const color& albedo ) : tex( make_shared<solid_color>( albedo ) ) {
     }
@@ -16,25 +16,21 @@ public:
     lambertian( const shared_ptr<texture> tex ) : tex( tex ) {
     }
 
-    bool scatter( const ray& r_in, const surface_hit_rec& rec, scatter_record& srec ) const override {
-        srec.attenuation = tex->value( rec.m_intersection );
-        srec.pdf_ptr = make_shared<cosine_pdf>( rec.get_normal() );
-        srec.skip_pdf = false;
+    bool scatter( const ray& r_in, const surface_hit_rec& rec, surface_scatter_rec& srec ) const override {
+
+        cosine_pdf scatter_pdf = cosine_pdf( rec.get_normal() );
+        pdf_rec prec;
+        scatter_pdf.sample(prec);
+        srec.s_ray = ray(rec.get_p() + prec.direction * epsilon, prec.direction);
+
+        srec.bsdf = get_bsdf(rec);
+        srec.w_pdf =  prec.pdf;
+
         return true;
     }
 
-    double scattering_pdf( const ray& r_in, const surface_hit_rec& rec, const ray& scattered ) const override {
-        auto cos_theta = dot( rec.get_normal(), unit_vector( scattered.direction() ) );
-        return cos_theta < 0 ? 0 : cos_theta / pi;
-    }
-
-    color get_attenuation(const surface_hit_rec &rec) const override {
-        return tex->value( rec.m_intersection );
-    }
-
-    color bsdf(vec3 d_in, const surface_hit_rec &rec, const vec3 &r_out) override {
-        //We don't use sampling for this
-        return get_attenuation(rec) * (1 / pi);
+    color get_bsdf(const surface_hit_rec &rec) const override {
+        return (1 / pi) * tex->value( rec.m_intersection );
     }
 
 private:

@@ -62,9 +62,9 @@ public:
         auto sqrt_d = std::sqrt( discriminant );
 
         //try both roots of equation
-        auto root = ( h - sqrt_d ) / a;
+        auto root = ( -h - sqrt_d ) / a;
         if ( !ray_t.surrounds( root ) ) {
-            root = ( h + sqrt_d ) / a;
+            root = ( -h + sqrt_d ) / a;
             if ( !ray_t.surrounds( root ) ) {
                 return false;
             }

@@ -10,8 +10,7 @@
 #include "hittables/mediums/transformed_medium.h"
 #include "hittables/surfaces/primitive_surface.h"
 #include "hittables/surfaces/transformed_surface.h"
-#include "material/material.h"
-#include "material/medium_material.h"
+#include "material/surface_material.h"
 
 #include "transforms/translate.h"
 #include "transforms/rotate_y.h"
@@ -21,7 +20,7 @@
 
 namespace object_library {
 
-    inline shared_ptr<surface> make_sphere( const point3& o, double r, shared_ptr<material> mat ) {
+    inline shared_ptr<surface> make_sphere( const point3& o, double r, shared_ptr<surface_material> mat ) {
         auto ball = make_shared<primitive_surface>(make_shared<sphere>(r), mat);
         return make_shared<transformed_surface>(ball, make_shared<translate>(o));
     }
@@ -31,12 +30,12 @@ namespace object_library {
         return make_shared<transformed_medium>(ball, make_shared<translate>(o));
     }
 
-    inline shared_ptr<surface> make_quad(const point3& o, const vec3& u, const vec3& v, shared_ptr<material> mat) {
+    inline shared_ptr<surface> make_quad(const point3& o, const vec3& u, const vec3& v, shared_ptr<surface_material> mat) {
         auto ball = make_shared<primitive_surface>(make_shared<quad>(u, v), mat);
         return make_shared<transformed_surface>(ball, make_shared<translate>(o));
     }
 
-    inline shared_ptr<surface> make_box(const point3& a, const point3& b, shared_ptr<material> mat) {
+    inline shared_ptr<surface> make_box(const point3& a, const point3& b, shared_ptr<surface_material> mat) {
         auto sides = make_shared<surface_list>();
 
         // Construct the two opposite vertices with the minimum and maximum coordinates.

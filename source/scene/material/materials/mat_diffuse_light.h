@@ -7,7 +7,7 @@
 
 #include "../../texture/texture.h"
 
-class diffuse_light : public material {
+class diffuse_light : public surface_material {
 public:
     //TODO: Allow for non-uniform emission...
     diffuse_light( shared_ptr<texture> tex ) : tex( tex ) {
@@ -25,11 +25,9 @@ public:
         return tex->value( u, v, p );
     }
 
-    //TODO: Consider reflectance off emissive materials...
-
-    color bsdf(vec3 d_in, const surface_hit_rec &rec, const vec3 &r_out) override {
-        //Don't use monte carlo here
-        return color(0, 0, 0);
+    //TODO: Think about this! For now we don't use monte carlo on lights
+    color get_bsdf(const surface_hit_rec &rec) const override {
+        return vec3(0, 0, 0);
     }
 
 private:

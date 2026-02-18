@@ -5,15 +5,13 @@
 #ifndef MAT_DIELECTRIC_H
 #define MAT_DIELECTRIC_H
 
-class dielectric : public material {
+class dielectric : public surface_material {
 public:
     dielectric( double refraction_index ) : refraction_index( refraction_index ) {
     }
 
-    bool scatter( const ray& r_in, const surface_hit_rec& rec, scatter_record& srec ) const override {
-        srec.attenuation = color( 1.0, 1.0, 1.0 );
-        srec.pdf_ptr = nullptr;
-        srec.skip_pdf = true;
+    bool scatter( const ray& r_in, const surface_hit_rec& rec, surface_scatter_rec& srec ) const override {
+        srec.bsdf = color( 1.0, 1.0, 1.0 );
 
         double ri = rec.get_front_face() ? ( 1.0 / refraction_index ) : refraction_index;
 
@@ -33,13 +31,15 @@ public:
             direction = refract( unit_direction, rec.get_normal(), ri );
         }
 
-        srec.skip_pdf_ray = ray( rec.get_p() + direction * epsilon, direction, r_in.time() );
+        srec.s_ray = ray( rec.get_p() + direction * epsilon, direction, r_in.time() );
+
+        srec.is_spec = true;
 
         return true;
     }
 
-    color bsdf(vec3 d_in, const surface_hit_rec &rec, const vec3 &r_out) override {
-        //Don't use monte carlo here
+    //Don't use monte carlo here
+    color get_bsdf(const surface_hit_rec &rec) const override {
         return color(0, 0, 0);
     }
 
