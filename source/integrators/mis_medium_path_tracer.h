@@ -23,6 +23,7 @@ public:
     color ray_color(const ray &r, int depth, const world& world) const override {
         path_state p_state = initial_path_state();
         path_result res = path_trace(r, world, p_state);
+
         return res.radiance_from_path;
     }
 
@@ -127,7 +128,6 @@ private:
             //---------------------------------------
             // Then throughput
 
-            //TODO: This weighting here is for MVP purposes
             const double pdf_scalar = medium_rec.m_transmittance_pdf_scalar;
             const double sigma_s_scalar = medium_rec.m_sigma_s_scalar;
             const double denom = std::max(epsilon, (pdf_scalar * sigma_s_scalar));
@@ -146,15 +146,7 @@ private:
             path_result indirect_res = path_trace(sray, world, child_state);
 
             // Accumulate emission at the medium point (if any)
-
             color contrib = ((direct + emittance) * medium_rec.m_transmittance) + indirect_res.radiance_from_path * throughput;
-
-            const double add_mag = max_component(contrib);
-            if (!std::isfinite(add_mag) || add_mag > 1e2) {
-                std::clog
-                    << "\nFIRELLY (indirect - med): add_mag=" << add_mag
-                    << std::endl;
-            }
 
             out_result.radiance_from_path += contrib;
 
@@ -167,9 +159,6 @@ private:
 
         //---------------------------------------
         // Get surface emittance
-        // TODO: Downweight because of NEE
-
-
 
         color surface_emittance = rec.m_mat->emission(rec.m_intersection);
         if (rec.m_is_explicit_light && p_state.last_bounce_used_nee) {
@@ -217,6 +206,20 @@ private:
         color from_surface = out_result.radiance_from_path + surface_emittance + direct;
         from_surface = from_surface * media_transmittance;
         out_result.radiance_from_path = from_surface;
+        out_result.terminated_on_light = out_result.terminated_on_light || rec.m_is_explicit_light;
+
+        if (max_component(from_surface) > 10.0) {
+            std::clog << "HIGH depth=" << p_state.depth
+                      << " emittance=" << max_component(surface_emittance)
+                      << " direct=" << max_component(direct)
+                      << " indirect=" << max_component(out_result.radiance_from_path)
+                      << " last_nee=" << p_state.last_bounce_used_nee
+                      << " is_light=" << rec.m_is_explicit_light
+                        << " is_delta=" << rec.m_mat->is_delta()
+                        << " bsdf_pdf=" << srec.w_pdf
+                      << std::endl;
+        }
+
         return out_result;
     }
 
@@ -228,8 +231,8 @@ private:
         if (srec.is_delta) {
 
             //prev bsdf is meaningless for specular. Just keep sensible.
-            child_state.prev_bsdf_pdf = 1.0;
-
+            child_state.prev_bsdf_pdf = p_state.prev_bsdf_pdf;
+            child_state.last_bounce_used_nee = p_state.last_bounce_used_nee;
             //attenuation is like the throughput of spec surfaces
             child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
             indirect_res = path_trace(srec.s_ray, world, child_state);
@@ -253,12 +256,6 @@ private:
             indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;
         }
 
-        const double add_mag = max_component(indirect_res.radiance_from_path);
-        if (!std::isfinite(add_mag) || add_mag > 1e2) {
-            std::clog
-                << "\nFIRELLY (indirect - surface): add_mag=" << add_mag
-                << std::endl;
-        }
 
         return indirect_res;
     }
@@ -312,18 +309,6 @@ private:
                 //DEBUG
 
                 color add = contrib * w;
-
-                // Firefly tracer (log only when something is truly extreme)
-                const double add_mag = max_component(add);
-                if (!std::isfinite(add_mag) || add_mag > 1e2) {
-                    std::clog
-                        << "\nFIRELLY (surface direct): add_mag=" << add_mag
-                        << " light_pdf_w=" << light_pdf_w
-                        << " bsdf_pdf=" << bsdf_pdf
-                        << " cos_mat=" << cos_mat
-                        << " is_env=" << ls.m_is_env_light
-                        << std::endl;
-                }
 
                 direct += add;
             }

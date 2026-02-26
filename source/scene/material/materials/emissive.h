@@ -32,7 +32,7 @@ public:
 
     color emission(const intersection& i) const override {
         if ( !i.m_front_face ) {
-            return color( 0, 0, 0 );
+            return colors::black;
         }
         return tex->value( i.m_u, i.m_v, i.get_p() );
     }

@@ -51,7 +51,7 @@ public:
     }
 
     color phase(const interaction &isect, const vec3 &in, const vec3 &out) const override {
-        return vec3(1.0, 1.0, 1.0);
+        return m_albedo;
     }
 
     double phase_pdf(const interaction &isect, const vec3 &in, const vec3 &out) const override {
