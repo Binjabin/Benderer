@@ -91,9 +91,10 @@ public:
                 ray shadow_ray = ray(rec.p, shadow_ray_dir, r.time());
 
                 //Values for MIS/pdfs
-                double sky_weight = sky->get_flux_weight();
-                double light_weight = lights.get_flux_weight();
-                double flux_sum = sky_weight + light_weight;
+                const double sky_weight = sky ? sky->get_flux_weight() : 0.0;
+                const bool have_lights = (lights && lights->get_count() && lights->get_flux_weight() > 0.0);
+                const double light_weight = have_lights ? (std::max(lights.get_flux_weight(), 0.0)) : 0.0;
+                const double flux_sum = sky_weight + light_weight;
 
                 color direct_of_sample = color(0,0,0);
 

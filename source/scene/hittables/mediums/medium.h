@@ -8,7 +8,7 @@
 #include "../hittable.h"
 #include "../../../records/medium_intersection.h"
 #include "../../../structures/ray.h"
-#include "../../../utility/Color/color.h"
+#include "../../../utility/color/color.h"
 
 class medium : public hittable {
 public:

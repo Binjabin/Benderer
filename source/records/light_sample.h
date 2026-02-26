@@ -28,7 +28,7 @@ struct environment_light_sample {
     local_light_sample to_local_sample(point3 from) const {
         local_light_sample res;
         res.m_radiance = m_radiance;
-        res.m_direction = m_direction;
+        res.m_direction = unit_vector(m_direction);
         res.m_pdf_w = m_pdf_w;
         res.m_distance = infinity;
         res.m_geometry_term = 1;
@@ -58,6 +58,7 @@ struct surface_light_sample {
 
     double pdf_w(point3 from) const {
         double dist2 = squared_distance(from);
+        if (dist2 <= epsilon) return 0.0;
         double cos_theta = dot(m_normal, -direction(from));
         if (cos_theta <= epsilon) return 0;
         return m_pdf_A * dist2 / cos_theta;
@@ -65,6 +66,7 @@ struct surface_light_sample {
 
     double geometry_term(point3 from) const {
         double dist2 = squared_distance(from);
+        if (dist2 <= epsilon) return 0.0;
         double cos_theta = dot(m_normal, -direction(from));
         if (cos_theta <= epsilon) return 0;
         return (cos_theta / dist2);

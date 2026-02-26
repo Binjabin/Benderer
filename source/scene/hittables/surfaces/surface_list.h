@@ -56,6 +56,19 @@ public:
         return hit_anything;
     }
 
+    bool surface_hit_check(const ray &r, interval ray_t) const override {
+        if (surfaces.empty()) return false;
+
+        for (int i = 0; i < surfaces.size(); i++) {
+            auto surface = surfaces[i];
+            if ( surface->surface_hit_check( r, ray_t ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     aabb bounding_box() const override { return bbox; }
 
     double pdf_value(const point3& origin, const vec3& direction) const override {

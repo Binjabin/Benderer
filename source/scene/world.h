@@ -8,6 +8,7 @@
 #include "hittables/hittable.h"
 #include "hittables/mediums/medium.h"
 #include "hittables/surfaces/surface_list.h"
+#include "hittables/surfaces/surface_tree.h"
 #include "skyboxes/skybox.h"
 
 class world {
@@ -16,6 +17,10 @@ public:
 
     world( shared_ptr<surface> surfaces, shared_ptr<medium> mediums, shared_ptr<surface> lights, const shared_ptr<skybox> skybox)
         : m_surfaces( surfaces ), m_mediums(mediums), m_lights( lights ), m_sky( skybox ) {
+    }
+
+    void accelerate() {
+        m_surfaces = make_shared<surface_tree_node>(make_shared<surface_list>(m_surfaces));
     }
 
     shared_ptr<surface> m_surfaces;

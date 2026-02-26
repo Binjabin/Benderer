@@ -49,7 +49,7 @@ private:
 
         //---------------------------------------
         // Get surface emittance
-        color color_from_light = rec.m_mat->emitted(r, rec, rec.get_u(), rec.get_v(), rec.get_p());
+        color color_from_light = rec.m_mat->emission(rec.m_intersection);
 
         //---------------------------------------
         // We have a max depth. Terminate if the next sample would exceed that depth.
@@ -61,7 +61,7 @@ private:
         // Otherwise, calculate ray "scatter". Either absorb ray (just return emittance, no more bounces) or calculate the scatter direction
 
         surface_scatter_rec srec;
-        bool scattered = rec.m_mat->scatter(r, rec, srec);
+        bool scattered = rec.m_mat->scatter(rec.m_intersection, r.direction(), srec);
 
         //If we don't scatter, then we exit early
         if (!scattered) {
@@ -84,7 +84,7 @@ private:
         path_result indirect_res = empty_path_result();
         path_state child_state = p_state;
         child_state.depth++;
-        if (srec.is_spec) {
+        if (srec.is_delta) {
 
             //prev bsdf is meaningless for specular. Just keep sensible.
             child_state.prev_bsdf_pdf = 1.0;

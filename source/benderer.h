@@ -19,6 +19,7 @@ using std::shared_ptr;
 constexpr double infinity = std::numeric_limits<double>::infinity();
 constexpr double epsilon = 1e-8;
 constexpr double pi = 3.1415926535897932385;
+constexpr double inv_pi = 1.0 / pi;
 
 constexpr double uninit = std::numeric_limits<double>::quiet_NaN();
 
@@ -44,7 +45,7 @@ inline int random_int(int min, int max) {
 
 //COMMON HEADERS
 
-#include "utility/Color/color.h"
+#include "utility/color/color.h"
 #include "structures/ray.h"
 #include "structures/vec3.h"
 #include "structures/interval.h"

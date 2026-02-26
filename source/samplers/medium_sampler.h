@@ -18,7 +18,7 @@ public:
 
     static bool sample_distance(const ray& r, medium_intersections& intersections, interval t, medium_hit_rec& rec) {
 
-        auto slices = intersections.get_cropped_slices(t);
+        const auto slices = intersections.get_cropped_slices(t);
 
         color transmittance = colors::white;
         double transmittance_pdf_scalar = 1.0;
@@ -30,9 +30,9 @@ public:
             if (mats.empty()) continue;
 
 
-            interval w_t = slice.m_interval;
-            double t0 = w_t.min;
-            double t1 = w_t.max;
+            const interval w_t = slice.m_interval;
+            const double t0 = w_t.min;
+            const double t1 = w_t.max;
 
             double cursor_t = t0;
             point3 p = r.at(cursor_t);
@@ -40,12 +40,14 @@ public:
             //Per-Slice co-efficients
             color sigma_t_color_total = colors::black;
             double sigma_t_scalar_total = 0.0;
+            double sigma_s_scalar_total = 0.0;
             double sigma_maj_scalar_total = 0.0;
 
             for (const shared_ptr<medium_material>& mat : mats) {
                 const color sigma_t_i = mat->sigma_t(p);
                 sigma_t_color_total += sigma_t_i;
                 sigma_t_scalar_total += sigma_scalar(sigma_t_i);
+                sigma_s_scalar_total += sigma_scalar(mat->sigma_s(p));
                 sigma_maj_scalar_total += sigma_scalar(mat->sigma_maj());
             }
 
@@ -55,10 +57,17 @@ public:
                 continue;
             }
 
+            if (sigma_s_scalar_total <= 0.0) {
+                const double dist = t1 - cursor_t;
+                transmittance *= exp(-sigma_t_color_total * dist);
+                transmittance_pdf_scalar *= std::exp(-sigma_t_scalar_total * dist);
+                continue;
+            }
+
             while (true) {
                 //Sample free-flight distance
-                double u = random_double();
-                double dt = (-std::log(1 - u)) / sigma_maj_scalar_total;
+                const double u = random_double();
+                const double dt = (-std::log(1 - u)) / sigma_maj_scalar_total;
 
                 if (cursor_t + dt > t1) {
                     //If we exit slice, advance to slice end and continue

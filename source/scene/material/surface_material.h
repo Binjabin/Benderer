@@ -14,24 +14,23 @@ public:
     //TODO: Allow for non-uniform emission...
     virtual ~surface_material() = default;
 
-    virtual color emitted( const ray& r_in, const surface_hit_rec& rec, double u, double v, const point3& p ) const {
-        return m_radiance;
-    }
+    virtual color bsdf(const intersection& i, const vec3& in, const vec3& out) = 0;
 
-    virtual bool scatter( const ray& r_in, const surface_hit_rec& rec, surface_scatter_rec& srec ) const {
-        return false;
-    }
+    virtual double pdf(const intersection& i, const vec3& in, const vec3& out) = 0;
 
-    color get_radiance() const { return m_radiance; }
+    virtual bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) = 0;
 
-    //The bsdf function. Determines how much light travels from r_in to r_out
-    virtual color get_bsdf( const surface_hit_rec& rec ) const {
-        return color(1, 1, 1);
-    };
+    virtual color emission(const intersection& i) const = 0;
+
+    virtual color get_radiance() const = 0;
+
+    virtual bool is_delta() const = 0;
 
 protected:
     //TODO: Allow for non-uniform emission...
     color m_radiance = color( 0, 0, 0 );
 };
+
+
 
 #endif //MATERIAL_H

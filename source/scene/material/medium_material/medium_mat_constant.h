@@ -50,6 +50,14 @@ public:
         srec.phase_pdf = 1.0 / (4.0 * pi);
     }
 
+    color phase(const interaction &isect, const vec3 &in, const vec3 &out) const override {
+        return vec3(1.0, 1.0, 1.0);
+    }
+
+    double phase_pdf(const interaction &isect, const vec3 &in, const vec3 &out) const override {
+        return 1.0 / (4.0 * pi);
+    }
+
 private:
     color m_albedo;
     float m_density;

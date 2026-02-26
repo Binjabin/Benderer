@@ -16,21 +16,40 @@ public:
     lambertian( const shared_ptr<texture> tex ) : tex( tex ) {
     }
 
-    bool scatter( const ray& r_in, const surface_hit_rec& rec, surface_scatter_rec& srec ) const override {
+    color bsdf(const intersection& i, const vec3& in, const vec3& out) override {
+        if (dot(out, i.m_normal) <= 0.0) return color(0, 0, 0);
+        return tex->value(i.m_u, i.m_v, i.get_p()) * inv_pi;
+    }
 
-        cosine_pdf scatter_pdf = cosine_pdf( rec.get_normal() );
+    double pdf(const intersection &i, const vec3 &in, const vec3 &out) override {
+        double cos_theta = dot(i.m_normal, out);
+        cos_theta = std::max(cos_theta, 0.0);
+        return cos_theta * inv_pi;
+    }
+
+    bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
+        cosine_pdf scatter_pdf = cosine_pdf( i.m_normal );
         pdf_rec prec;
         scatter_pdf.sample(prec);
-        srec.s_ray = ray(rec.get_p() + prec.direction * epsilon, prec.direction);
 
-        srec.bsdf = get_bsdf(rec);
+        srec.s_ray = ray(i.get_p() + prec.direction * epsilon, prec.direction, i.get_time());
         srec.w_pdf =  prec.pdf;
+        srec.bsdf = bsdf(i, in, srec.s_ray.direction());
+        srec.is_delta = false;
 
         return true;
     }
 
-    color get_bsdf(const surface_hit_rec &rec) const override {
-        return (1 / pi) * tex->value( rec.m_intersection );
+    color emission(const intersection& i) const override {
+        return color(0, 0, 0);
+    }
+
+    color get_radiance() const override {
+        return colors::black;
+    }
+
+    bool is_delta() const override {
+        return false;
     }
 
 private:

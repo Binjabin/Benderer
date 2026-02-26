@@ -43,6 +43,12 @@ public:
         return h;
     }
 
+    bool surface_hit_check(const ray &r, interval ray_t) const override {
+        intersection isect;
+        bool h = m_shape->intersect_check(r, ray_t);
+        return h;
+    }
+
 
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
 

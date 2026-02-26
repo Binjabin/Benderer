@@ -9,24 +9,28 @@
 #include "image/writer/psix_writer.h"
 #include "image/writer/png_writer.h"
 #include "image/post/post_process.h"
+#include "integrators/mis_medium_path_tracer.h"
+#include "integrators/rr_medium_path_tracer.h"
 #include "integrators/simple_medium_path_tracer.h"
 #include "scene/hittables/surfaces/surface_tree.h"
 
 int main() {
 
-    scene our_scene = scene_library::cornell_ball();
+    scene our_scene = scene_library::cornell_box();
     our_scene.finalize();
-    image_info info = image_info_library::micro_sol();
+    image_info info = image_info_library::small_high();
     //auto itgr = rtw_model();
     //auto itgr = mips_model(info.max_depth(), 2, 16);
-    auto itgr = simple_medium_path_tracer(info.max_depth());
+    //auto itgr = simple_medium_path_tracer(info.max_depth());
+    int rr_depth = (info.max_depth() * 3) / 4;
+    //auto itgr = rr_medium_path_tracer(info.max_depth(), rr_depth);
+    auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
 
     camera cam = our_scene.m_cam;
     world world = our_scene.m_world;
 
-    //TODO: Make this neater:
     //Put stuff in acceleration structure
-    //world.m_geometry = make_shared<surface_tree_node>(world.m_geometry);
+    world.accelerate();
 
     int w = info.pixel_width();
     int h = info.pixel_height();

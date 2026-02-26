@@ -2,8 +2,8 @@
 // Created by binjabin on 1/25/26.
 //
 
-#ifndef BENDERER_SIMPLE_MEDIUM_PATH_TRACER_H
-#define BENDERER_SIMPLE_MEDIUM_PATH_TRACER_H
+#ifndef BENDERER_RR_MEDIUM_PATH_TRACER_H
+#define BENDERER_RR_MEDIUM_PATH_TRACER_H
 
 #include "../records/medium_scatter_rec.h"
 #include "../scene/scene.h"
@@ -12,11 +12,11 @@
 #include "../records/path_state.h"
 #include "../samplers/medium_sampler.h"
 
-class simple_medium_path_tracer : public integrator {
+class rr_medium_path_tracer : public integrator {
 
 public:
-    simple_medium_path_tracer(int max_depth)
-        : m_max_depth(max_depth) {
+    rr_medium_path_tracer(int max_depth, int rr_depth)
+        : m_max_depth(max_depth), m_rr_start_depth(rr_depth) {
     };
 
     // Correctly override integrator::ray_color (const-correct signature)
@@ -29,6 +29,8 @@ public:
 
 private:
     int m_max_depth;
+    const int m_rr_start_depth;
+    const interval rr_prob = interval(0.05, 0.95);
 
     path_result path_trace(const ray& r, const world& world, path_state& p_state) const {
 
@@ -62,7 +64,6 @@ private:
             hit_medium = medium_sampler::sample_distance(r, medium_recs, medium_interval, medium_rec);
         }
 
-
         //---------------------------------------
         // If no intersection, default to skybox
         if (!(hit_surface || hit_medium)) {
@@ -85,6 +86,16 @@ private:
 
             if (p_state.depth + 1 >= m_max_depth) {
                 return color_path_result(emittance * medium_rec.m_transmittance);
+            }
+
+            //---------------------------------------
+            // Potentially terminate due to russian roulette!
+
+            if (p_state.depth >= m_rr_start_depth) {
+                const double p = rr_prob.clamp(max_component(p_state.overall_throughput));
+                double u = random_double();
+                if (u > p) return color_path_result(emittance * medium_rec.m_transmittance);
+                p_state.overall_throughput /= p;
             }
 
             //---------------------------------------
@@ -226,4 +237,4 @@ private:
     }
 };
 
-#endif //BENDERER_SIMPLE_MEDIUM_PATH_TRACER_H
+#endif //BENDERER_RR_MEDIUM_PATH_TRACER_H

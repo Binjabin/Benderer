@@ -11,6 +11,7 @@
 #include "hittables/surfaces/primitive_surface.h"
 #include "object_library.h"
 #include "hittables/mediums/medium_list.h"
+#include "hittables/surfaces/surface_tree.h"
 
 #include "transforms/translate.h"
 #include "transforms/rotate_y.h"
@@ -21,7 +22,7 @@
 #include "material/surface_material.h"
 #include "material/materials/mat_lambertian.h"
 #include "material/materials/mat_dielectric.h"
-#include "material/materials/mat_diffuse_light.h"
+#include "material/materials/emissive.h"
 #include "material/materials/mat_metal.h"
 #include "material/medium_material/medium_mat_constant.h"
 #include "skyboxes/gradient_skybox.h"
@@ -206,7 +207,7 @@ public:
         surfaces.add( object_library::make_sphere( point3( 0, -1000, 0 ), 1000, make_shared<lambertian>( pertext ) ) );
         surfaces.add( object_library::make_sphere( point3( 0, 2, 0 ), 2, make_shared<lambertian>( pertext ) ) );
 
-        auto light_mat = make_shared<diffuse_light>( colors::dim_light );
+        auto light_mat = make_shared<emissive>( colors::dim_light );
         auto light_quad = object_library::make_quad( point3( 3, 1, -2 ), vec3( 2, 0, 0 ), vec3( 0, 2, 0 ), light_mat );
 
         surfaces.add( light_quad );
@@ -248,7 +249,7 @@ public:
         box2 = object_library::make_translate( box2, vec3( 130, 0, 65 ) );
         surfaces.add( box2 );
 
-        auto light_mat = make_shared<diffuse_light>( colors::bright_light );
+        auto light_mat = make_shared<emissive>( colors::bright_light );
         auto light = object_library::make_quad( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
 
         surfaces.add( light );
@@ -292,7 +293,7 @@ public:
         surfaces.add( glass_ball );
 
         // Light Sources
-        auto light_mat = make_shared<diffuse_light>( colors::bright_light );
+        auto light_mat = make_shared<emissive>( colors::bright_light );
 
         auto light = object_library::make_quad( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
         // Light

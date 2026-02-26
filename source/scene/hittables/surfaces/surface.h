@@ -10,6 +10,8 @@ class surface : public hittable {
 public:
     virtual bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const = 0;
 
+    virtual bool surface_hit_check( const ray& r, interval ray_t ) const = 0;
+
     virtual void set_explicit_light(bool is_light) = 0;
 
     virtual surface_light_sample sample_light_over_flux(double seed, double running_prob) const = 0;

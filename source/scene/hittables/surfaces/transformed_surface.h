@@ -44,6 +44,11 @@ public:
         return true;
     }
 
+    bool surface_hit_check( const ray& r, interval ray_t ) const override {
+        ray offset_r = m_transform->transform_ray(r);
+        return m_surface->surface_hit_check( offset_r, ray_t );
+    }
+
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
         surface_light_sample child_sample = m_surface->sample_light_over_flux(seed, running_prob);
         child_sample.m_light_p = m_transform->reverse_transform_point(child_sample.m_light_p);

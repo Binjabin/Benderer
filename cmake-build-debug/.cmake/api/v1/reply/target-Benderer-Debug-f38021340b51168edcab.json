@@ -162,7 +162,8 @@
 				74,
 				75,
 				76,
-				77
+				77,
+				78
 			]
 		}
 	],
@@ -181,7 +182,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/utility/Color/color.h",
+			"path" : "source/utility/color/color.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -281,7 +282,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/scene/material/materials/mat_diffuse_light.h",
+			"path" : "source/scene/material/materials/emissive.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -547,17 +548,22 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/utility/Color/spectrum.h",
+			"path" : "source/utility/color/spectrum.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/utility/Color/sampled_spectrum.h",
+			"path" : "source/utility/color/sampled_spectrum.h",
 			"sourceGroupIndex" : 1
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/utility/Color/spectra/constant_spectrum.h",
+			"path" : "source/utility/color/spectra/constant_spectrum.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/samplers/direct_light_sampler.h",
 			"sourceGroupIndex" : 1
 		}
 	],

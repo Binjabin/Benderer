@@ -36,6 +36,10 @@ public:
     //Generate a scatter direction (Phase function)
     virtual void scatter(const vec3& in_dir, medium_scatter_rec& srec) const = 0;
 
+    virtual color phase(const interaction& isect, const vec3& in, const vec3& out) const = 0;
+
+    virtual double phase_pdf(const interaction& isect, const vec3& in, const vec3& out) const = 0;
+
 };
 
 #endif //BENDERER_MEDIUM_MATERIAL_H

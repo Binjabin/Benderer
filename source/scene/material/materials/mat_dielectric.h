@@ -10,13 +10,21 @@ public:
     dielectric( double refraction_index ) : refraction_index( refraction_index ) {
     }
 
-    bool scatter( const ray& r_in, const surface_hit_rec& rec, surface_scatter_rec& srec ) const override {
+    color bsdf(const intersection &i, const vec3 &in, const vec3 &out) override {
+        return color(0, 0, 0);
+    }
+
+    double pdf(const intersection &i, const vec3 &in, const vec3 &out) override {
+        return uninit;
+    }
+
+    bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
         srec.bsdf = color( 1.0, 1.0, 1.0 );
 
-        double ri = rec.get_front_face() ? ( 1.0 / refraction_index ) : refraction_index;
+        double ri = i.m_front_face ? ( 1.0 / refraction_index ) : refraction_index;
 
-        vec3 unit_direction = unit_vector( r_in.direction() );
-        double cos_theta = std::fmin( dot( -unit_direction, rec.get_normal() ), 1.0 );
+        vec3 unit_direction = unit_vector( in );
+        double cos_theta = std::fmin( dot( -unit_direction, i.m_normal ), 1.0 );
         double sin_theta = std::sqrt( 1.0 - cos_theta * cos_theta );
 
         bool cannot_refract = ri * sin_theta > 1.0;
@@ -25,22 +33,29 @@ public:
         double r = reflectance( cos_theta, ri );
 
         if ( cannot_refract || random_double() < r) {
-            direction = reflect( unit_direction, rec.get_normal() );
+            direction = reflect( unit_direction, i.m_normal );
         }
         else {
-            direction = refract( unit_direction, rec.get_normal(), ri );
+            direction = refract( unit_direction, i.m_normal, ri );
         }
 
-        srec.s_ray = ray( rec.get_p() + direction * epsilon, direction, r_in.time() );
+        srec.s_ray = ray( i.get_p() + direction * epsilon, direction, i.get_time() );
 
-        srec.is_spec = true;
+        srec.is_delta = true;
 
         return true;
     }
 
-    //Don't use monte carlo here
-    color get_bsdf(const surface_hit_rec &rec) const override {
+    color emission(const intersection& i) const override {
         return color(0, 0, 0);
+    }
+
+    color get_radiance() const override {
+        return colors::black;
+    }
+
+    bool is_delta() const override {
+        return true;
     }
 
 private:

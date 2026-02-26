@@ -4,7 +4,7 @@
 
 #ifndef VEC3_H
 #define VEC3_H
-#include "../utility/Color/color.h"
+#include "../utility/color/color.h"
 
 class vec3 {
 public:
@@ -219,14 +219,15 @@ inline vec3 refract( const vec3& uv, const vec3& n, double etai_over_eta_t ) {
 }
 
 inline vec3 random_unit_vector() {
-    auto r1 = random_double();
-    auto r2 = random_double();
+    const double r1 = random_double();
+    const double r2 = random_double();
 
-    auto phi = 2 * pi * r1;
-    auto root = std::sqrt( r2 * (1 - r2) );
-    auto x = std::cos( phi ) * 2 * root;
-    auto y = std::sin(phi) * root;
-    auto z = 1 - 2 * r1;
+    const double phi = 2.0 * pi * r1;
+    const double z = 1.0 - 2.0 * r1;
+    const double r = std::sqrt( std::max(0.0, 1.0 - z * z) );
+
+    const double x = std::cos( phi ) * r;
+    const double y = std::sin(phi) * r;
 
     return vec3(x, y, z);
 }

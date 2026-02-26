@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(Benderer source/main.cpp
         source/structures/vec3.h
-        source/utility/Color/color.h
+        source/utility/color/color.h
         source/structures/ray.h
         source/scene/hittables/hittable.h
         source/benderer.h
@@ -25,7 +25,7 @@ add_executable(Benderer source/main.cpp
         unused_source/mat_isotropic.h
         source/scene/material/materials/mat_dielectric.h
         source/scene/material/materials/mat_metal.h
-        source/scene/material/materials/mat_diffuse_light.h
+        source/scene/material/materials/emissive.h
         source/scene/scene.h
         source/scene/scene_library.h
         source/image/image_info.h
@@ -78,7 +78,8 @@ add_executable(Benderer source/main.cpp
         source/samplers/medium_sampler.h
         source/records/medium_hit_rec.h
         source/records/pdf_rec.h
-        source/utility/Color/spectrum.h
-        source/utility/Color/sampled_spectrum.h
-        source/utility/Color/spectra/constant_spectrum.h
+        source/utility/color/spectrum.h
+        source/utility/color/sampled_spectrum.h
+        source/utility/color/spectra/constant_spectrum.h
+        source/samplers/direct_light_sampler.h
 )

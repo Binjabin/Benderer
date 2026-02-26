@@ -5,7 +5,7 @@
 #ifndef BENDERER_MEDIUM_MATERIAL_H
 #define BENDERER_MEDIUM_MATERIAL_H
 
-#include "../source/utility/Color/color.h"
+#include "../source/utility/color/color.h"
 #include "../source/records/medium_intersection.h"
 #include "../source/records/medium_scatter_rec.h"
 

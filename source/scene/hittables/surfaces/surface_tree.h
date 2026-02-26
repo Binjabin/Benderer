@@ -14,7 +14,7 @@
 //acceleration structure for handling lots of objects in sub-linear time
 class surface_tree_node : public surface {
 public:
-    surface_tree_node( surface_list list ) : surface_tree_node( list.surfaces, 0, list.surfaces.size() ) {
+    surface_tree_node( shared_ptr<surface_list> list ) : surface_tree_node( list->surfaces, 0, list->surfaces.size() ) {
     }
 
     //construct leaf node. list of hittable objects
@@ -72,27 +72,22 @@ public:
         interval right_ray_t = interval( ray_t.min, hit_left ? l_rec.get_t() : ray_t.max );
         bool hit_right = right->surface_hit( r, right_ray_t, r_rec );
 
-        if (!hit_left && !hit_right) {
-            return false;
-        }
+        if (!hit_left && !hit_right) return false;
 
-        //Calculate the probability of choosing either item
-        auto l_p = left->get_flux_weight();
-        auto r_p = right->get_flux_weight();
-        auto total = r_p + l_p;
         //If we hit right it was closer
-        if (hit_right) {
-            auto p = r_p / total;
-            rec = r_rec;
-            rec.m_pdf_v *= p;
-        }
-        else if (hit_left) {
-            auto p = l_p / total;
-            rec = l_rec;
-            rec.m_pdf_v *= p;
-        }
+        if (hit_right) rec = r_rec;
+        else if (hit_left) rec = l_rec;
 
-        return hit_left || hit_right;
+        return true;
+    }
+
+    bool surface_hit_check( const ray& r, interval ray_t ) const override {
+        if ( !bbox.hit( r, ray_t ) )
+            return false;
+
+        bool hit_left = left->surface_hit_check( r, ray_t );
+        if (hit_left) return true;
+        return right->surface_hit_check( r, ray_t );
     }
 
     aabb bounding_box() const override { return bbox; }

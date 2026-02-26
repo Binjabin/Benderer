@@ -15,5 +15,7 @@ struct path_state {
 
     double rr_probability;
 
+    //So we can check if we did direct sampling at the last bounce
+    bool last_bounce_used_nee = false;
 };
 #endif //BENDERER_PATH_STATE_H
