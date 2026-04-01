@@ -41,7 +41,7 @@ public:
         std::vector<double> accum_buff;
         accum_buff.resize( pixel_area * 3 );
 
-        const int preview_update_frequency = 40000;
+        constexpr int preview_update_frequency = 40000;
         int work_until_update = 0;
 
         for ( int sample = 0; sample < spp; sample++ ) {

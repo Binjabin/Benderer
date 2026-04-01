@@ -135,6 +135,13 @@ public:
         return normal;
     }
 
+    double furthest_point() const override {
+        double u_length = u.length();
+        double v_length = v.length();
+        double u_v_length = (u + v).length();
+        return std::max(u_length, std::max(v_length, u_v_length));
+    }
+
 
 private:
     vec3 u, v;

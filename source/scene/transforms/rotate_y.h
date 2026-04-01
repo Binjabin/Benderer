@@ -34,6 +34,12 @@ public:
         return point3( px, p.y(), pz );
     }
 
+    point3 transform_point(const point3& p) const override {
+        auto px = cos_theta * p.x() + sin_theta * p.z();
+        auto pz = cos_theta * p.z() - sin_theta * p.x();
+        return point3( px, p.y(), pz );
+    }
+
     vec3 reverse_transform_normal(const vec3& normal) const override {
         auto nx = cos_theta * normal.x() - sin_theta * normal.z();
         auto nz = sin_theta * normal.x() + cos_theta * normal.z();

@@ -50,7 +50,7 @@ public:
         }
     }
 
-    std::string extention() override {
+    std::string file_extention() override {
         return ".ppm";
     }
 

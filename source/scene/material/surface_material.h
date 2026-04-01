@@ -18,6 +18,8 @@ public:
 
     virtual double pdf(const intersection& i, const vec3& in, const vec3& out) = 0;
 
+    virtual bool scatter_is(const intersection& i, const vec3& in, surface_scatter_rec& srec) = 0;
+
     virtual bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) = 0;
 
     virtual color emission(const intersection& i) const = 0;

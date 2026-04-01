@@ -42,7 +42,7 @@ add_executable(Benderer source/main.cpp
         source/scene/skyboxes/solid_color_skybox.h
         source/records/path_state.h
         source/records/path_result.h
-        source/integrators/simple_path_tracer.h
+        source/integrators/is_path_tracer.h
         source/scene/world.h
         source/records/surface_hit_rec.h
         source/scene/hittables/mediums/medium.h
@@ -82,4 +82,7 @@ add_executable(Benderer source/main.cpp
         source/utility/color/sampled_spectrum.h
         source/utility/color/spectra/constant_spectrum.h
         source/samplers/direct_light_sampler.h
+        source/integrators/bd_medium_path_tracer.h
+        source/records/path.h
+        source/records/path_vertex.h
 )

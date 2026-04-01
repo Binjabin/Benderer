@@ -26,6 +26,20 @@ public:
     void add( shared_ptr<surface> surface ) {
         surfaces.push_back( surface );
         bbox = aabb( bbox, surface->bounding_box() );
+
+        if (get_count() == 0) {
+            m_origin = surface->origin();
+            m_local_furthest_point = surface->local_furthest_point();
+        }
+        else {
+            vec3 offset = surface->origin() - m_origin;
+            double dist = offset.length();
+            double new_rad = (1.0 / 2.0) * (dist + m_local_furthest_point + surface->local_furthest_point());
+            m_origin = m_origin + (1.0 / dist) * (new_rad - m_local_furthest_point) * offset;
+            m_local_furthest_point = new_rad;
+        }
+
+        m_global_furthest_point = std::max(m_global_furthest_point, surface->global_furthest_point());
         set_count(get_count() + surface->get_count());
     }
 
@@ -68,8 +82,6 @@ public:
 
         return false;
     }
-
-    aabb bounding_box() const override { return bbox; }
 
     double pdf_value(const point3& origin, const vec3& direction) const override {
         auto weight = 1.0 / surfaces.size();
@@ -140,6 +152,20 @@ public:
 
     }
 
+    aabb bounding_box() const override { return bbox; }
+
+    double global_furthest_point() const override {
+        return m_global_furthest_point;
+    }
+
+    double local_furthest_point() const override {
+        return m_local_furthest_point;
+    }
+
+    vec3 origin() const override {
+        return m_origin;
+    }
+
 private:
     //The probability a flux based sample selected item i out of the list
     double get_discrete_flux_pdf(int i) const {
@@ -149,6 +175,10 @@ private:
     }
 
     aabb bbox;
+
+    point3 m_origin;
+    double m_local_furthest_point;
+    double m_global_furthest_point;
 };
 
 #endif //BENDERER_SURFACE_LIST_H

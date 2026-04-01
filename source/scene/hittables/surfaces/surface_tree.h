@@ -47,6 +47,14 @@ public:
             right = make_shared<surface_tree_node>( surfaces, mid, end );
         }
 
+        //Bounding sphere
+        vec3 offset = left->origin() - right->origin();
+        double dist = offset.length();
+        double new_rad = (1.0 / 2.0) * (dist  + left->local_furthest_point() + right->local_furthest_point());
+        m_origin = left->origin() + (1.0 / dist) * (new_rad - left->local_furthest_point()) * offset;
+        m_local_furthest_point = new_rad;
+        m_global_furthest_point = std::max(right->global_furthest_point(), left->global_furthest_point());
+
         int count_sum = 0;
         double area_sum = 0;
         vec3 flux_sum = vec3(0,0,0);
@@ -121,10 +129,26 @@ public:
         return right->sample_light_over_flux(new_seed, running_prob * prob);
     }
 
+    double global_furthest_point() const override {
+        return m_global_furthest_point;
+    }
+
+    double local_furthest_point() const override {
+        return m_local_furthest_point;
+    }
+
+    vec3 origin() const override {
+        return m_origin;
+    }
+
 private:
     shared_ptr<surface> left;
     shared_ptr<surface> right;
     aabb bbox;
+
+    point3 m_origin;
+    double m_local_furthest_point;
+    double m_global_furthest_point;
 
     static bool box_compare( const shared_ptr<hittable> a, const shared_ptr<hittable> b, int axis_index ) {
         //compare by minimum of ranges
@@ -144,6 +168,8 @@ private:
     static bool box_z_compare( const shared_ptr<hittable> a, const shared_ptr<hittable> b ) {
         return box_compare( a, b, 2 );
     }
+
+
 };
 
 #endif //BENDERER_SURFACE_TREE_H

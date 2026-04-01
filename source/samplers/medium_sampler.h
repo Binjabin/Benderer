@@ -16,7 +16,7 @@ public:
         return max_component(c);
     }
 
-    static bool sample_distance(const ray& r, medium_intersections& intersections, interval t, medium_hit_rec& rec) {
+    static bool sample_distance(const ray& r, medium_intersections& intersections, const interval& t, medium_hit_rec& rec) {
 
         const auto slices = intersections.get_cropped_slices(t);
 

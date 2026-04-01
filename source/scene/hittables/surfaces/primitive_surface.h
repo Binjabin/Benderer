@@ -16,6 +16,8 @@ public:
         : m_shape(shape),  m_mat(mat) {
         set_count(1);
         bbox = m_shape->bounding_box();
+
+        m_furthest_point = m_shape->furthest_point();
     }
 
     void compute_properties() override {
@@ -64,11 +66,25 @@ public:
 
     aabb bounding_box() const override { return bbox; }
 
+    point3 origin() const override {
+        return point3(0,0,0);
+    }
+
+    double global_furthest_point() const override {
+        return m_furthest_point;
+    }
+
+    double local_furthest_point() const override {
+        return m_furthest_point;
+    }
+
 private:
     bool m_is_explicit_light = false;
     shared_ptr<shape> m_shape;
     shared_ptr<surface_material> m_mat;
     aabb bbox;
+    point3 m_origin;
+    double m_furthest_point;
 
 
 };

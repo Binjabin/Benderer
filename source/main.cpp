@@ -1,6 +1,6 @@
 #include "benderer.h"
 #include "image/image_info_library.h"
-#include "integrators/simple_path_tracer.h"
+#include "integrators/is_path_tracer.h"
 
 #include "scene/scene.h"
 #include "scene/scene_library.h"
@@ -12,20 +12,22 @@
 #include "integrators/mis_medium_path_tracer.h"
 #include "integrators/rr_medium_path_tracer.h"
 #include "integrators/simple_medium_path_tracer.h"
+#include "integrators/simple_path_tracer.h"
 #include "scene/hittables/surfaces/surface_tree.h"
 
 int main() {
 
-    scene our_scene = scene_library::cornell_ball();
+    scene our_scene = scene_library::random_balls();
     our_scene.finalize();
-    image_info info = image_info_library::large_high();
+    image_info info = image_info_library::small_high();
+    auto itgr = simple_path_tracer(info.max_depth());
     //auto itgr = rtw_model();
     //auto itgr = mips_model(info.max_depth(), 2, 16);
     //auto itgr = simple_medium_path_tracer(info.max_depth());
     int rr_depth = (info.max_depth() * 3) / 4;
     //auto itgr = rr_medium_path_tracer(info.max_depth(), rr_depth);
     //auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
-    auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
+    //auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
 
     camera cam = our_scene.m_cam;
     world world = our_scene.m_world;

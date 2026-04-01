@@ -21,7 +21,7 @@ public:
 
     // Correctly override integrator::ray_color (const-correct signature)
     color ray_color(const ray &r, int depth, const world& world) const override {
-        path_state p_state = initial_path_state();
+        path_state p_state = path_state::initial_path_state();
         path_result res = path_trace(r, world, p_state);
 
         return res.radiance_from_path;
@@ -41,7 +41,7 @@ private:
         //---------------------------------------
         // Terminate if our throughput becomes 0 (or close)
         if (max_component(p_state.overall_throughput) < epsilon) {
-            return empty_path_result();
+            return path_result::empty_path_result();
         }
 
         //---------------------------------------
@@ -58,7 +58,7 @@ private:
 
         //Check for media up to first surface
         medium_intersections medium_recs;
-        bool intersect_medium = world.m_mediums->medium_hit(r, medium_interval, medium_recs);
+        bool intersect_medium = world.m_media->medium_hit(r, medium_interval, medium_recs);
 
         medium_hit_rec medium_rec;
         bool hit_medium = false;
@@ -81,7 +81,7 @@ private:
             }
 
             color res = col_from_sky * media_transmittance;
-            return color_path_result(res);
+            return path_result::color_path_result(res);
         }
 
         //Sampled media hit up to first surface so any media hit will hit before surface
@@ -99,7 +99,7 @@ private:
             // Terminate due to max depth termination!
 
             if (p_state.depth + 1 >= m_max_depth) {
-                return color_path_result((direct + emittance) * medium_rec.m_transmittance);
+                return path_result::color_path_result((direct + emittance) * medium_rec.m_transmittance);
             }
 
             //---------------------------------------
@@ -108,14 +108,14 @@ private:
             if (p_state.depth >= m_rr_start_depth) {
                 const double p = rr_prob.clamp(max_component(p_state.overall_throughput));
                 double u = random_double();
-                if (u > p) return color_path_result((direct + emittance) * medium_rec.m_transmittance);
+                if (u > p) return path_result::color_path_result((direct + emittance) * medium_rec.m_transmittance);
                 p_state.overall_throughput /= p;
             }
 
             //---------------------------------------
             // Terminate due to absorb event!
             if (!medium_rec.m_is_scatter) {
-                return color_path_result(emittance * medium_rec.m_transmittance);
+                return path_result::color_path_result(emittance * medium_rec.m_transmittance);
             }
 
             //---------------------------------------
@@ -160,6 +160,8 @@ private:
         //---------------------------------------
         // Get surface emittance
 
+        //TODO: This part isn't correct now. We aren't downweighting for MIS at the right place. Better than nothing though..
+        //TODO: Only truly fixed with bidirectional path tracing!
         color surface_emittance = rec.m_mat->emission(rec.m_intersection);
         if (rec.m_is_explicit_light && p_state.last_bounce_used_nee) {
             const double light_pdf_w = direct_light_sampler::pdf_w(world, r.origin(), r.direction());
@@ -180,19 +182,19 @@ private:
         // We have a max depth. Terminate if the next sample exceeds that depth.
         if (p_state.depth + 1 >= m_max_depth) {
             color res = (surface_emittance + direct) * media_transmittance;
-            return color_path_result(res);
+            return path_result::color_path_result(res);
         }
 
         //---------------------------------------
         // Otherwise, calculate ray "scatter". Either absorb ray (just return emittance, no more bounces) or calculate the scatter direction
 
         surface_scatter_rec srec;
-        bool scattered = rec.m_mat->scatter(rec.m_intersection, r.direction(), srec);
+        bool scattered = rec.m_mat->scatter_is(rec.m_intersection, r.direction(), srec);
 
         //If we don't scatter, then we exit early
         if (!scattered) {
             color res = (surface_emittance + direct) * media_transmittance ;
-            path_result no_scatter = color_path_result(res);
+            path_result no_scatter = path_result::color_path_result(res);
             return no_scatter;
         }
 
@@ -208,6 +210,8 @@ private:
         out_result.radiance_from_path = from_surface;
         out_result.terminated_on_light = out_result.terminated_on_light || rec.m_is_explicit_light;
 
+
+        /*
         if (max_component(from_surface) > 10.0) {
             std::clog << "HIGH depth=" << p_state.depth
                       << " emittance=" << max_component(surface_emittance)
@@ -219,12 +223,13 @@ private:
                         << " bsdf_pdf=" << srec.w_pdf
                       << std::endl;
         }
+        */
 
         return out_result;
     }
 
     path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const surface_scatter_rec& srec, const surface_hit_rec& rec, const bool used_nee) const {
-        path_result indirect_res = empty_path_result();
+        path_result indirect_res = path_result::empty_path_result();
         path_state child_state = p_state;
         child_state.depth++;
         child_state.last_bounce_used_nee = used_nee;
@@ -241,7 +246,7 @@ private:
         else {
             vec3 scatter_dir = srec.s_ray.direction();
             //If pdf is 0 or close, stop. Generated impossible sample. Probably shouldn't happen!
-            if (srec.w_pdf <= epsilon) return empty_path_result();
+            if (srec.w_pdf <= epsilon) return path_result::empty_path_result();
 
             //If a volume, this is meaningless, just carry on
             double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
@@ -271,7 +276,7 @@ private:
         for (int i = 0; i < m_direct_samples; i++) {
             local_light_sample ls;
             //If we fail to sample, leave
-            if (!direct_light_sampler::sample(world, p, ls)) break;
+            if (!direct_light_sampler::sample_from_point(world, p, ls)) break;
 
             //TODO: Move to seperate method?
             //Cast shadow ray until just before surface
@@ -283,7 +288,7 @@ private:
                 //Path to light not blocked by surfaces, do media
                 color shadow_transmittance = colors::white;
                 medium_intersections shadow_medium_intersections;
-                bool shadow_hit_medium = world.m_mediums->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
+                bool shadow_hit_medium = world.m_media->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
                 if (shadow_hit_medium) {
                     shadow_transmittance = medium_sampler::transmittance_homogeneous(shadow_ray, shadow_medium_intersections, shadow_ray_t);
                 }
@@ -333,7 +338,7 @@ private:
         for (int i = 0; i < m_direct_samples; i++) {
             local_light_sample ls;
             //If we fail to sample, leave
-            if (!direct_light_sampler::sample(world, p, ls)) break;
+            if (!direct_light_sampler::sample_from_point(world, p, ls)) break;
 
             //Cast shadow ray until just before surface
             ray shadow_ray = ray(p, ls.m_direction);
@@ -344,7 +349,7 @@ private:
                 //Path to light not blocked by surfaces, do media
                 color shadow_transmittance = colors::white;
                 medium_intersections shadow_medium_intersections;
-                bool shadow_hit_medium = world.m_mediums->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
+                bool shadow_hit_medium = world.m_media->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
                 if (shadow_hit_medium) {
                     shadow_transmittance = medium_sampler::transmittance_homogeneous(shadow_ray, shadow_medium_intersections, shadow_ray_t);
                 }
@@ -387,29 +392,6 @@ private:
 
         return direct / m_direct_samples;
 
-    }
-
-    path_state initial_path_state() const {
-        path_state p_state;
-        //Here depth starts from 0 and counts upwards
-        p_state.depth = 0;
-        p_state.overall_throughput = colors::white;
-        p_state.prev_bsdf_pdf = 1.0;
-        p_state.last_bounce_used_nee = false;
-        return p_state;
-    }
-
-    path_result color_path_result(color radiance) const {
-        path_result res = empty_path_result();
-        res.radiance_from_path = radiance;
-        return res;
-    }
-
-    path_result empty_path_result() const {
-        path_result out_result;
-        out_result.radiance_from_path = color(0,0,0);
-        out_result.terminated_on_light = false;
-        return out_result;
     }
 
     double power_heuristic(double a, double b) const {

@@ -37,6 +37,13 @@ struct environment_light_sample {
     }
 };
 
+struct light_ray_sample {
+    color m_radiance;
+    double m_pdf_w;
+    ray m_ray;
+    bool m_is_env_light;
+};
+
 struct surface_light_sample {
     color m_radiance;
     point3 m_light_p;
@@ -56,7 +63,7 @@ struct surface_light_sample {
         return (o - m_light_p).length_squared();
     }
 
-    double pdf_w(point3 from) const {
+    double pdf_w(const point3& from) const {
         double dist2 = squared_distance(from);
         if (dist2 <= epsilon) return 0.0;
         double cos_theta = dot(m_normal, -direction(from));
@@ -64,12 +71,16 @@ struct surface_light_sample {
         return m_pdf_A * dist2 / cos_theta;
     }
 
-    double geometry_term(point3 from) const {
+    double geometry_term(const point3& from) const {
         double dist2 = squared_distance(from);
         if (dist2 <= epsilon) return 0.0;
-        double cos_theta = dot(m_normal, -direction(from));
+        double cos_theta = cos_term(-direction(from));
         if (cos_theta <= epsilon) return 0;
         return (cos_theta / dist2);
+    }
+
+    double cos_term(const vec3& dir) const {
+        return dot(m_normal, dir);
     }
 
     local_light_sample to_local_sample(point3 from) const {
@@ -82,6 +93,8 @@ struct surface_light_sample {
         res.m_is_env_light = false;
         return res;
     }
+
+    
 };
 
 

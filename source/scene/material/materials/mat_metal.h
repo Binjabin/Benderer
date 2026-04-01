@@ -20,6 +20,10 @@ public:
         return uninit;
     }
 
+    bool scatter_is(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
+        return scatter(i, in, srec);
+    } 
+
     bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
         vec3 unit_in = unit_vector( in );
         vec3 reflected = reflect( unit_in, i.m_normal );

@@ -25,6 +25,15 @@ public:
         m_count = count;
     }
 
+    //Origin in world space
+    virtual point3 origin() const = 0;
+
+    //Radius of bounding sphere from world origin
+    virtual double global_furthest_point() const = 0;
+
+    //Radius of bounding sphere from it's origin
+    virtual double local_furthest_point() const = 0;
+
 private:
     int m_count = 0;
 

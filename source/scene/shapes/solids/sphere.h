@@ -128,6 +128,10 @@ public:
         return unit_vector(p);
     }
 
+    double furthest_point() const override {
+        return radius;
+    }
+
 private:
     double radius;
 

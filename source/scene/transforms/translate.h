@@ -23,6 +23,10 @@ public:
         return (p + offset);
     }
 
+    point3 transform_point(const point3 &p) const override {
+        return (p - offset);
+    }
+
     point3 reverse_transform_normal(const vec3 &n) const override {
         return n;
     }

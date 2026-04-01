@@ -29,6 +29,11 @@
 			}
 		]
 	},
+	"codemodelVersion" : 
+	{
+		"major" : 2,
+		"minor" : 9
+	},
 	"compileGroups" : 
 	[
 		{
@@ -163,7 +168,10 @@
 				75,
 				76,
 				77,
-				78
+				78,
+				79,
+				80,
+				81
 			]
 		}
 	],
@@ -367,7 +375,7 @@
 		},
 		{
 			"backtrace" : 1,
-			"path" : "source/integrators/simple_path_tracer.h",
+			"path" : "source/integrators/is_path_tracer.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -564,6 +572,21 @@
 		{
 			"backtrace" : 1,
 			"path" : "source/samplers/direct_light_sampler.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/integrators/bd_medium_path_tracer.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/path.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "source/records/path_vertex.h",
 			"sourceGroupIndex" : 1
 		}
 	],

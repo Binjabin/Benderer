@@ -13,9 +13,10 @@
 class primitive_medium : public medium {
 public:
     primitive_medium(std::shared_ptr<solid> boundary, std::shared_ptr<medium_material> mat)
-        : m_boundary(boundary), m_mat(mat){
+        : m_boundary(boundary), m_mat(mat) {
         set_count(1);
         m_bbox = m_boundary->bounding_box();
+        m_furthest_point = boundary->furthest_point();
     }
 
     //Object functions
@@ -62,10 +63,23 @@ public:
         //Nothing to do
     }
 
+    point3 origin() const override {
+        return point3(0,0,0);
+    }
+
+    double global_furthest_point() const override {
+        return m_furthest_point;
+    }
+
+    double local_furthest_point() const override {
+        return m_furthest_point;
+    }
+    
 private:
     shared_ptr<solid> m_boundary;
     shared_ptr<medium_material> m_mat;
     aabb m_bbox;
+    double m_furthest_point;
 };
 
 

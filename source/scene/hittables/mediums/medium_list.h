@@ -30,6 +30,21 @@ public:
     void add( shared_ptr<medium> medium ) {
         mediums.push_back( medium );
         bbox = aabb( bbox, medium->bounding_box() );
+
+        if (get_count() == 0) {
+            m_origin = medium->origin();
+            m_local_furthest_point = medium->local_furthest_point();
+        }
+        else {
+            vec3 offset = medium->origin() - m_origin;
+            double dist = offset.length();
+            double new_rad = (1.0 / 2.0) * (dist + m_local_furthest_point + medium->local_furthest_point());
+            m_origin = m_origin + (1.0 / dist) * (new_rad - m_local_furthest_point) * offset;
+            m_local_furthest_point = new_rad;
+        }
+
+        m_global_furthest_point = std::max(m_global_furthest_point, medium->global_furthest_point());
+
         set_count(get_count() + medium->get_count());
     }
 
@@ -59,8 +74,25 @@ public:
         return bbox;
     }
 
+    double global_furthest_point() const override {
+        return m_global_furthest_point;
+    }
+
+    double local_furthest_point() const override {
+        return m_local_furthest_point;
+    }
+
+    vec3 origin() const override {
+        return m_origin;
+    }
+
 private:
     aabb bbox;
+    //TODO: Could improve by averaging?
+    point3 m_origin = point3(0,0,0);
+    double m_local_furthest_point = 0;
+    double m_global_furthest_point = 0;
+
 };
 
 #endif //BENDERER_MEDIUM_LIST_H

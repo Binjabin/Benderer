@@ -184,29 +184,6 @@ inline vec3 exp( const vec3& v ) {
     return vec3(x, y, z);
 }
 
-/*
-inline vec3 random_unit_vector() {
-    while ( true ) {
-        auto p = vec3::random( -1, 1 );
-        auto len_sq = p.length_squared();
-        if ( 1e-160 < len_sq && len_sq <= 1 ) {
-            return p / sqrt( len_sq );
-        }
-    }
-}
-
-
-inline vec3 random_on_hemisphere( const vec3& normal ) {
-    vec3 on_unit_sphere = random_unit_vector();
-    if ( dot( on_unit_sphere, normal ) > 0.0 ) {
-        return on_unit_sphere;
-    }
-    else {
-        return -on_unit_sphere;
-    }
-}
-*/
-
 inline vec3 reflect( const vec3& v, const vec3& n ) {
     return v - 2 * dot( v, n ) * n;
 }
@@ -223,7 +200,7 @@ inline vec3 random_unit_vector() {
     const double r2 = random_double();
 
     const double phi = 2.0 * pi * r1;
-    const double z = 1.0 - 2.0 * r1;
+    const double z = 1.0 - 2.0 * r2;
     const double r = std::sqrt( std::max(0.0, 1.0 - z * z) );
 
     const double x = std::cos( phi ) * r;

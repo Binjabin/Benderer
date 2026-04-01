@@ -34,7 +34,7 @@ public:
             double g = double_buf[i*3 + 1];
             double b = double_buf[i*3 + 2];
 
-            // clamp then gamma
+            //clamp
             r = std::clamp(r, 0.0, 1.0);
             g = std::clamp(g, 0.0, 1.0);
             b = std::clamp(b, 0.0, 1.0);
@@ -51,7 +51,7 @@ public:
         stbi_write_png(name, m_width, m_height, 3, byte_buffer.data(), stride);
     }
 
-    std::string extention() override {
+    std::string file_extention() override {
         return ".png";
     }
 

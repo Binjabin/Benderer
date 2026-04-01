@@ -12,6 +12,11 @@ public:
     transformed_surface(shared_ptr<surface> object, shared_ptr<transform> transform)
         : m_surface(object), m_transform(transform) {
         bbox = m_transform->transform_bbox(m_surface->bounding_box());
+
+        m_origin = m_transform->transform_point( object->origin());
+        m_local_furthest_point = object->local_furthest_point();
+
+        m_global_furthest_point = m_origin.length() + m_local_furthest_point;
     }
 
 
@@ -60,10 +65,26 @@ public:
         return bbox;
     }
 
+    double global_furthest_point() const override {
+        return m_global_furthest_point;
+    }
+
+    double local_furthest_point() const override {
+        return m_local_furthest_point;
+    }
+
+    vec3 origin() const override {
+        return m_origin;
+    }
+
 private:
     shared_ptr<surface> m_surface;
     shared_ptr<transform> m_transform;
     aabb bbox;
+
+    double m_global_furthest_point;
+    double m_local_furthest_point;
+    point3 m_origin;
 };
 
 #endif //BENDERER_TRANSFORMED_H

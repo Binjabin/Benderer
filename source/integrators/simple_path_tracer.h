@@ -85,29 +85,25 @@ private:
         path_state child_state = p_state;
         child_state.depth++;
         if (srec.is_delta) {
-
-            //prev bsdf is meaningless for specular. Just keep sensible.
-            child_state.prev_bsdf_pdf = 1.0;
-
-            //attenuation is like the throughput of spec surfaces
+            //----------------------------------------
+            // We didn't sample a direction, so our throughput is just the bsdf value.
+            // No cos term as it is considered to be "absorbed" into the bsdf for delta materials 
             child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
             indirect_res = path_trace(srec.s_ray, world, child_state);
             indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf;
         }
         else {
+            //----------------------------------------
+            // Our sample is over a uniform hemisphere, so our pdf is just 1/2pi.
+            // The cosine term is the geometry term for the material
             vec3 scatter_dir = srec.s_ray.direction();
-            //If pdf is 0 or close, stop. Generated impossible sample. Probably shouldn't happen!
-            if (srec.w_pdf <= epsilon) return empty_path_result();
-
-            //If a volume, this is meaningless, just carry on
-            //TODO: We had volume cos-theta stuff here. We handle this differently now!
             double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
-            //Throughput at this point (from a scattered direction, out at a ray direction)
-            color throughput = srec.bsdf * cos_theta / srec.w_pdf;
+            double pdf = 1.0 / (2.0 * pi);
+            color throughput = srec.bsdf * cos_theta / pdf;
 
-            child_state.prev_bsdf_pdf = srec.w_pdf;
-            child_state.overall_throughput = throughput * child_state.overall_throughput;
-
+            //----------------------------------------
+            // Keep track of overall throughput, to terminate paths with tiny contributions early
+            child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
             indirect_res = path_trace(srec.s_ray, world, child_state);
 
             indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;

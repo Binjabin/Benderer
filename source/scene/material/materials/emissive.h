@@ -26,6 +26,10 @@ public:
         return uninit;
     }
 
+    bool scatter_is(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
+        return false;
+    }
+
     bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
         return false;
     }

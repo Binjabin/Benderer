@@ -11,7 +11,7 @@ class image_writer {
 public:
     virtual ~image_writer() = default;
     virtual void write(const std::string& filename, const std::vector<double>& double_buf) const = 0;
-    virtual std::string extention() = 0;
+    virtual std::string file_extention() = 0;
 };
 
 #endif //BENDERER_IMAGE_MAKER_H

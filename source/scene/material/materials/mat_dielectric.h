@@ -18,6 +18,10 @@ public:
         return uninit;
     }
 
+    bool scatter_is(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
+        return scatter(i, in, srec);
+    } 
+
     bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
         srec.bsdf = color( 1.0, 1.0, 1.0 );
 
@@ -45,6 +49,8 @@ public:
 
         return true;
     }
+
+
 
     color emission(const intersection& i) const override {
         return color(0, 0, 0);

@@ -27,7 +27,7 @@ public:
         return cos_theta * inv_pi;
     }
 
-    bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
+    bool scatter_is(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
         cosine_pdf scatter_pdf = cosine_pdf( i.m_normal );
         pdf_rec prec;
         scatter_pdf.sample(prec);
@@ -39,6 +39,19 @@ public:
 
         return true;
     }
+
+    bool scatter(const intersection& i, const vec3& in, surface_scatter_rec& srec) override {
+        hemisphere_pdf scatter_pdf = hemisphere_pdf( i.m_normal );
+        pdf_rec prec;
+        scatter_pdf.sample(prec);
+
+        srec.s_ray = ray(i.get_p() + prec.direction * epsilon, prec.direction, i.get_time());
+        srec.bsdf = bsdf(i, in, srec.s_ray.direction());
+        srec.is_delta = false;
+
+        return true;
+    }
+    
 
     color emission(const intersection& i) const override {
         return color(0, 0, 0);

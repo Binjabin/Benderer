@@ -31,5 +31,8 @@ public:
     virtual double pdf_A_value(const point3& p) const = 0;
 
     virtual vec3 get_normal(const point3& p) const = 0;
+
+    //Radius of bounding sphere
+    virtual double furthest_point() const = 0;
 };
 #endif //BENDERER_SHAPE_H

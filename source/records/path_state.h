@@ -17,5 +17,16 @@ struct path_state {
 
     //So we can check if we did direct sampling at the last bounce
     bool last_bounce_used_nee = false;
+
+    static path_state initial_path_state() {
+        path_state p_state;
+        //Here depth starts from 0 and counts upwards
+        p_state.depth = 0;
+        p_state.overall_throughput = colors::white;
+        p_state.prev_bsdf_pdf = 1.0;
+        p_state.last_bounce_used_nee = false;
+        return p_state;
+    }
+
 };
 #endif //BENDERER_PATH_STATE_H

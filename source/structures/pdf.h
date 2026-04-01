@@ -39,6 +39,27 @@ public:
     bool trivial() const override { return false; }
 };
 
+class hemisphere_pdf : public pdf {
+public:
+    hemisphere_pdf(const vec3& normal) : n(normal) {
+    }
+
+    double value(const vec3& direction) const override {
+        return 1.0 / (2.0 * pi);
+    }
+
+    void sample(pdf_rec& rec) const override {
+        auto d = random_on_hemisphere(n);
+        rec.direction = d;
+        rec.pdf = value(d);
+    }
+
+    bool trivial() const override { return false; }
+
+private:
+    vec3 n;
+};
+
 class cosine_pdf : public pdf {
 public:
     cosine_pdf(const vec3& w) : uvw(w) {
