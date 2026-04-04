@@ -23,13 +23,13 @@ int main() {
     image_info info = image_info_library::micro_sol();
 
     //auto itgr = simple_path_tracer(info.max_depth());
-    auto itgr = simple_medium_path_tracer(info.max_depth());
+    //auto itgr = simple_medium_path_tracer(info.max_depth());
 
     //auto itgr = rtw_model();
     //auto itgr = mips_model(info.max_depth(), 2, 16);
     //auto itgr = simple_medium_path_tracer(info.max_depth());
     int rr_depth = (info.max_depth() * 3) / 4;
-    //auto itgr = rr_medium_path_tracer(info.max_depth(), rr_depth);
+    auto itgr = rr_medium_path_tracer(info.max_depth(), rr_depth);
     //auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
     //auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
 

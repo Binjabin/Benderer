@@ -14,8 +14,19 @@ public:
         m_albedo = sigma_s / m_sigma_t;
     }
 
-    medium_mat_constant(color albedo, double density, color emission)
-        : medium_mat_constant(albedo, color(density, density, density), emission) {}
+    medium_mat_constant(color col, double intensity, double frosting_amount) {
+        double safe_r = std::max(epsilon, col[0]);
+        double safe_g = std::max(epsilon, col[1]);
+        double safe_b = std::max(epsilon, col[2]);
+
+        m_sigma_a = intensity * color(-std::log(safe_r), -std::log(safe_g), -std::log(safe_b));
+
+        m_sigma_s = color(frosting_amount, frosting_amount, frosting_amount);
+
+        m_sigma_t = m_sigma_a + m_sigma_s;
+        m_albedo = m_sigma_s / m_sigma_t;
+        m_emission = color(0,0,0);
+    }
 
     color sigma_a(const point3& p) const override {
         return m_sigma_a;

@@ -113,12 +113,6 @@ private:
             }
 
             //---------------------------------------
-            // Terminate due to absorb event!
-            if (!medium_rec.m_is_scatter) {
-                return path_result::color_path_result(emittance * medium_rec.m_transmittance);
-            }
-
-            //---------------------------------------
             // Otherwise scatter in the medium!
             // First calculate scatter direction
             medium_scatter_rec srec;

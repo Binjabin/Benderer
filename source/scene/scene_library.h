@@ -300,7 +300,7 @@ public:
         surfaces.add( light );
 
         medium_list mediums;
-        auto frosted_mat = make_shared<medium_mat_constant>(colors::black, colors::blue * 0.01, colors::black);
+        auto frosted_mat = make_shared<medium_mat_constant>(colors::blue, 0.04, 0.0 );
         auto frosted = object_library::make_sphere_medium(point3( 190, 90, 190 ), 90, frosted_mat);
         mediums.add(frosted);
 
