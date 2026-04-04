@@ -166,6 +166,15 @@ public:
         return m_origin;
     }
 
+    std::vector<shared_ptr<surface>> flatten() const override {
+        std::vector<shared_ptr<surface>> flattened;
+        for (const auto& surface : surfaces) {
+            auto child = surface ->flatten();
+            flattened.insert(flattened.end(), child.begin(), child.end());
+        }
+        return flattened;
+    }
+
 private:
     //The probability a flux based sample selected item i out of the list
     double get_discrete_flux_pdf(int i) const {

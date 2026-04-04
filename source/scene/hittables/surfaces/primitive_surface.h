@@ -32,9 +32,11 @@ public:
         m_is_explicit_light = is_light;
     }
 
-    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
+    bool surface_hit( const ray& r, interval r_t, surface_hit_rec& rec ) const override {
+        if (bounding_box().hit(r, r_t) == false) return false;
+
         intersection isect;
-        bool h = m_shape->intersect(r, ray_t, isect);
+        bool h = m_shape->intersect(r, r_t, isect);
         if(!h) { return false; }
 
         rec.m_intersection = isect;
@@ -45,9 +47,10 @@ public:
         return h;
     }
 
-    bool surface_hit_check(const ray &r, interval ray_t) const override {
+    bool surface_hit_check(const ray &r, interval r_t) const override {
+        if (bounding_box().hit(r, r_t) == false) return false;
         intersection isect;
-        bool h = m_shape->intersect_check(r, ray_t);
+        bool h = m_shape->intersect_check(r, r_t);
         return h;
     }
 
@@ -76,6 +79,12 @@ public:
 
     double local_furthest_point() const override {
         return m_furthest_point;
+    }
+
+    std::vector<shared_ptr<surface>> flatten() const override {
+        std::vector<shared_ptr<surface>> flattened;
+        flattened.push_back(make_shared<primitive_surface>(*this));
+        return flattened;
     }
 
 private:

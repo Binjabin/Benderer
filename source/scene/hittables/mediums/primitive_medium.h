@@ -25,6 +25,8 @@ public:
     }
 
     bool medium_hit(const ray &r, const interval& r_t, medium_intersections& rec) const override {
+        if (bounding_box().hit(r, r_t) == false) return false;
+
         bool start_inside = m_boundary->contains(r.origin());
         bool intersected = start_inside;
 
@@ -70,6 +72,12 @@ public:
 
     double local_furthest_point() const override {
         return m_furthest_point;
+    }
+
+    std::vector<shared_ptr<medium>> flatten() const override {
+        std::vector<shared_ptr<medium>> flattened;
+        flattened.push_back(make_shared<primitive_medium>(*this));
+        return flattened;
     }
     
 private:

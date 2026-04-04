@@ -16,6 +16,7 @@ public:
 
     virtual bool medium_hit(const ray& r, const interval& ray_t, medium_intersections& rec) const = 0;
 
+    virtual std::vector<shared_ptr<medium>> flatten() const = 0;
 };
 
 #endif //BENDERER_MEDIUM_H

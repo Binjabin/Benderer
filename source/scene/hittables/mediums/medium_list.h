@@ -85,9 +85,17 @@ public:
         return m_origin;
     }
 
+    std::vector<shared_ptr<medium>> flatten() const override {
+        std::vector<shared_ptr<medium>> flattened;
+        for (const auto& medium : mediums) {
+            auto child = medium ->flatten();
+            flattened.insert(flattened.end(), child.begin(), child.end());
+        }
+        return flattened;
+    }
+
 private:
     aabb bbox;
-    //TODO: Could improve by averaging?
     point3 m_origin = point3(0,0,0);
     double m_local_furthest_point = 0;
     double m_global_furthest_point = 0;

@@ -50,7 +50,19 @@ public:
         //Nothing to do!
     }
 
+    std::vector<shared_ptr<medium>> flatten() const override {
+        std::vector<shared_ptr<medium>> flattened;
 
+        auto child_flattened = m_medium->flatten();
+
+        for (auto& child : child_flattened) {
+            flattened.push_back(
+                make_shared<transformed_medium>(child, m_transform)
+            );
+        }
+
+        return flattened;
+    }
 
 private:
     shared_ptr<medium> m_medium;

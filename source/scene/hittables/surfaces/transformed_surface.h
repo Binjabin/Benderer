@@ -77,6 +77,22 @@ public:
         return m_origin;
     }
 
+    std::vector<shared_ptr<surface>> flatten() const override {
+        std::vector<shared_ptr<surface>> flattened;
+
+        auto child_flattened = m_surface->flatten();
+
+        for (auto& child : child_flattened) {
+            flattened.push_back(
+                make_shared<transformed_surface>(child, m_transform)
+            );
+        }
+
+        return flattened;
+    }
+
+
+
 private:
     shared_ptr<surface> m_surface;
     shared_ptr<transform> m_transform;

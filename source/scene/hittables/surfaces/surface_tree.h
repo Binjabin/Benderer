@@ -14,7 +14,10 @@
 //acceleration structure for handling lots of objects in sub-linear time
 class surface_tree_node : public surface {
 public:
-    surface_tree_node( shared_ptr<surface_list> list ) : surface_tree_node( list->surfaces, 0, list->surfaces.size() ) {
+
+    surface_tree_node( shared_ptr<surface> root ) {
+        std::vector<shared_ptr<surface>> flattened = root->flatten();
+        *this = surface_tree_node( flattened, 0, flattened.size() );
     }
 
     //construct leaf node. list of hittable objects
@@ -141,6 +144,13 @@ public:
         return m_origin;
     }
 
+    std::vector<shared_ptr<surface>> flatten() const override {
+        std::vector<shared_ptr<surface>> flattened;
+        flattened.insert(flattened.end(), left->flatten().begin(), left->flatten().end());
+        flattened.insert(flattened.end(), right->flatten().begin(), right->flatten().end());
+        return flattened;
+    }
+
 private:
     shared_ptr<surface> left;
     shared_ptr<surface> right;
@@ -150,26 +160,24 @@ private:
     double m_local_furthest_point;
     double m_global_furthest_point;
 
-    static bool box_compare( const shared_ptr<hittable> a, const shared_ptr<hittable> b, int axis_index ) {
+    static bool box_compare( const shared_ptr<surface> a, const shared_ptr<surface> b, int axis_index ) {
         //compare by minimum of ranges
         auto a_axis_interval = a->bounding_box().axis_interval( axis_index );
         auto b_axis_interval = b->bounding_box().axis_interval( axis_index );
         return a_axis_interval.min < b_axis_interval.min;
     }
 
-    static bool box_x_compare( const shared_ptr<hittable> a, const shared_ptr<hittable> b ) {
+    static bool box_x_compare( const shared_ptr<surface> a, const shared_ptr<surface> b ) {
         return box_compare( a, b, 0 );
     }
 
-    static bool box_y_compare( const shared_ptr<hittable> a, const shared_ptr<hittable> b ) {
+    static bool box_y_compare( const shared_ptr<surface> a, const shared_ptr<surface> b ) {
         return box_compare( a, b, 1 );
     }
 
-    static bool box_z_compare( const shared_ptr<hittable> a, const shared_ptr<hittable> b ) {
+    static bool box_z_compare( const shared_ptr<surface> a, const shared_ptr<surface> b ) {
         return box_compare( a, b, 2 );
     }
-
-
 };
 
 #endif //BENDERER_SURFACE_TREE_H

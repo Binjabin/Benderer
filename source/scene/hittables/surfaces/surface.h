@@ -32,6 +32,8 @@ public:
         return luminance(m_flux_rgb);
     }
 
+    virtual std::vector<shared_ptr<surface>> flatten() const = 0;
+
 protected:
     void set_flux_rgb(const vec3& flux_rgb) {
         m_flux_rgb = flux_rgb;
