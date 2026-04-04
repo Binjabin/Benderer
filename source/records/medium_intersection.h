@@ -8,46 +8,60 @@
 #include <memory>
 #include "interaction.h"
 
-//tell compiler we handle what this is later
-class medium_material;
+#include "../scene/material/medium_material.h"
 
-class medium_intersection {
+//The intersection along a ray with a medium
+struct medium_intersection {
+    medium_intersection(shared_ptr<medium_material> mat, interval t, int priority)
+        : m_mat(std::move(mat)), m_t(t), m_excluder_priority(priority) {}
+
+    shared_ptr<medium_material> m_mat;
+    interval m_t;
+    int m_excluder_priority;
+};
+
+//A sub-segment of a ray with some media on it
+class medium_slice {
 public:
-    ~medium_intersection() = default;
-    medium_intersection(shared_ptr<medium_material> mat, interval med_t)
-        : m_mat(mat){
-        m_interval_t = med_t;
-    }
-
-    shared_ptr<medium_material> m_mat;
-    interval m_interval_t;
-};
-
-struct medium_boundary_event {
-    shared_ptr<medium_material> m_mat;
-    double m_t;
-    bool m_enter;
-};
-
-struct medium_slice {
     std::vector<shared_ptr<medium_material>> m_mats;
     interval m_interval;
+
+    medium_slice(std::vector<shared_ptr<medium_material>> ms, interval t)
+        : m_mats(std::move(ms)), m_interval(t) {
+
+        sigma_t = colors::black;
+        sigma_s = colors::black;
+        emission = colors::black;
+        for (const auto& mat : m_mats) {
+            //Arbitrary location since volumes are homogeneous!
+            sigma_t += mat->sigma_t(vec3(0.0, 0.0, 0.0));
+            sigma_s += mat->sigma_s(vec3(0.0, 0.0, 0.0));
+            emission += mat->emission(vec3(0.0, 0.0, 0.0));
+        }
+        optical_thickness = sigma_t * m_interval.size();
+
+        is_empty = m_mats.empty();
+    }
+
+    color sigma_s;
+    color sigma_t;
+    color emission;
+    color optical_thickness;
+    bool is_empty;
 };
 
 class medium_intersections {
 public:
-    medium_intersections(){
-    }
+    medium_intersections() = default;
 
-    void add(shared_ptr<medium_material> mat, interval med_t) {
-        auto new_rec = medium_intersection(mat, med_t);
-        m_recs.push_back(new_rec);
+    void add(shared_ptr<medium_material> mat, interval med_t, int excluder_priority) {
+        m_intersections.emplace_back(std::move(mat), med_t, excluder_priority);
         sliced = false;
     }
 
     void fuse(const medium_intersections& other) {
-        m_recs.reserve(m_recs.size() + other.m_recs.size());
-        m_recs.insert(m_recs.end(), other.m_recs.begin(), other.m_recs.end());
+        if (other.m_intersections.empty()) return;
+        m_intersections.insert(m_intersections.end(), other.m_intersections.begin(), other.m_intersections.end());
         sliced = false;
     }
 
@@ -58,110 +72,120 @@ public:
         return m_slices;
     }
 
-    std::vector<medium_slice> get_cropped_slices(interval t) {
+    void get_cropped_slices(interval t, std::vector<medium_slice>& out_slices){
+        //Make the slices if we haven't already.
         if (!sliced) {
             make_slices();
         }
 
-        std::vector<medium_slice> result;
+        out_slices.clear();
 
-        if (m_slices.empty()) return result;
+        for (const auto& slice : m_slices) {
+            if (slice.m_interval.max <= t.min || slice.m_interval.min >= t.max) continue;
 
-        int count = m_slices.size();
+            double new_min = std::max(slice.m_interval.min, t.min);
+            double new_max = std::min(slice.m_interval.max, t.max);
 
-        int i = -1;
-        double current_slice_end_t = -infinity;
-
-        for (medium_slice slice : m_slices) {
-            interval slice_t = slice.m_interval;
-            double new_min = slice_t.min;
-            double new_max = slice_t.max;
-
-            if (slice_t.max < t.min || slice_t.min > t.max) {
-                //Slice isn't in region, skip
-                continue;
+            if (new_max > new_min) {
+                out_slices.push_back({slice.m_mats, interval(new_min, new_max)});
             }
-            // Clamp slice to requested interval: [max(slice.min, t.min), min(slice.max, t.max)]
-            new_min = (new_min < t.min) ? t.min : new_min;
-            new_max = (new_max > t.max) ? t.max : new_max;
-
-            interval new_interval = interval(new_min, new_max);
-            medium_slice new_slice = slice;
-            new_slice.m_interval = new_interval;
-            result.push_back(new_slice);
         }
-
-        return result;
     }
 
-    std::vector<medium_intersection> m_recs;
+    std::vector<medium_intersection> m_intersections;
 
 private:
     bool sliced = false;
     std::vector<medium_slice> m_slices;
 
+    struct event {
+        double m_t;
+        bool m_enter;
+        const medium_intersection* m_rec;
+
+        bool operator<(const event& other) const {
+            if (std::abs(m_t - other.m_t) > epsilon)
+                return m_t < other.m_t;
+            //We take enters before exits
+            return m_enter > other.m_enter;
+        }
+    };
+
+    std::vector<event> m_events;
+    std::vector<const medium_intersection*> m_active;
+
     void make_slices() {
-        m_slices = std::vector<medium_slice>();
-
-        std::vector<medium_boundary_event> events;
-        events.reserve(m_recs.size() * 2);
-
-        for (const medium_intersection& rec : m_recs) {
-            auto in = medium_boundary_event(rec.m_mat, rec.m_interval_t.min, true);
-            auto out = medium_boundary_event(rec.m_mat, rec.m_interval_t.max, false);
-            events.push_back(in);
-            events.push_back(out);
+        m_slices.clear();
+        if (m_intersections.empty()) {
+            sliced = true;
+            return;
         }
 
-        std::sort(events.begin(), events.end(),
-        [](const medium_boundary_event& a, const medium_boundary_event& b) {
-            if (a.m_t != b.m_t) { return a.m_t < b.m_t; } ;
-            return a.m_enter && !b.m_enter; ;
-        });
+        //Convert the intersections into ordered slices
+        m_events.clear();
+        for (const auto& rec : m_intersections) {
+            m_events.push_back({rec.m_t.min, true, &rec});
+            m_events.push_back({rec.m_t.max, false, &rec});
+        }
+        std::sort(m_events.begin(), m_events.end());
 
-        std::vector<std::shared_ptr<medium_material>> active;
+        //Go through the events tracking active media
+        m_active.clear();
+        const int event_count = m_events.size();
 
-        int i = 0;
-        double start_t = -infinity;
-        double end_t = -infinity;
+        for (size_t i = 0; i < event_count; ) {
+            double start_t = m_events[i].m_t;
 
-        while (i < events.size()) {
-            int j = i;
-
-            start_t = events[i].m_t;
-
-            while (j < events.size() && events[j].m_t <= start_t + epsilon) {
-                //Consider this the same t
-                auto e = events[j];
-
-                if (e.m_enter) {
-                    active.push_back(e.m_mat);
+            // Process all events at current t
+            while (i < event_count && (std::abs(m_events[i].m_t - start_t) <= epsilon)) {
+                const event& ev = m_events[i];
+                if (ev.m_enter) {
+                    //Add to active media
+                    m_active.push_back(ev.m_rec);
                 }
                 else {
-                    auto it = std::find(active.begin(), active.end(), e.m_mat);
-                    active.erase(it);
+                    //Find and remove the active media
+                    auto it = std::find(m_active.begin(), m_active.end(), ev.m_rec);
+                    //Order doesn't matter so we can swap + pop
+                    if (it != m_active.end()) {
+                        std::swap(*it, m_active.back());
+                        m_active.pop_back();
+                    }
                 }
-
-                j++;
+                i++;
             }
 
-            if (j < events.size()) {
-                end_t = events[j].m_t;
-            }
-            else {
-                end_t = infinity;
-            }
-            auto slice = medium_slice(active, interval(start_t, end_t));
+            //If we have items and a valid interval
+            if (i < event_count && !m_active.empty()) {
+                //End interval at start of next one
+                double end_t = m_events[i].m_t;
 
-            m_slices.push_back(slice);
+                if (end_t > start_t + epsilon) {
+                    //Find highest priority in intersection list
+                    int max_priority = std::numeric_limits<int>::min();
+                    for (const auto* rec : m_active) {
+                        if (rec->m_excluder_priority > max_priority) {
+                            max_priority = rec->m_excluder_priority;
+                        }
+                    }
 
-            start_t = end_t;
-            i = j;
+                    //choose everything of equal priority
+                    std::vector<shared_ptr<medium_material>> filtered_mats;
+                    for (const auto* rec : m_active) {
+                        if (rec->m_excluder_priority == max_priority && rec->m_mat) {
+                            filtered_mats.push_back(rec->m_mat);
+                        }
+                    }
+
+                    //Add all the unfiltered lists and intervals.
+                    if (!filtered_mats.empty()) {
+                        m_slices.push_back({std::move(filtered_mats), interval(start_t, end_t)});
+                    }
+                }
+            }
         }
-
         sliced = true;
     }
-
 
 };
 

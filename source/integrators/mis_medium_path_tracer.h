@@ -122,16 +122,13 @@ private:
             // Otherwise scatter in the medium!
             // First calculate scatter direction
             medium_scatter_rec srec;
-            medium_rec.m_mat->scatter(-r.direction(), srec);
+            medium_rec.m_mat->scatter_is(-r.direction(), srec);
             ray sray = ray(p, srec.s_dir);
 
             //---------------------------------------
             // Then throughput
 
-            const double pdf_scalar = medium_rec.m_transmittance_pdf_scalar;
-            const double sigma_s_scalar = medium_rec.m_sigma_s_scalar;
-            const double denom = std::max(epsilon, (pdf_scalar * sigma_s_scalar));
-            color throughput = medium_rec.m_transmittance * medium_rec.m_sigma_s * (1.0 / denom);
+            color throughput = medium_rec.m_transmittance * medium_rec.m_mat->sigma_s(p);
             throughput *= (srec.phase_pdf / srec.w_pdf);
 
             //---------------------------------------
@@ -202,7 +199,10 @@ private:
         // If our ray is scattered, we take another step, an indirect sample
         // Generate a scatter direction, and calculate lighting from that direction down our ray
 
-        path_result indirect_res = get_indirect_result(r, world, p_state, srec, rec, used_nee_here);
+        path_state child_state = p_state;
+        child_state.overall_throughput *= media_transmittance;
+
+        path_result indirect_res = get_indirect_result(r, world, child_state, srec, rec, used_nee_here);
 
         out_result = indirect_res;
         color from_surface = out_result.radiance_from_path + surface_emittance + direct;
@@ -290,7 +290,7 @@ private:
                 medium_intersections shadow_medium_intersections;
                 bool shadow_hit_medium = world.m_media->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
                 if (shadow_hit_medium) {
-                    shadow_transmittance = medium_sampler::transmittance_homogeneous(shadow_ray, shadow_medium_intersections, shadow_ray_t);
+                    shadow_transmittance = medium_sampler::uninterupted_transmittance(shadow_ray, shadow_medium_intersections, shadow_ray_t);
                 }
 
                 //Geometry term for material
@@ -351,11 +351,11 @@ private:
                 medium_intersections shadow_medium_intersections;
                 bool shadow_hit_medium = world.m_media->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
                 if (shadow_hit_medium) {
-                    shadow_transmittance = medium_sampler::transmittance_homogeneous(shadow_ray, shadow_medium_intersections, shadow_ray_t);
+                    shadow_transmittance = medium_sampler::uninterupted_transmittance(shadow_ray, shadow_medium_intersections, shadow_ray_t);
                 }
 
                 const color light_emission = ls.m_radiance;
-                const color phase = mat->phase(interaction, -r.direction(), shadow_ray.direction());
+                const double phase = mat->phase(interaction, -r.direction(), shadow_ray.direction());
 
                 //The chance we sampled this direction (based on picking lights)
                 const double light_pdf_w = ls.m_pdf_w;
@@ -366,7 +366,7 @@ private:
                 color contrib = light_emission * phase * shadow_transmittance / light_pdf_w;
 
                 //Apply MIS
-                double phase_pdf = mat->phase_pdf(interaction, -r.direction(), shadow_ray.direction());
+                double phase_pdf = mat->phase(interaction, -r.direction(), shadow_ray.direction());
                 double w = power_heuristic(m_direct_samples * light_pdf_w, phase_pdf);
 
                 color add = contrib * w;

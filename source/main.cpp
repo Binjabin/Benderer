@@ -11,16 +11,20 @@
 #include "image/post/post_process.h"
 #include "integrators/mis_medium_path_tracer.h"
 #include "integrators/rr_medium_path_tracer.h"
+#include "integrators/is_medium_path_tracer.h"
 #include "integrators/simple_medium_path_tracer.h"
 #include "integrators/simple_path_tracer.h"
 #include "scene/hittables/surfaces/surface_tree.h"
 
 int main() {
 
-    scene our_scene = scene_library::random_balls();
+    scene our_scene = scene_library::cornell_ball();
     our_scene.finalize();
-    image_info info = image_info_library::small_high();
-    auto itgr = simple_path_tracer(info.max_depth());
+    image_info info = image_info_library::micro_sol();
+
+    //auto itgr = simple_path_tracer(info.max_depth());
+    auto itgr = simple_medium_path_tracer(info.max_depth());
+
     //auto itgr = rtw_model();
     //auto itgr = mips_model(info.max_depth(), 2, 16);
     //auto itgr = simple_medium_path_tracer(info.max_depth());

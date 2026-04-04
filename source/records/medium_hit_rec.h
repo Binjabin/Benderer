@@ -10,7 +10,7 @@ class medium_material;
 class medium_hit_rec {
 public:
     medium_hit_rec()
-        : m_interaction(interaction()){
+        : m_interaction(interaction()), m_transmittance(colors::white), m_is_scatter(false), m_mat(nullptr) {
     }
 
     ~medium_hit_rec() = default;
@@ -33,12 +33,9 @@ public:
     //Is this event a scatter event (or instead an absorption event)
     bool m_is_scatter;
 
-    //The scalar transmittance used by the sampling dist
-    double m_transmittance_pdf_scalar = 1.0;
+    double m_mat_pdf;
 
-    //The scatter properties of the scatter event (if we did scatter)
-    color m_sigma_s = colors::black;
-    double m_sigma_s_scalar = 0.0;
+    color m_emission;
 
     //The material we scattered off
     shared_ptr<medium_material> m_mat = nullptr;

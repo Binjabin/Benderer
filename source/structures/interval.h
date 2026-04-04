@@ -49,6 +49,11 @@ public:
         return cropped;
     }
 
+    interval crop(interval c) {
+        interval cropped(clamp(c.min),clamp(c.max));
+        return cropped;
+    }
+
     static const interval empty, universe;
 };
 

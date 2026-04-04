@@ -4,6 +4,7 @@
 
 #ifndef BENDERER_MEDIUM_SAMPLER_H
 #define BENDERER_MEDIUM_SAMPLER_H
+#include <complex>
 #include <memory>
 
 #include "../scene/material/medium_material.h"
@@ -16,166 +17,179 @@ public:
         return max_component(c);
     }
 
+    static color slice_transmittance(const medium_slice& slice) {
+        return exp(-slice.optical_thickness);
+    }
+
+    static color slice_transmittance(const medium_slice& slice, double t) {
+        return exp(-slice.sigma_t * t);
+    }
+
+    static double slice_transmittance_for_channel(const medium_slice& slice, int channel) {
+        return std::exp(-slice.optical_thickness[channel]);
+    }
+
+    static double slice_transmittance_for_channel(const medium_slice& slice, double t, int channel) {
+        return std::exp(-slice.sigma_t[channel] * t);
+    }
+
     static bool sample_distance(const ray& r, medium_intersections& intersections, const interval& t, medium_hit_rec& rec) {
 
-        const auto slices = intersections.get_cropped_slices(t);
+        std::vector<medium_slice> slices;
+        intersections.get_cropped_slices(t, slices);
 
-        color transmittance = colors::white;
-        double transmittance_pdf_scalar = 1.0;
+        //Calculate total optical thickness
+        color total_optical_thickness = colors::black;
+        for (const medium_slice& slice : slices) {
+            total_optical_thickness += slice.optical_thickness;
+        }
+        double sum = total_optical_thickness[0] + total_optical_thickness[1] + total_optical_thickness[2];
+        //No thickness!
+        if (sum <= 0.0) {
+            rec.m_transmittance = colors::white;
+            rec.m_is_scatter = false;
+            rec.m_mat = nullptr;
+            rec.m_mat_pdf = 1.0;
+            return false;
+        }
+
+        double r_prop = total_optical_thickness[0] / sum;
+        double g_prop = total_optical_thickness[1] / sum;
+        double b_prop = total_optical_thickness[2] / sum;
+
+        //Randomly select hero channel
+        double c_r = random_double();
+        int h = -1;
+        if (c_r < r_prop) h = 0;
+        else if (c_r < r_prop + g_prop) h = 1;
+        else h = 2;
+
+        //Store the probability of each channel given survival up to this point
+        double r_prob_accum = r_prop;
+        double g_prob_accum = g_prop;
+        double b_prob_accum = b_prop;
+
+        //Select optical thickness budget from unit Poisson
+        double c_d = random_double();
+        double budget = -std::log(1 - c_d);
+
+        color throughput = colors::white;
 
         for (const medium_slice& slice : slices) {
             //Skip empty slices
+            if (slice.is_empty) continue;
 
-            const auto& mats = slice.m_mats;
-            if (mats.empty()) continue;
+            const interval slice_t = slice.m_interval;
+            const double d_t = slice_t.size();
+            double sigma_t_h = slice.sigma_t[h];
 
-
-            const interval w_t = slice.m_interval;
-            const double t0 = w_t.min;
-            const double t1 = w_t.max;
-
-            double cursor_t = t0;
-            point3 p = r.at(cursor_t);
-
-            //Per-Slice co-efficients
-            color sigma_t_color_total = colors::black;
-            double sigma_t_scalar_total = 0.0;
-            double sigma_s_scalar_total = 0.0;
-            double sigma_maj_scalar_total = 0.0;
-
-            for (const shared_ptr<medium_material>& mat : mats) {
-                const color sigma_t_i = mat->sigma_t(p);
-                sigma_t_color_total += sigma_t_i;
-                sigma_t_scalar_total += sigma_scalar(sigma_t_i);
-                sigma_s_scalar_total += sigma_scalar(mat->sigma_s(p));
-                sigma_maj_scalar_total += sigma_scalar(mat->sigma_maj());
+            //If we have very low density on hero channel, assume no scatter
+            double t = d_t + epsilon;
+            if (sigma_t_h > epsilon) {
+                t = budget / sigma_t_h;
             }
 
-            //No extinction in this slice: Skip
-            if (sigma_t_scalar_total <= 0.0 || sigma_maj_scalar_total <= 0.0) {
-                // No extinction in this slice; nothing happens, just continue
-                continue;
+            if (t > d_t) {
+                //Have traversed whole segment
+                budget -= d_t * sigma_t_h;
+                throughput *= slice_transmittance(slice);
+
+                double r_transmittance = slice_transmittance_for_channel(slice, 0);
+                double g_transmittance = slice_transmittance_for_channel(slice, 1);
+                double b_transmittance = slice_transmittance_for_channel(slice, 2);
+
+                double weight = 1.0 / (r_prob_accum * r_transmittance + g_prob_accum * g_transmittance + b_prob_accum * b_transmittance);
+
+                throughput *= (weight);
+
+                //update probabilities
+                r_prob_accum *= slice_transmittance_for_channel(slice, 0) * weight;
+                g_prob_accum *= slice_transmittance_for_channel(slice, 1) * weight;
+                b_prob_accum *= slice_transmittance_for_channel(slice, 2) * weight;
             }
+            else {
+                //Scatter event!
+                vec3 p = r.at(slice_t.min + t);
 
-            if (sigma_s_scalar_total <= 0.0) {
-                const double dist = t1 - cursor_t;
-                transmittance *= exp(-sigma_t_color_total * dist);
-                transmittance_pdf_scalar *= std::exp(-sigma_t_scalar_total * dist);
-                continue;
-            }
-
-            while (true) {
-                //Sample free-flight distance
-                const double u = random_double();
-                const double dt = (-std::log(1 - u)) / sigma_maj_scalar_total;
-
-                if (cursor_t + dt > t1) {
-                    //If we exit slice, advance to slice end and continue
-                    const double dist = t1 - cursor_t;
-                    transmittance *= exp(-sigma_t_color_total * dist);
-                    transmittance_pdf_scalar *= std::exp(-sigma_t_scalar_total * dist);
-                    break;
+                double total_sigma_s = 0.0;
+                for (const auto& mat : slice.m_mats) {
+                    total_sigma_s += mat->sigma_s(p)[h];
                 }
 
-                //Otherwise we carry on in slice until where our event occurs!
-                cursor_t += dt;
-                p = r.at(cursor_t);
-                transmittance *= exp(-sigma_t_color_total * dt);
-                transmittance_pdf_scalar *= std::exp(-sigma_t_scalar_total * dt);
+                shared_ptr<medium_material> chosen_mat = nullptr;
+                double chosen_sigma_s_h = 0.0;
+                double mat_pdf = 1.0;
 
-                //What sort of event?
-                const double u2 = random_double();
-                const double accept_prob = sigma_t_scalar_total / sigma_maj_scalar_total;
+                if (total_sigma_s > epsilon) {
+                    double rand = random_double() * total_sigma_s;
 
-                //If we pass this check we have a null collision, keep marching
-                if (u2 >= accept_prob) continue;
+                    double cum_w = 0.0;
+                    for (const auto& mat : slice.m_mats) {
+                        double w = mat->sigma_s(p)[h];
+                        cum_w += w;
+                        if (rand < cum_w) {
+                            chosen_mat = mat;
+                            chosen_sigma_s_h = w;
+                            mat_pdf = chosen_sigma_s_h / total_sigma_s;
+                            break;
+                        }
+                    }
 
-                //Otherwise we have a REAL event. Choose the medium that caused it
-                std::vector<double> sigma_t_weights;
-                sigma_t_weights.reserve(mats.size());
-                double sigma_t_sum = 0.0;
-                for (const auto& mat : mats) {
-                    const double w = sigma_scalar(mat->sigma_t(p));
-                    sigma_t_weights.push_back(w);
-                    sigma_t_sum += w;
-                }
-                int chosen = 0;
-                if (sigma_t_sum > 0.0) {
-                    double pick = random_double() * sigma_t_sum;
-                    while (pick > sigma_t_weights[chosen]) {
-                        pick -= sigma_t_weights[chosen];
-                        ++chosen;
+                    if (!chosen_mat) {
+                        chosen_mat = slice.m_mats.back();
+                        chosen_sigma_s_h = chosen_mat->sigma_s(p)[h];
+                        mat_pdf = chosen_sigma_s_h / total_sigma_s;
                     }
                 }
-                shared_ptr<medium_material> chosen_mat = mats[chosen];
 
-                //Choose scatter vs absorb for the chosen medium
-                const double sigma_t_chosen_scalar = sigma_scalar(chosen_mat->sigma_t(p));
-                const double sigma_s_chosen_scalar = sigma_scalar(chosen_mat->sigma_s(p));
-                const double p_scatter = (sigma_t_chosen_scalar > 0.0) ? (sigma_s_chosen_scalar / sigma_t_chosen_scalar) : 0.0;
+                throughput *= slice_transmittance(slice, t);
 
-                //Populate record
-                rec.set_t(cursor_t);
-                rec.set_p(p);
-                rec.m_transmittance = transmittance;
-                rec.m_transmittance_pdf_scalar = transmittance_pdf_scalar;
+                double r_transmittance = slice_transmittance_for_channel(slice, t, 0);
+                double g_transmittance = slice_transmittance_for_channel(slice, t, 1);
+                double b_transmittance = slice_transmittance_for_channel(slice, t, 2);
+
+                double weight = 1.0 / (
+                    slice.sigma_t[0] * r_transmittance * r_prob_accum +
+                    slice.sigma_t[1] * g_transmittance * g_prob_accum +
+                    slice.sigma_t[2] * b_transmittance * b_prob_accum
+                );
+
+                throughput *= weight;
+
+                rec.m_transmittance = throughput;
+                rec.m_is_scatter = (chosen_mat != nullptr);
                 rec.m_mat = chosen_mat;
-
-                const double u3 = random_double();
-                if (u3 < p_scatter) {
-                    rec.m_is_scatter = true;
-                    rec.m_sigma_s = chosen_mat->sigma_s(p);
-                    rec.m_sigma_s_scalar = sigma_scalar(rec.m_sigma_s);
-                }
-                else {
-                    rec.m_is_scatter = false;
-                }
+                rec.m_emission = slice.emission;
+                rec.set_p(p);
+                rec.set_t(slice_t.min + t);
+                rec.m_mat_pdf = mat_pdf;
 
                 return true;
             }
         }
 
-        //No event at all!
-
-        rec.m_transmittance = transmittance;
-        rec.m_transmittance_pdf_scalar = transmittance_pdf_scalar;
+        rec.m_transmittance = throughput;
         rec.m_is_scatter = false;
         rec.m_mat = nullptr;
+        rec.m_mat_pdf = 1.0;
+        rec.m_emission = colors::black;
 
         return false;
     }
 
-    //Calculate (Homogeneous) Transmittance along the ray
-    static color transmittance_homogeneous(const ray& r, medium_intersections& intersections, interval t) {
-        auto slices = intersections.get_cropped_slices(t);
-        color transmission = colors::white;
+    static color uninterupted_transmittance(const ray& r, medium_intersections& intersections, const interval& t) {
+        std::vector<medium_slice> slices;
+        intersections.get_cropped_slices(t, slices);
 
+        //Calculate total optical thickness
+        color total_optical_thickness = colors::black;
         for (const medium_slice& slice : slices) {
-
-            //Skip vacuums
-            if (slice.m_mats.empty()) continue;
-
-            interval w_t = slice.m_interval;
-            double dt = w_t.size();
-
-            //Since we are homogeneous, this is fine
-            point3 p = r.at(w_t.min);
-
-            color sigma_t_sum = colors::black;
-            for (auto& mat : slice.m_mats) {
-                sigma_t_sum += mat->sigma_t(p);
-            }
-
-            //If sigma_t is 0, transmittance is always 1!
-            if (sigma_scalar(sigma_t_sum) <= 0.0) continue;
-
-            //Calculate the beer-lambert based on this per-slice
-            color local_transmission = exp(-sigma_t_sum * dt);
-            transmission = transmission * local_transmission;
+            total_optical_thickness += slice.optical_thickness;
         }
-        
-        return transmission;
+
+        return exp(-total_optical_thickness);
     }
+
 };
 
 #endif //BENDERER_MEDIUM_SAMPLER_H

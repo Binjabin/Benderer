@@ -52,7 +52,6 @@ public:
         if (mediums.empty()) return false;
 
         bool hit_anything = false;
-        auto closest_so_far = ray_t.max;
 
         for (int i = 0; i < mediums.size(); i++) {
             auto medium = mediums[i];

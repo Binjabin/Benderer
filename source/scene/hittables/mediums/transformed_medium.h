@@ -33,9 +33,8 @@ public:
     }
 
     bool medium_hit(const ray& r, const interval& ray_t, medium_intersections& rec) const override {
+        //We keep intersection values as t values so don't need to worry about these for transformations
         ray offset_r = m_transform->transform_ray(r);
-
-        //Probability defers to sub-item here
         if ( !m_medium->medium_hit( offset_r, ray_t, rec ) ) {
             return false;
         }

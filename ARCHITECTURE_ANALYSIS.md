@@ -78,7 +78,7 @@ ray_color()
 ```
 
 #### B. `simple_medium_path_tracer` (Media Support)
-**Location**: [source/integrators/simple_medium_path_tracer.h](source/integrators/simple_medium_path_tracer.h)
+**Location**: [source/integrators/simple_medium_path_tracer.h](source/integrators/is_medium_path_tracer.h)
 
 **Purpose**: Extends baseline to handle volumetric media fully
 

@@ -20,11 +20,11 @@
 #include "shapes/solids/sphere.h"
 
 #include "material/surface_material.h"
-#include "material/materials/mat_lambertian.h"
-#include "material/materials/mat_dielectric.h"
-#include "material/materials/emissive.h"
-#include "material/materials/mat_metal.h"
-#include "material/medium_material/medium_mat_constant.h"
+#include "material/surface materials/mat_lambertian.h"
+#include "material/surface materials/mat_dielectric.h"
+#include "material/surface materials/emissive.h"
+#include "material/surface materials/mat_metal.h"
+#include "material/medium materials/medium_mat_constant.h"
 #include "skyboxes/gradient_skybox.h"
 #include "skyboxes/solid_color_skybox.h"
 
@@ -300,7 +300,7 @@ public:
         surfaces.add( light );
 
         medium_list mediums;
-        auto frosted_mat = make_shared<medium_mat_constant>(colors::blue, 0.01, colors::black);
+        auto frosted_mat = make_shared<medium_mat_constant>(colors::black, colors::blue * 0.01, colors::black);
         auto frosted = object_library::make_sphere_medium(point3( 190, 90, 190 ), 90, frosted_mat);
         mediums.add(frosted);
 

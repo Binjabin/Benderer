@@ -21,11 +21,11 @@ add_executable(Benderer source/main.cpp
         source/scene/texture/textures/tex_checker.h
         source/scene/texture/textures/tex_image.h
         source/scene/texture/textures/tex_noise.h
-        source/scene/material/materials/mat_lambertian.h
+        "source/scene/material/surface materials/mat_lambertian.h"
         unused_source/mat_isotropic.h
-        source/scene/material/materials/mat_dielectric.h
-        source/scene/material/materials/mat_metal.h
-        source/scene/material/materials/emissive.h
+        "source/scene/material/surface materials/mat_dielectric.h"
+        "source/scene/material/surface materials/mat_metal.h"
+        "source/scene/material/surface materials/emissive.h"
         source/scene/scene.h
         source/scene/scene_library.h
         source/image/image_info.h
@@ -71,10 +71,10 @@ add_executable(Benderer source/main.cpp
         unused_source/medium_mat_constant.h
         source/scene/hittables/mediums/medium_list.h
         source/scene/hittables/mediums/medium_tree.h
-        source/integrators/simple_medium_path_tracer.h
+        source/integrators/is_medium_path_tracer.h
         source/records/medium_scatter_rec.h
         source/scene/material/medium_material.h
-        source/scene/material/medium_material/medium_mat_constant.h
+        "source/scene/material/medium materials/medium_mat_constant.h"
         source/samplers/medium_sampler.h
         source/records/medium_hit_rec.h
         source/records/pdf_rec.h

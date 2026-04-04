@@ -12,8 +12,8 @@
 
 class primitive_medium : public medium {
 public:
-    primitive_medium(std::shared_ptr<solid> boundary, std::shared_ptr<medium_material> mat)
-        : m_boundary(boundary), m_mat(mat) {
+    primitive_medium(std::shared_ptr<solid> boundary, std::shared_ptr<medium_material> mat, int excluder_level = 0)
+        : m_boundary(boundary), m_mat(mat), m_excluder_level(excluder_level) {
         set_count(1);
         m_bbox = m_boundary->bounding_box();
         m_furthest_point = boundary->furthest_point();
@@ -26,38 +26,35 @@ public:
 
     bool medium_hit(const ray &r, const interval& r_t, medium_intersections& rec) const override {
         bool start_inside = m_boundary->contains(r.origin());
-        double start_t = r_t.min;
-        double after_entry_t = r_t.min;
+        bool intersected = start_inside;
 
-        if (!start_inside) {
-            intersection entry;
-            if (!m_boundary->intersect(r, r_t, entry)) {
-                return false;
+        interval remaining = r_t;
+
+        //We could start inside the medium, in which case we still need to record the time we spend inside
+        if (start_inside) {
+            if (!process_entry(r, remaining, rec)) {
+                //Done already. Never left first volume.
+                return true;
             }
-
-            start_t = entry.get_t();
-            after_entry_t = start_t + epsilon;
         }
 
-        //find exit
-        intersection exit;
-        //We clamp the upper end later
-        interval r2_t = interval(after_entry_t, infinity);
-        if (!m_boundary->intersect(r, r2_t, exit)) {
-            //Shouldn't happen!
-            return false;
+        //Now we are outside any intervals. Loop through sections of interval until we don't hit any
+        //Need to loop to support non-convex shapes!
+        intersection new_entry;
+        while (m_boundary->intersect(r, remaining, new_entry)) {
+            intersected = true;
+
+            remaining.min = new_entry.get_t();
+
+            if (!process_entry(r, remaining, rec)) {
+                //Done. Never this volume.
+                return true;
+            }
         }
 
-        interval medium_interval = interval(start_t, exit.get_t());
-        interval cropped = medium_interval.crop(r_t.min, r_t.max);
-
-        if (cropped.size() <= 0.0) {
-            return false;
-        }
-
-        rec.add(m_mat, cropped);
-        return true;
+        return intersected;
     }
+
 
     void compute_properties() override {
         //Nothing to do
@@ -78,8 +75,32 @@ public:
 private:
     shared_ptr<solid> m_boundary;
     shared_ptr<medium_material> m_mat;
+
+    //Excludes any volumes in the region of lower level
+    int m_excluder_level;
+
     aabb m_bbox;
     double m_furthest_point;
+
+
+    bool process_entry(const ray& r, interval& remaining, medium_intersections& rec) const {
+        interval exit_interval = remaining;
+        exit_interval.min += epsilon;
+
+        intersection exit;
+        if (!m_boundary->intersect(r, exit_interval, exit)) {
+            //Didn't exit and reached end of segment
+            rec.add(m_mat, remaining, m_excluder_level);
+            return false;
+        }
+
+        interval first_part = interval(remaining.min, exit.get_t());
+        rec.add(m_mat, first_part, m_excluder_level);
+
+        remaining.min = exit.get_t();
+        //Have exitted. More to process
+        return true;
+    }
 };
 
 

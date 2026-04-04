@@ -8,13 +8,14 @@
 
 class medium_mat_constant : public medium_material {
 public:
-    medium_mat_constant(color albedo, double density, color emission)
-        : m_albedo(albedo), m_density(density), m_emission(emission) {
-
-        m_sigma_a = density * (vec3(1.0, 1.0, 1.0) - albedo);
-        m_sigma_s = density * albedo;
-        m_sigma_t = m_sigma_a + m_sigma_s;
+    medium_mat_constant(color sigma_a, color sigma_s, color emission)
+        : m_sigma_a(sigma_a), m_sigma_s(sigma_s), m_emission(emission) {
+        m_sigma_t = sigma_a + sigma_s;
+        m_albedo = sigma_s / m_sigma_t;
     }
+
+    medium_mat_constant(color albedo, double density, color emission)
+        : medium_mat_constant(albedo, color(density, density, density), emission) {}
 
     color sigma_a(const point3& p) const override {
         return m_sigma_a;
@@ -40,7 +41,7 @@ public:
         return m_sigma_t;
     }
 
-    void scatter(const vec3& in_dir, medium_scatter_rec &srec) const override {
+    void scatter(const vec3 &in_dir, medium_scatter_rec &srec) const override {
         sphere_pdf d_pdf = sphere_pdf();
         pdf_rec prec;
         d_pdf.sample(prec);
@@ -50,11 +51,17 @@ public:
         srec.phase_pdf = 1.0 / (4.0 * pi);
     }
 
-    color phase(const interaction &isect, const vec3 &in, const vec3 &out) const override {
-        return m_albedo;
+    void scatter_is(const vec3& in_dir, medium_scatter_rec &srec) const override {
+        sphere_pdf d_pdf = sphere_pdf();
+        pdf_rec prec;
+        d_pdf.sample(prec);
+
+        srec.w_pdf = prec.pdf;
+        srec.s_dir = prec.direction;
+        srec.phase_pdf = 1.0 / (4.0 * pi);
     }
 
-    double phase_pdf(const interaction &isect, const vec3 &in, const vec3 &out) const override {
+    double phase(const interaction &isect, const vec3 &in, const vec3 &out) const override {
         return 1.0 / (4.0 * pi);
     }
 
