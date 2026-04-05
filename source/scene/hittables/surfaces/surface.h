@@ -8,7 +8,7 @@
 
 class surface : public hittable {
 public:
-    virtual bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const = 0;
+    virtual bool surface_hit( const ray& r, const interval& ray_t, surface_hit_rec& rec ) const = 0;
 
     virtual bool surface_hit_check( const ray& r, interval ray_t ) const = 0;
 
@@ -20,23 +20,23 @@ public:
         return m_surface_area;
     }
 
-    virtual color get_flux_rgb() const {
-        return m_flux_rgb;
+    virtual color get_flux() const {
+        return m_flux;
     }
 
     virtual double pdf_value(const point3& origin, const vec3& direction) const {
         return 0.0;
     }
 
-    virtual double get_flux_weight() const {
-        return luminance(m_flux_rgb);
+    virtual double get_flux_lum() const {
+        return luminance(m_flux);
     }
 
     virtual std::vector<shared_ptr<surface>> flatten() const = 0;
 
 protected:
     void set_flux_rgb(const vec3& flux_rgb) {
-        m_flux_rgb = flux_rgb;
+        m_flux = flux_rgb;
     }
 
     void set_surface_area(const double surface_area) {
@@ -45,7 +45,7 @@ protected:
 
 private:
     double m_surface_area = 0;
-    color m_flux_rgb = vec3(0, 0, 0);
+    color m_flux = vec3(0, 0, 0);
 };
 
 #endif //BENDERER_SURFACE_H

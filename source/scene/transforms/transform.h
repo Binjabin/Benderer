@@ -16,11 +16,11 @@ public:
 
     virtual point3 transform_point(const point3& p) const = 0;
 
-    virtual vec3 reverse_transform_normal(const vec3& n) const = 0;
+    virtual vec3 reverse_transform_direction(const vec3& n) const = 0;
 
     virtual aabb transform_bbox(const aabb& bbox) = 0;
 
-
+    virtual vec3 transform_direction(const vec3& direction) const = 0;
 
     virtual ~transform() = default;
 };

@@ -40,10 +40,16 @@ public:
         return point3( px, p.y(), pz );
     }
 
-    vec3 reverse_transform_normal(const vec3& normal) const override {
-        auto nx = cos_theta * normal.x() - sin_theta * normal.z();
-        auto nz = sin_theta * normal.x() + cos_theta * normal.z();
-        return vec3( nx, normal.y(), nz );
+    vec3 reverse_transform_direction(const vec3& direction) const override {
+        auto nx = cos_theta * direction.x() - sin_theta * direction.z();
+        auto nz = sin_theta * direction.x() + cos_theta * direction.z();
+        return vec3( nx, direction.y(), nz );
+    }
+
+    vec3 transform_direction(const vec3 &direction) const override {
+        auto nx = cos_theta * direction.x() + sin_theta * direction.z();
+        auto nz = sin_theta * direction.x() - cos_theta * direction.z();
+        return vec3( nx, direction.y(), nz );
     }
 
     aabb transform_bbox(const aabb &bbox) override {

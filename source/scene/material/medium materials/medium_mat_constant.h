@@ -11,7 +11,11 @@ public:
     medium_mat_constant(color sigma_a, color sigma_s, color emission)
         : m_sigma_a(sigma_a), m_sigma_s(sigma_s), m_emission(emission) {
         m_sigma_t = sigma_a + sigma_s;
-        m_albedo = sigma_s / m_sigma_t;
+        m_albedo = color(
+            m_sigma_t[0] > epsilon ? sigma_s[0] / m_sigma_t[0] : 0,
+            m_sigma_t[1] > epsilon ? sigma_s[1] / m_sigma_t[1] : 0,
+            m_sigma_t[2] > epsilon ? sigma_s[2] / m_sigma_t[2] : 0
+        );
     }
 
     medium_mat_constant(color col, double intensity, double frosting_amount) {
@@ -24,7 +28,11 @@ public:
         m_sigma_s = color(frosting_amount, frosting_amount, frosting_amount);
 
         m_sigma_t = m_sigma_a + m_sigma_s;
-        m_albedo = m_sigma_s / m_sigma_t;
+        m_albedo = color(
+            m_sigma_t[0] > epsilon ? m_sigma_s[0] / m_sigma_t[0] : 0,
+            m_sigma_t[1] > epsilon ? m_sigma_s[1] / m_sigma_t[1] : 0,
+            m_sigma_t[2] > epsilon ? m_sigma_s[2] / m_sigma_t[2] : 0
+        );
         m_emission = color(0,0,0);
     }
 
@@ -74,6 +82,10 @@ public:
 
     double phase(const interaction &isect, const vec3 &in, const vec3 &out) const override {
         return 1.0 / (4.0 * pi);
+    }
+
+    color average_radiance() const override {
+        return m_emission;
     }
 
 private:

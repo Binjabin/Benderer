@@ -24,7 +24,7 @@ public:
         if (m_mat) {
             double area = m_shape->surface_area();
             set_surface_area(area);
-            set_flux_rgb(pi * area * m_mat->get_radiance());
+            set_flux_rgb(pi * area * m_mat->average_radiance());
         }
     }
 
@@ -32,7 +32,7 @@ public:
         m_is_explicit_light = is_light;
     }
 
-    bool surface_hit( const ray& r, interval r_t, surface_hit_rec& rec ) const override {
+    bool surface_hit( const ray& r, const interval& r_t, surface_hit_rec& rec ) const override {
         if (bounding_box().hit(r, r_t) == false) return false;
 
         intersection isect;
@@ -47,19 +47,35 @@ public:
         return h;
     }
 
+    double pdf_value(const point3 &origin, const vec3 &direction) const override {
+        surface_hit_rec rec;
+        vec3 d = unit_vector(direction);
+        ray r(origin, d);
+        if (!surface_hit(r, interval(0, infinity), rec)) {
+            return 0.0;
+        }
+
+        const vec3 to_light = rec.get_p() - origin;
+        const double dist2 = to_light.length_squared();
+        if (dist2 <= epsilon) return 0.0;
+
+        const double cos_light = dot(rec.get_normal(), -d);
+        if (cos_light <= epsilon) return 0.0;
+
+        return rec.m_pdf_v * (dist2 / cos_light);
+    }
+
     bool surface_hit_check(const ray &r, interval r_t) const override {
         if (bounding_box().hit(r, r_t) == false) return false;
-        intersection isect;
         bool h = m_shape->intersect_check(r, r_t);
         return h;
     }
-
 
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
 
         vec3 p = m_shape->sample_over_surface();
         surface_light_sample result;
-        result.m_radiance = m_mat->get_radiance();
+        result.m_radiance = m_mat->average_radiance();
         result.m_light_p = p;
         result.m_normal = m_shape->get_normal(p);
         result.m_pdf_A = m_shape->pdf_A_value(p) * running_prob;

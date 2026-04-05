@@ -82,6 +82,11 @@ private:
 
             double mat_inv_pdf = 1.0 / medium_rec.m_mat_pdf;
 
+            if (!medium_rec.m_is_scatter) {
+                //Absorb event
+                return path_result::color_path_result(emittance * medium_rec.m_transmittance);
+            }
+
             //---------------------------------------
             // Otherwise scatter in the medium!
             // First calculate scatter direction

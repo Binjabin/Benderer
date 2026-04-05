@@ -41,6 +41,8 @@ public:
     virtual void scatter_is(const vec3& in_dir, medium_scatter_rec& srec) const = 0;
 
     virtual color sigma_maj() const = 0;
+
+    virtual color average_radiance() const = 0;
 };
 
 #endif //BENDERER_MEDIUM_MATERIAL_H

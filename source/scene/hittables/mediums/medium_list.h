@@ -65,8 +65,66 @@ public:
         return hit_anything;
     }
 
+    double pdf_value(const point3& origin, const vec3& direction) const override {
+        double total_flux = get_flux_lum();
+        if (total_flux <= 0.0) return 0.0;
+
+        auto sum = 0.0;
+        for (const auto& medium : mediums) {
+            double weight = medium->get_flux_lum() / total_flux;
+            sum += weight * medium->pdf_value( origin, direction );
+        }
+        return sum;
+    }
+
     void compute_properties() override {
-        //Nothing to do!
+
+        int sum_count = 0;
+        double sum_volume = 0;
+        vec3 sum_flux_rgb = vec3(0,0,0);
+
+        for (const auto& medium : mediums) {
+            medium->compute_properties();
+            sum_count += medium->get_count();
+            sum_volume += medium->get_volume();
+            sum_flux_rgb += medium->get_flux();
+        }
+
+        set_count(sum_count);
+        set_volume(sum_volume);
+        set_flux_rgb(sum_flux_rgb);
+    }
+
+    void set_explicit_light(bool is_light) override {
+        for (const auto& medium : mediums) {
+            medium->set_explicit_light(is_light);
+        }
+    }
+
+    volume_light_sample sample_light_over_flux(double seed, double running_prob) const override {
+        if (mediums.size() <= 0) {
+            throw std::runtime_error("No objects in hittable list");
+        }
+
+        auto total_flux = get_flux_lum();
+        auto sample = seed * total_flux;
+
+        double bottom = 0;
+        double top = mediums[0]->get_flux_lum();
+        double interval_range = top;
+        int i = 0;
+        while (top < sample && i + 1 < mediums.size()) {
+            top += mediums[i+1]->get_flux_lum();
+            bottom += interval_range;
+            interval_range = top - bottom;
+            i++;
+        }
+
+        //We end under a specific item
+        double new_seed = (sample - bottom) / interval_range;
+        double prob = interval_range / total_flux;
+        return mediums[i]->sample_light_over_flux(new_seed, running_prob * prob);
+
     }
 
     aabb bounding_box() const override {
@@ -84,6 +142,8 @@ public:
     vec3 origin() const override {
         return m_origin;
     }
+
+
 
     std::vector<shared_ptr<medium>> flatten() const override {
         std::vector<shared_ptr<medium>> flattened;

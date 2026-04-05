@@ -27,8 +27,12 @@ public:
         return (p - offset);
     }
 
-    point3 reverse_transform_normal(const vec3 &n) const override {
-        return n;
+    vec3 reverse_transform_direction(const vec3 &direction) const override {
+        return direction;
+    }
+
+    vec3 transform_direction(const vec3 &direction) const override {
+        return direction;
     }
 
     aabb transform_bbox(const aabb &bbox) override {

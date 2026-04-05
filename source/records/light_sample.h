@@ -97,5 +97,43 @@ struct surface_light_sample {
     
 };
 
+struct volume_light_sample {
+    color m_radiance;
+    point3 m_light_p;
+    double m_pdf_V;
+
+    //Direction from o to the light
+    vec3 direction(point3 o) const {
+        return unit_vector(m_light_p - o);
+    }
+
+    double distance(point3 o) const {
+        return (o - m_light_p).length();
+    }
+
+    double squared_distance(point3 o) const {
+        return (o - m_light_p).length_squared();
+    }
+
+    double pdf_w(const point3& from) const {
+        double dist2 = squared_distance(from);
+        if (dist2 <= epsilon) return 0.0;
+        return m_pdf_V * dist2;
+    }
+
+    local_light_sample to_local_sample(point3 from) const {
+        local_light_sample res;
+        res.m_radiance = m_radiance;
+        res.m_direction = direction(from);
+        res.m_pdf_w = pdf_w(from);
+        res.m_distance = distance(from);
+        res.m_geometry_term = 1.0;
+        res.m_is_env_light = false;
+        return res;
+    }
+
+
+};
+
 
 #endif //BENDERER_LIGHT_SAMPLE_H

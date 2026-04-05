@@ -47,20 +47,38 @@ public:
     }
 
     void compute_properties() override {
-        //Nothing to do!
+        if (m_medium){
+            m_medium->compute_properties();
+            set_count(m_medium->get_count());
+            set_volume(m_medium->get_volume());
+            set_flux_rgb(m_medium->get_flux());
+        }
+    }
+
+    void set_explicit_light(bool is_light) override {
+        m_medium->set_explicit_light(is_light);
+    }
+
+    volume_light_sample sample_light_over_flux(double seed, double running_prob) const override {
+        volume_light_sample child_sample = m_medium->sample_light_over_flux(seed, running_prob);
+        child_sample.m_light_p = m_transform->reverse_transform_point(child_sample.m_light_p);
+        return child_sample;
+    }
+
+    double pdf_value(const point3 &origin, const vec3 &direction) const override {
+        point3 p = m_transform->transform_point(origin);
+        vec3 d = m_transform->transform_direction(direction);
+        return m_medium->pdf_value(p, d);
     }
 
     std::vector<shared_ptr<medium>> flatten() const override {
         std::vector<shared_ptr<medium>> flattened;
-
         auto child_flattened = m_medium->flatten();
-
         for (auto& child : child_flattened) {
             flattened.push_back(
                 make_shared<transformed_medium>(child, m_transform)
             );
         }
-
         return flattened;
     }
 

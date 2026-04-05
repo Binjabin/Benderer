@@ -43,7 +43,7 @@ public:
         set_count(get_count() + surface->get_count());
     }
 
-    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
+    bool surface_hit( const ray& r, const interval& ray_t, surface_hit_rec& rec ) const override {
         surface_hit_rec temp_rec;
         bool hit_anything = false;
         auto closest_so_far = ray_t.max;
@@ -84,23 +84,17 @@ public:
     }
 
     double pdf_value(const point3& origin, const vec3& direction) const override {
-        auto weight = 1.0 / surfaces.size();
-        auto sum = 0.0;
+        double total_flux = get_flux_lum();
+        if (total_flux <= 0.0) return 0.0;
 
-        for (const auto& object : surfaces) {
-            sum += weight * object->pdf_value( origin, direction );
+        auto sum = 0.0;
+        for (const auto& surface : surfaces) {
+            double weight = surface->get_flux_lum() / total_flux;
+            sum += weight * surface->pdf_value( origin, direction );
         }
 
         return sum;
     }
-
-    /*
-    vec3 random(const point3& origin) const override {
-        auto int_size = int(surfaces.size());
-        auto obj = surfaces[random_int(0, int_size-1)];
-        return obj->random(origin);
-    }
-    */
 
     void compute_properties() override {
 
@@ -112,7 +106,7 @@ public:
             surface->compute_properties();
             sum_count += surface->get_count();
             sum_area += surface->get_surface_area();
-            sum_flux_rgb += surface->get_flux_rgb();
+            sum_flux_rgb += surface->get_flux();
         }
 
         set_count(sum_count);
@@ -131,15 +125,15 @@ public:
             throw std::runtime_error("No objects in hittable list");
         }
 
-        auto total_flux = get_flux_weight();
+        auto total_flux = get_flux_lum();
         auto sample = seed * total_flux;
 
         double bottom = 0;
-        double top = surfaces[0]->get_flux_weight();
+        double top = surfaces[0]->get_flux_lum();
         double interval_range = top;
         int i = 0;
         while (top < sample && i + 1 < surfaces.size()) {
-            top += surfaces[i+1]->get_flux_weight();
+            top += surfaces[i+1]->get_flux_lum();
             bottom += interval_range;
             interval_range = top - bottom;
             i++;
@@ -178,8 +172,8 @@ public:
 private:
     //The probability a flux based sample selected item i out of the list
     double get_discrete_flux_pdf(int i) const {
-        double total = get_flux_weight();
-        double p = surfaces[i]->get_flux_weight() / total;
+        double total = get_flux_lum();
+        double p = surfaces[i]->get_flux_lum() / total;
         return p;
     }
 

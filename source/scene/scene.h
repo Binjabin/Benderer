@@ -15,14 +15,14 @@ class scene {
 public:
     ~scene() = default;
 
-    scene( camera& cam, shared_ptr<surface> surfaces, shared_ptr<medium> mediums, shared_ptr<surface> lights, const shared_ptr<skybox> skybox)
-        : m_cam( cam ), m_world( surfaces, mediums, lights, skybox ){
+    scene( camera& cam, shared_ptr<surface> surfaces, shared_ptr<medium> mediums, shared_ptr<surface> surface_lights, shared_ptr<medium> volume_lights, const shared_ptr<skybox> skybox)
+        : m_cam( cam ), m_world( surfaces, mediums, surface_lights, volume_lights, skybox ){
     }
 
     void finalize() {
         m_world.m_surfaces->compute_properties();
-        m_world.m_lights->compute_properties();
-        m_world.m_lights->set_explicit_light(true);
+        m_world.m_surface_lights->compute_properties();
+        m_world.m_surface_lights->set_explicit_light(true);
     }
 
     void render(const std::string& filename, const image_info& info, const integrator& itgr, post_process& post, const image_writer& preview_writer, const image_writer& result_writer) {

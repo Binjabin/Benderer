@@ -8,8 +8,6 @@
 #include <algorithm>
 
 #include "medium.h"
-#include "surface.h"
-#include "surface_list.h"
 
 //acceleration structure for handling lots of objects in sub-linear time
 class medium_tree_node : public medium {
@@ -21,11 +19,11 @@ public:
     }
 
     //construct leaf node. list of hittable objects
-    medium_tree_node( std::vector<shared_ptr<medium>>& surfaces, size_t start, size_t end ) {
+    medium_tree_node( std::vector<shared_ptr<medium>>& media, size_t start, size_t end ) {
         //create a bounding box of all source items
         bbox = aabb::empty;
         for ( size_t object_index = start; object_index < end; object_index++ ) {
-            bbox = aabb(bbox, surfaces[object_index]->bounding_box());
+            bbox = aabb(bbox, media[object_index]->bounding_box());
         }
 
         //select random axis to sort along, and get function for sorting
@@ -35,19 +33,19 @@ public:
 
         //if there are 1 or 2 objects, just split them the obvious way, and make the subtrees just the objects
         if ( object_span == 1 ) {
-            left = right = surfaces[start];
+            left = right = media[start];
         }
         else if ( object_span == 2 ) {
-            left = surfaces[start];
-            right = surfaces[start + 1];
+            left = media[start];
+            right = media[start + 1];
         }
         else {
             //sort along some axis (from comparator)
-            std::sort( std::begin( surfaces ) + start, std::begin( surfaces ) + end, comparator );
+            std::sort( std::begin( media ) + start, std::end(media) + end, comparator );
             //then split in through the middle into left and right subtrees
             auto mid = start + object_span / 2;
-            left = make_shared<medium_tree_node>( surfaces, start, mid );
-            right = make_shared<medium_tree_node>( surfaces, mid, end );
+            left = make_shared<medium_tree_node>( media, start, mid );
+            right = make_shared<medium_tree_node>( media, mid, end );
         }
 
         //Bounding sphere
@@ -62,13 +60,13 @@ public:
         double area_sum = 0;
         vec3 flux_sum = vec3(0,0,0);
         for ( size_t i = start; i < end; i++ ) {
-            count_sum += surfaces[i]->get_count();
+            count_sum += media[i]->get_count();
         }
         set_count(count_sum);
     }
 
     //check if we hit any objects in the subtree
-    bool medium_hit( const ray& r, interval ray_t, medium_intersections& rec ) const override {
+    bool medium_hit( const ray& r, const interval& ray_t, medium_intersections& rec ) const override {
         if ( !bbox.hit( r, ray_t ) )
             return false;
 
@@ -76,8 +74,7 @@ public:
         bool hit_left = left->medium_hit( r, ray_t, l_rec );
 
         medium_intersections r_rec = medium_intersections();
-        interval right_ray_t = interval( ray_t.min, hit_left ? l_rec.t() : ray_t.max );
-        bool hit_right = right->medium_hit( r, right_ray_t, r_rec );
+        bool hit_right = right->medium_hit( r, ray_t, r_rec );
 
         if (!hit_left && !hit_right) return false;
 
@@ -98,6 +95,45 @@ public:
 
     vec3 origin() const override {
         return m_origin;
+    }
+
+    void compute_properties() override {
+        left->compute_properties();
+        right->compute_properties();
+        set_volume(left->get_volume() + right->get_volume());
+        set_flux_rgb(left->get_flux() + right->get_flux());
+    }
+
+    void set_explicit_light(bool is_light) override {
+        left->set_explicit_light(is_light);
+        right->set_explicit_light(is_light);
+    }
+
+    volume_light_sample sample_light_over_flux(double seed, double running_prob) const override {
+
+        double l_flux = left->get_flux_lum();
+        double r_flux = right->get_flux_lum();
+        double total_flux = l_flux + r_flux;
+        double sample = seed * total_flux;
+
+        if (sample < l_flux) {
+            auto new_seed = sample / l_flux;
+            double prob = l_flux / total_flux;
+            return left->sample_light_over_flux(new_seed, running_prob * prob);
+        }
+        auto new_seed = (sample - l_flux) / r_flux;
+        double prob = r_flux / total_flux;
+        return right->sample_light_over_flux(new_seed, running_prob * prob);
+    }
+
+    double pdf_value(const point3 &origin, const vec3 &direction) const override {
+        double lflux = left->get_flux_lum();
+        double rflux = right->get_flux_lum();
+        double total_flux = lflux + rflux;
+        if (total_flux <= 0.0) return 0.0;
+
+        return (lflux / total_flux) * left->pdf_value(origin, direction) +
+            (rflux / total_flux) * right->pdf_value(origin, direction);
     }
 
     std::vector<shared_ptr<medium>> flatten() const override {

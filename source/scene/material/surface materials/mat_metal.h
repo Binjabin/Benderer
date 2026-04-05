@@ -43,7 +43,7 @@ public:
         return colors::black;
     }
 
-    color get_radiance() const override {
+    color average_radiance() const override {
         return colors::black;
     }
 

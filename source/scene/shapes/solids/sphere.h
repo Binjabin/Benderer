@@ -132,11 +132,26 @@ public:
         return radius;
     }
 
+    double volume() const override {
+        return 4.0 / 3.0 * pi * radius * radius * radius;
+    }
+
+    point3 sample_over_volume() const override {
+        vec3 dir = random_unit_vector();
+        double r = radius * std::cbrt(random_double());
+        return dir * r;
+    }
+
+    double pdf_V_value(const point3& p) const override {
+        return 1 / ((4.0 / 3.0) * pi * radius3);
+    }
+
 private:
     double radius;
 
     //for efficiency
     double radius2 = radius * radius;
+    double radius3 = radius * radius * radius;
 
     static void get_sphere_uv( const point3& p, double& u, double& v ) {
         // p: a given point on the sphere of radius one

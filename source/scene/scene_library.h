@@ -50,11 +50,18 @@ public:
 
         medium_list mediums;
 
-        surface_list lights;
+        surface_list surface_lights;
+        medium_list medium_lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 
     static scene earth() {
@@ -73,11 +80,18 @@ public:
 
         medium_list mediums;
 
-        surface_list lights;
+        surface_list surface_lights;
+        medium_list medium_lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 
     static scene random_balls() {
@@ -134,11 +148,18 @@ public:
 
         medium_list mediums;
 
-        surface_list lights;
+        surface_list surface_lights;
+        medium_list medium_lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 
     static scene perlin_spheres() {
@@ -156,11 +177,18 @@ public:
 
         medium_list mediums;
 
-        surface_list lights;
+        surface_list surface_lights;
+        medium_list medium_lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 
     static scene quads() {
@@ -187,11 +215,18 @@ public:
 
         medium_list mediums;
 
-        surface_list lights;
+        surface_list surface_lights;
+        medium_list medium_lights;
 
         auto const skybox = make_shared<gradient_skybox>(colors::n_white, colors::sky);
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 
     static scene simple_light() {
@@ -214,12 +249,20 @@ public:
 
         medium_list mediums;
 
-        surface_list lights;
-        lights.add( light_quad );
+        surface_list surface_lights;
+        surface_lights.add( light_quad );
+
+        medium_list medium_lights;
 
         auto const skybox = make_shared<solid_color_skybox>(colors::black);
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 
     static scene cornell_box() {
@@ -256,12 +299,20 @@ public:
 
         medium_list mediums;
 
-        surface_list lights;
-        lights.add( light );
+        surface_list surface_lights;
+        surface_lights.add( light );
+
+        medium_list medium_lights;
 
         auto const skybox = make_shared<solid_color_skybox>(colors::black);
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 
     static scene cornell_ball() {
@@ -304,12 +355,20 @@ public:
         auto frosted = object_library::make_sphere_medium(point3( 190, 90, 190 ), 90, frosted_mat);
         mediums.add(frosted);
 
-        surface_list lights;
-        lights.add( light );
+        surface_list surface_lights;
+        surface_lights.add( light );
+
+        medium_list medium_lights;
 
         auto const skybox = make_shared<solid_color_skybox>((colors::black));
 
-        return scene( cam, make_shared<surface_list>(surfaces), make_shared<medium_list>(mediums), make_shared<surface_list>(lights), skybox );
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
     }
 };
 

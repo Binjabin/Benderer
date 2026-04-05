@@ -10,6 +10,12 @@
 class solid : public shape {
 public:
     virtual bool contains(const point3& p) const = 0;
+
+    virtual double volume() const = 0;
+
+    virtual point3 sample_over_volume() const = 0;
+
+    virtual double pdf_V_value(const point3& p) const = 0;
 };
 
 #endif //BENDERER_SOLID_H

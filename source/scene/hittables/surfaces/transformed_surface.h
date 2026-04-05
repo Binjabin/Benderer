@@ -25,7 +25,7 @@ public:
             m_surface->compute_properties();
             set_count(m_surface->get_count());
             set_surface_area(m_surface->get_surface_area());
-            set_flux_rgb(m_surface->get_flux_rgb());
+            set_flux_rgb(m_surface->get_flux());
         }
     }
 
@@ -33,7 +33,7 @@ public:
         m_surface->set_explicit_light(is_light);
     }
 
-    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
+    bool surface_hit( const ray& r, const interval& ray_t, surface_hit_rec& rec ) const override {
         ray offset_r = m_transform->transform_ray(r);
 
         //Probability defers to sub-item here
@@ -41,9 +41,8 @@ public:
             return false;
         }
 
-
         point3 new_p = m_transform->reverse_transform_point( rec.get_p() );
-        vec3 new_n = m_transform->reverse_transform_normal( rec.get_normal() );
+        vec3 new_n = m_transform->reverse_transform_direction( rec.get_normal() );
         rec.transform_to(new_p, new_n);
 
         return true;
@@ -57,7 +56,7 @@ public:
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
         surface_light_sample child_sample = m_surface->sample_light_over_flux(seed, running_prob);
         child_sample.m_light_p = m_transform->reverse_transform_point(child_sample.m_light_p);
-        child_sample.m_normal = m_transform->reverse_transform_normal(child_sample.m_normal);
+        child_sample.m_normal = m_transform->reverse_transform_direction(child_sample.m_normal);
         return child_sample;
     }
 
@@ -75,6 +74,12 @@ public:
 
     vec3 origin() const override {
         return m_origin;
+    }
+
+    double pdf_value(const point3 &origin, const vec3 &direction) const override {
+        point3 p = m_transform->transform_point(origin);
+        vec3 local_dir = m_transform->transform_direction(direction);
+        return m_surface->pdf_value(p, local_dir);
     }
 
     std::vector<shared_ptr<surface>> flatten() const override {

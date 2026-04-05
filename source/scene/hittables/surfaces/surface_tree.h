@@ -64,7 +64,7 @@ public:
         for ( size_t i = start; i < end; i++ ) {
             count_sum += surfaces[i]->get_count();
             area_sum += surfaces[i]->get_surface_area();
-            flux_sum += surfaces[i]->get_flux_rgb();
+            flux_sum += surfaces[i]->get_flux();
         }
         set_count(count_sum);
         set_surface_area(area_sum);
@@ -72,7 +72,7 @@ public:
     }
 
     //check if we hit any objects in the subtree
-    bool surface_hit( const ray& r, interval ray_t, surface_hit_rec& rec ) const override {
+    bool surface_hit( const ray& r, const interval& ray_t, surface_hit_rec& rec ) const override {
         if ( !bbox.hit( r, ray_t ) )
             return false;
 
@@ -107,7 +107,7 @@ public:
         left->compute_properties();
         right->compute_properties();
         set_surface_area(left->get_surface_area() + right->get_surface_area());
-        set_flux_rgb(left->get_flux_rgb() + right->get_flux_rgb());
+        set_flux_rgb(left->get_flux() + right->get_flux());
     }
 
     void set_explicit_light(bool is_light) override {
@@ -117,17 +117,17 @@ public:
 
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
 
-        double l_flux = left->get_flux_weight();
-        double r_flux = right->get_flux_weight();
+        double l_flux = left->get_flux_lum();
+        double r_flux = right->get_flux_lum();
         double total_flux = l_flux + r_flux;
         double sample = seed * total_flux;
 
         if (sample < l_flux) {
-            auto new_seed = sample / total_flux;
+            auto new_seed = sample / l_flux;
             double prob = l_flux / total_flux;
             return left->sample_light_over_flux(new_seed, running_prob * prob);
         }
-        auto new_seed = (sample - l_flux) / total_flux;
+        auto new_seed = (sample - l_flux) / r_flux;
         double prob = r_flux / total_flux;
         return right->sample_light_over_flux(new_seed, running_prob * prob);
     }
@@ -149,6 +149,16 @@ public:
         flattened.insert(flattened.end(), left->flatten().begin(), left->flatten().end());
         flattened.insert(flattened.end(), right->flatten().begin(), right->flatten().end());
         return flattened;
+    }
+
+    double pdf_value(const point3 &origin, const vec3 &direction) const override {
+        double lflux = left->get_flux_lum();
+        double rflux = right->get_flux_lum();
+        double total_flux = lflux + rflux;
+        if (total_flux <= 0.0) return 0.0;
+
+        return (lflux / total_flux) * left->pdf_value(origin, direction) +
+            (rflux / total_flux) * right->pdf_value(origin, direction);
     }
 
 private:

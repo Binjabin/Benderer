@@ -24,7 +24,7 @@ public:
 
     virtual color emission(const intersection& i) const = 0;
 
-    virtual color get_radiance() const = 0;
+    virtual color average_radiance() const = 0;
 
     virtual bool is_delta() const = 0;
 

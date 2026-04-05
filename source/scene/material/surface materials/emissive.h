@@ -41,7 +41,7 @@ public:
         return tex->value( i.m_u, i.m_v, i.get_p() );
     }
 
-    color get_radiance() const override {
+    color average_radiance() const override {
         return m_emission_color;
     }
 

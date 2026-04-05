@@ -53,9 +53,13 @@ public:
             return false;
         }
 
-        double r_prop = total_optical_thickness[0] / sum;
-        double g_prop = total_optical_thickness[1] / sum;
-        double b_prop = total_optical_thickness[2] / sum;
+        //Mix uniform with optical thickness weighted
+        const double uniform_prob = 1.0 / 3.0;
+        const double tau_weight = 1.0 - uniform_prob;
+
+        double r_prop = tau_weight * (total_optical_thickness[0] / sum) + uniform_prob / 3.0;
+        double g_prop = tau_weight * (total_optical_thickness[1] / sum) + uniform_prob / 3.0;
+        double b_prop = tau_weight * (total_optical_thickness[2] / sum) + uniform_prob / 3.0;
 
         //Randomly select hero channel
         double c_r = random_double();
@@ -84,10 +88,7 @@ public:
             double sigma_t_h = slice.sigma_t[h];
 
             //If we have very low density on hero channel, assume no scatter
-            double t = d_t + epsilon;
-            if (sigma_t_h > epsilon) {
-                t = budget / sigma_t_h;
-            }
+            double t = (sigma_t_h > epsilon) ? budget / sigma_t_h : d_t + epsilon;
 
             if (t > d_t) {
                 //Have traversed whole segment
@@ -157,6 +158,7 @@ public:
                 throughput *= weight;
 
                 rec.m_transmittance = throughput;
+                //If we didn't choose a mat it was because scatter was < epsilon, so we absorb instead
                 rec.m_is_scatter = (chosen_mat != nullptr);
                 rec.m_mat = chosen_mat;
                 rec.m_emission = slice.emission;
