@@ -26,8 +26,10 @@ public:
         if (double_buf.size() != size_t(m_width) * size_t(m_height) * 3)
             throw std::invalid_argument("buffer size mismatch");
 
-        auto name = filename + ".ppm";
-        std::ofstream out(name, std::ios::binary);
+        auto final_name = filename + ".ppm";
+        auto temp_name = filename + "_tmp.ppm";
+
+        std::ofstream out(temp_name, std::ios::binary);
         if (!out)
             throw std::runtime_error("failed to open file");
 
@@ -46,6 +48,29 @@ public:
                 to_byte(b)
             };
 
+            out.write(reinterpret_cast<char*>(rgb), 3);
+        }
+
+        out.close();
+        std::rename(temp_name.c_str(), final_name.c_str());
+    }
+
+    void write_clear(const std::string& filename, const std::vector<double>& double_buf) {
+        if (double_buf.size() != size_t(m_width) * size_t(m_height) * 3)
+            throw std::invalid_argument("buffer size mismatch");
+        auto name = filename + ".ppm";
+        std::ofstream out(name, std::ios::binary);
+        if (!out)
+            throw std::runtime_error("failed to open file");
+        // P6 header
+        out << "P6\n" << m_width << " " << m_height << "\n255\n";
+        const int pxCount = m_width * m_height;
+        for (int i = 0; i < pxCount; ++i) {
+            uint8_t rgb[3] = {
+                to_byte(0),
+                to_byte(0),
+                to_byte(0)
+            };
             out.write(reinterpret_cast<char*>(rgb), 3);
         }
     }

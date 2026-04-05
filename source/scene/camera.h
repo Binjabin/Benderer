@@ -36,6 +36,9 @@ public:
 
         size_t pixel_area = size_t(pw) * size_t(ph);
 
+        std::vector<double> black(ph * pw * 3, 0.0);
+        preview_writer.write("preview", black);
+
         std::vector<double> display_buff;
         display_buff.resize( pixel_area * 3 );
         std::vector<double> accum_buff;
@@ -71,7 +74,6 @@ public:
         }
 
         //Reset preview:
-        std::vector<double> black(ph * pw * 3, 0.0);
         preview_writer.write("preview", black);
 
         accum_to_display(display_buff, accum_buff, post, pixel_area, ss);

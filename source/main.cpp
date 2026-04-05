@@ -20,7 +20,16 @@ int main() {
 
     scene our_scene = scene_library::cornell_ball();
     our_scene.finalize();
-    image_info info = image_info_library::micro_sol();
+    image_info info = image_info_library::small_high();
+
+    int w = info.pixel_width();
+    int h = info.pixel_height();
+    post_process post = post_process(w, h);
+    png_writer image_maker = png_writer(w, h);
+    psix_writer preview_image_maker = psix_writer(w, h);
+
+    std::string filename = "output_";
+    filename += get_time_string();
 
     //auto itgr = simple_path_tracer(info.max_depth());
     //auto itgr = simple_medium_path_tracer(info.max_depth());
@@ -38,15 +47,6 @@ int main() {
 
     //Put stuff in acceleration structure
     world.accelerate();
-
-    int w = info.pixel_width();
-    int h = info.pixel_height();
-    post_process post = post_process(w, h);
-    png_writer image_maker = png_writer(w, h);
-    psix_writer preview_image_maker = psix_writer(w, h);
-
-    std::string filename = "output_";
-    filename += get_time_string();
 
     our_scene.render( filename, info, itgr, post, preview_image_maker, image_maker);
 

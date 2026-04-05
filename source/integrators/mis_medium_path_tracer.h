@@ -146,13 +146,13 @@ private:
         // Get surface emittance
         color emission = rec.m_mat->emission(rec.m_intersection);
 
-        /*
+
         //TODO: THIS IS STILL A HACK TO REMOVE FIREFLIES
         if (rec.m_is_explicit_light) {
             double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
             emission *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
         }
-        */
+
 
         if (!p_state.prev_was_delta) {
             double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
