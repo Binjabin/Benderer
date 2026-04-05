@@ -29,9 +29,9 @@ int main() {
     //auto itgr = mips_model(info.max_depth(), 2, 16);
     //auto itgr = simple_medium_path_tracer(info.max_depth());
     int rr_depth = (info.max_depth() * 3) / 4;
-    auto itgr = rr_medium_path_tracer(info.max_depth(), rr_depth);
+    //auto itgr = rr_medium_path_tracer(info.max_depth(), rr_depth);
     //auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
-    //auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
+    auto itgr = mis_medium_path_tracer(info.max_depth(), rr_depth, 5);
 
     camera cam = our_scene.m_cam;
     world world = our_scene.m_world;

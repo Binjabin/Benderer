@@ -18,7 +18,7 @@ public:
 
     // Correctly override integrator::ray_color (const-correct signature)
     color ray_color(const ray &r, int depth, const world& world) const {
-        path_state p_state = initial_path_state();
+        path_state p_state = path_state::initial_path_state();
         path_result res = path_trace(r, world, p_state);
         return res.radiance_from_path;
     }
@@ -34,7 +34,7 @@ private:
         //---------------------------------------
         // Terminate if our throughput becomes 0 (or close)
         if (max_component(p_state.overall_throughput) < epsilon) {
-            return empty_path_result();
+            return path_result::empty_path_result();
         }
 
         //---------------------------------------
@@ -44,7 +44,7 @@ private:
         //If it doesn't, default to skybox
         if ( !world.m_surfaces->surface_hit( r, ray_t, rec ) ) {
             color col_from_sky = world.m_sky->sample_color(r.direction());
-            return color_path_result(col_from_sky);
+            return path_result::color_path_result(col_from_sky);
         }
 
         //---------------------------------------
@@ -54,7 +54,7 @@ private:
         //---------------------------------------
         // We have a max depth. Terminate if the next sample would exceed that depth.
         if (p_state.depth + 1 >= m_max_depth) {
-            return color_path_result(color_from_light);
+            return path_result::color_path_result(color_from_light);
         }
 
         //---------------------------------------
@@ -65,7 +65,7 @@ private:
 
         //If we don't scatter, then we exit early
         if (!scattered) {
-            path_result no_scatter = color_path_result(color_from_light);
+            path_result no_scatter = path_result::color_path_result(color_from_light);
             return no_scatter;
         }
 
@@ -81,7 +81,7 @@ private:
     }
 
     path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const surface_scatter_rec& srec, const surface_hit_rec& rec) const {
-        path_result indirect_res = empty_path_result();
+        path_result indirect_res = path_result::empty_path_result();
         path_state child_state = p_state;
         child_state.depth++;
         if (srec.is_delta) {
@@ -97,7 +97,7 @@ private:
         else {
             vec3 scatter_dir = srec.s_ray.direction();
             //If pdf is 0 or close, stop. Generated impossible sample. Probably shouldn't happen!
-            if (srec.w_pdf <= epsilon) return empty_path_result();
+            if (srec.w_pdf <= epsilon) return path_result::empty_path_result();
 
             //If a volume, this is meaningless, just carry on
             //TODO: We had volume cos-theta stuff here. We handle this differently now!
@@ -116,28 +116,6 @@ private:
         return indirect_res;
     }
 
-
-    path_state initial_path_state() const {
-        path_state p_state;
-        //Here depth starts from 0 and counts upwards
-        p_state.depth = 0;
-        p_state.overall_throughput = colors::white;
-        p_state.prev_bsdf_pdf = 1.0;
-        return p_state;
-    }
-
-    path_result color_path_result(color radiance) const {
-        path_result res = empty_path_result();
-        res.radiance_from_path = radiance;
-        return res;
-    }
-
-    path_result empty_path_result() const {
-        path_result out_result;
-        out_result.radiance_from_path = color(0,0,0);
-        out_result.terminated_on_light = false;
-        return out_result;
-    }
 };
 
 #endif //BENDERER_IS_PATH_TRACER_H

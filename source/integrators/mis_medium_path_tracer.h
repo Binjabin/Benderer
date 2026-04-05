@@ -14,52 +14,45 @@
 #include "../samplers/medium_sampler.h"
 
 class mis_medium_path_tracer : public integrator {
+
 public:
-    mis_medium_path_tracer(int max_depth, int rr_depth, int direct_samples)
-        : m_max_depth(max_depth), m_rr_start_depth(rr_depth), m_direct_samples(direct_samples) {
+    mis_medium_path_tracer(int max_depth, int rr_start_depth, int direct_samples)
+        : m_max_depth(max_depth), m_rr_start_depth(rr_start_depth), m_direct_samples(direct_samples) {
     };
 
     // Correctly override integrator::ray_color (const-correct signature)
-    color ray_color(const ray &r, int depth, const world& world) const override {
+    color ray_color(const ray &r, int depth, const world& world) const {
         path_state p_state = path_state::initial_path_state();
         path_result res = path_trace(r, world, p_state);
-
         return res.radiance_from_path;
     }
 
 
 private:
-    const int m_max_depth;
-    const int m_rr_start_depth;
-    const int m_direct_samples;
-    const interval rr_prob = interval(0.05, 0.95);
+    int m_max_depth;
+    int m_rr_start_depth;
+    int m_direct_samples;
 
-    path_result path_trace(const ray& r, const world& world, path_state& p_state) const {
+    path_result path_trace(const ray& r, const world& world, const path_state& p_state) const {
 
         path_result out_result = path_result();
 
-        //---------------------------------------
-        // Terminate if our throughput becomes 0 (or close)
-        if (max_component(p_state.overall_throughput) < epsilon) {
-            return path_result::empty_path_result();
-        }
 
         //---------------------------------------
-        // Check for a surface hit
+        // First check that our ray hits a surface
         surface_hit_rec rec;
         interval ray_t = interval(epsilon, infinity);
         bool hit_surface = world.m_surfaces->surface_hit( r, ray_t, rec );
 
         //---------------------------------------
-        // Check for a medium hits
-
+        // Then check that our ray hits a volume
         double end_t = hit_surface ? rec.get_t() : infinity;
         interval medium_interval = interval(epsilon, end_t);
-
         //Check for media up to first surface
         medium_intersections medium_recs;
         bool intersect_medium = world.m_media->medium_hit(r, medium_interval, medium_recs);
 
+        //Sample any media for scatters
         medium_hit_rec medium_rec;
         bool hit_medium = false;
         if (intersect_medium) {
@@ -68,112 +61,108 @@ private:
 
         //---------------------------------------
         // If no intersection, default to skybox
-        if (!(hit_surface || hit_medium)) {
+        if ( !(hit_surface || hit_medium) ) {
             color col_from_sky = world.m_sky->sample_color(r.direction());
+            color transmittance = intersect_medium ? medium_rec.m_transmittance : colors::white;
 
-            const color media_transmittance = intersect_medium ? medium_rec.m_transmittance : colors::white;
-
-            if (p_state.last_bounce_used_nee) {
-                const double light_pdf_w = direct_light_sampler::pdf_w(world, r.origin(), r.direction());
-                const double bsdf_pdf = p_state.prev_bsdf_pdf;
-                const double w = power_heuristic(bsdf_pdf, m_direct_samples * light_pdf_w);
-                col_from_sky *= w;
+            if (!p_state.prev_was_delta) {
+                double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
+                col_from_sky *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
             }
 
-            color res = col_from_sky * media_transmittance;
-            return path_result::color_path_result(res);
+            col_from_sky *= transmittance;
+            return path_result::color_path_result(col_from_sky);
         }
 
-        //Sampled media hit up to first surface so any media hit will hit before surface
-        if (hit_medium){
+        //---------------------------------------
+        // Scattered at some point in the media
+        if (hit_medium) {
             //If we do hit the medium first, use this for scattering/absorption
             auto p = medium_rec.m_p();
-            color emittance = medium_rec.m_mat ? medium_rec.m_mat->emission(p) : colors::black;
+            color emittance = medium_rec.m_emission;
 
-            //---------------------------------------
-            // Sample direct
-
-            color direct = get_medium_direct_result(r, medium_rec, world);
+            if (!p_state.prev_was_delta) {
+                double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
+                emittance *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
+            }
 
             //---------------------------------------
             // Terminate due to max depth termination!
-
             if (p_state.depth + 1 >= m_max_depth) {
-                return path_result::color_path_result((direct + emittance) * medium_rec.m_transmittance);
+                return path_result::color_path_result(emittance * medium_rec.m_transmittance);
+            }
+
+            double mat_inv_pdf = 1.0 / medium_rec.m_mat_pdf;
+
+            if (!medium_rec.m_is_scatter) {
+                //Absorb event
+                return path_result::color_path_result(emittance * medium_rec.m_transmittance);
             }
 
             //---------------------------------------
-            // Potentially terminate due to russian roulette!
+            // Otherwise get NEE contrib
 
-            if (p_state.depth >= m_rr_start_depth) {
-                const double p = rr_prob.clamp(max_component(p_state.overall_throughput));
-                double u = random_double();
-                if (u > p) return path_result::color_path_result((direct + emittance) * medium_rec.m_transmittance);
-                p_state.overall_throughput /= p;
-            }
+            color direct = evaluate_direct_medium(r, medium_rec, world);
 
             //---------------------------------------
-            // Otherwise scatter in the medium!
+            // And scatter in the medium!
             // First calculate scatter direction
+
             medium_scatter_rec srec;
             medium_rec.m_mat->scatter_is(-r.direction(), srec);
             ray sray = ray(p, srec.s_dir);
 
             //---------------------------------------
-            // Then throughput
-
-            color throughput = medium_rec.m_transmittance * medium_rec.m_mat->sigma_s(p);
-            throughput *= (srec.phase_pdf / srec.w_pdf);
-
-            //---------------------------------------
             // Then send out the next ray
-
             path_state child_state = p_state;
             child_state.depth++; // advance path depth for medium bounce
-            child_state.overall_throughput *= throughput;
+            child_state.prev_p = p;
             child_state.prev_bsdf_pdf = srec.w_pdf;
-            child_state.last_bounce_used_nee = true;
+            child_state.prev_was_delta = false;
+
+            color sigma_s = medium_rec.m_mat->sigma_s(p);
+            double phase_factor = srec.phase_pdf / srec.w_pdf;
+
+            // Update child throughput for path termination check
+
+            child_state.overall_throughput *= (mat_inv_pdf * medium_rec.m_transmittance * sigma_s * phase_factor);
+
+            //Apply russian roulette
+            if (!russian_roulette(child_state)) {
+                return path_result::color_path_result((emittance + direct) * medium_rec.m_transmittance);
+            }
 
             path_result indirect_res = path_trace(sray, world, child_state);
-
-            // Accumulate emission at the medium point (if any)
-            color contrib = ((direct + emittance) * medium_rec.m_transmittance) + indirect_res.radiance_from_path * throughput;
-
-            out_result.radiance_from_path += contrib;
-
+            color indirect_rad = indirect_res.radiance_from_path * sigma_s * phase_factor * mat_inv_pdf;
+            out_result.radiance_from_path = (indirect_rad + direct + emittance)  * medium_rec.m_transmittance;
             return out_result;
         }
 
         //---------------------------------------
-        // If we traversed media with no event, apply transmittance
-        const color media_transmittance = intersect_medium ? medium_rec.m_transmittance : colors::white;
+        // Reached surface with no scatter
+        color media_transmittance = intersect_medium ? medium_rec.m_transmittance : colors::white;
 
         //---------------------------------------
         // Get surface emittance
+        color emission = rec.m_mat->emission(rec.m_intersection);
 
-        //TODO: This part isn't correct now. We aren't downweighting for MIS at the right place. Better than nothing though..
-        //TODO: Only truly fixed with bidirectional path tracing!
-        color surface_emittance = rec.m_mat->emission(rec.m_intersection);
-        if (rec.m_is_explicit_light && p_state.last_bounce_used_nee) {
-            const double light_pdf_w = direct_light_sampler::pdf_w(world, r.origin(), r.direction());
-            const double bsdf_pdf = p_state.prev_bsdf_pdf;
-            const double w = power_heuristic(bsdf_pdf, m_direct_samples * light_pdf_w);
-            surface_emittance *= w;
+        /*
+        //TODO: THIS IS STILL A HACK TO REMOVE FIREFLIES
+        if (rec.m_is_explicit_light) {
+            double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
+            emission *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
+        }
+        */
+
+        if (!p_state.prev_was_delta) {
+            double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
+            emission *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
         }
 
         //---------------------------------------
-        // Get direct lighting (Surface NEE)
-        const bool used_nee_here = (!rec.m_is_explicit_light && !rec.m_mat->is_delta());
-        color direct = colors::black;
-        if (used_nee_here) {
-            direct = get_surface_direct_result(r, rec, world);
-        }
-
-        //---------------------------------------
-        // We have a max depth. Terminate if the next sample exceeds that depth.
+        // We have a max depth. Terminate if the next sample would exceed that depth.
         if (p_state.depth + 1 >= m_max_depth) {
-            color res = (surface_emittance + direct) * media_transmittance;
-            return path_result::color_path_result(res);
+            return path_result::color_path_result(emission * media_transmittance);
         }
 
         //---------------------------------------
@@ -184,97 +173,52 @@ private:
 
         //If we don't scatter, then we exit early
         if (!scattered) {
-            color res = (surface_emittance + direct) * media_transmittance ;
-            path_result no_scatter = path_result::color_path_result(res);
+            path_result no_scatter = path_result::color_path_result(emission * media_transmittance);
             return no_scatter;
         }
 
         //----------------------------------------
         // If our ray is scattered, we take another step, an indirect sample
         // Generate a scatter direction, and calculate lighting from that direction down our ray
-
         path_state child_state = p_state;
         child_state.overall_throughput *= media_transmittance;
+        child_state.prev_p = rec.get_p();
 
-        path_result indirect_res = get_indirect_result(r, world, child_state, srec, rec, used_nee_here);
+        color direct = srec.is_delta ? colors::black : evaluate_direct_surface(r, rec, world);
 
+        path_result indirect_res = get_indirect_result(r, world, child_state, srec, rec);
         out_result = indirect_res;
-        color from_surface = out_result.radiance_from_path + surface_emittance + direct;
-        from_surface = from_surface * media_transmittance;
-        out_result.radiance_from_path = from_surface;
-        out_result.terminated_on_light = out_result.terminated_on_light || rec.m_is_explicit_light;
-
-
-        /*
-        if (max_component(from_surface) > 10.0) {
-            std::clog << "HIGH depth=" << p_state.depth
-                      << " emittance=" << max_component(surface_emittance)
-                      << " direct=" << max_component(direct)
-                      << " indirect=" << max_component(out_result.radiance_from_path)
-                      << " last_nee=" << p_state.last_bounce_used_nee
-                      << " is_light=" << rec.m_is_explicit_light
-                        << " is_delta=" << rec.m_mat->is_delta()
-                        << " bsdf_pdf=" << srec.w_pdf
-                      << std::endl;
-        }
-        */
-
+        out_result.radiance_from_path += emission;
+        out_result.radiance_from_path += direct;
+        out_result.radiance_from_path *= media_transmittance;
         return out_result;
     }
 
-    path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const surface_scatter_rec& srec, const surface_hit_rec& rec, const bool used_nee) const {
-        path_result indirect_res = path_result::empty_path_result();
-        path_state child_state = p_state;
-        child_state.depth++;
-        child_state.last_bounce_used_nee = used_nee;
-        if (srec.is_delta) {
-
-            //prev bsdf is meaningless for specular. Just keep sensible.
-            child_state.prev_bsdf_pdf = p_state.prev_bsdf_pdf;
-            child_state.last_bounce_used_nee = p_state.last_bounce_used_nee;
-            //attenuation is like the throughput of spec surfaces
-            child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
-            indirect_res = path_trace(srec.s_ray, world, child_state);
-            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf;
-        }
-        else {
-            vec3 scatter_dir = srec.s_ray.direction();
-            //If pdf is 0 or close, stop. Generated impossible sample. Probably shouldn't happen!
-            if (srec.w_pdf <= epsilon) return path_result::empty_path_result();
-
-            //If a volume, this is meaningless, just carry on
-            double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
-            //Throughput at this point (from a scattered direction, out at a ray direction)
-            color throughput = srec.bsdf * cos_theta / srec.w_pdf;
-
-            child_state.prev_bsdf_pdf = srec.w_pdf;
-            child_state.overall_throughput = child_state.overall_throughput * throughput;
-
-            indirect_res = path_trace(srec.s_ray, world, child_state);
-
-            indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;
-        }
-
-
-        return indirect_res;
-    }
-
-    color get_surface_direct_result(const ray& r, const surface_hit_rec& rec, const world& world) const {
+    color evaluate_direct_surface(const ray& r, const surface_hit_rec& rec, const world& world) const {
         color direct = colors::black;
 
-        auto isect = rec.m_intersection;
-        point3 p = isect.get_p();
-        vec3 n = isect.m_normal;
-        auto mat = rec.m_mat;
+        const point3 p = rec.get_p();
+        const vec3 normal = rec.get_normal();
+        const vec3 wo = unit_vector(-r.direction());
+        const auto mat = rec.m_mat;
+        const auto isect = rec.m_intersection;
 
         for (int i = 0; i < m_direct_samples; i++) {
             local_light_sample ls;
             //If we fail to sample, leave
-            if (!direct_light_sampler::sample_from_point(world, p, ls)) break;
+            if (!direct_light_sampler::sample_from_point(world, p, ls)) continue;
 
-            //TODO: Move to seperate method?
+            //The chance we sampled this direction (based on picking lights)
+            const double light_pdf_w = ls.m_pdf_w;
+            if (light_pdf_w <= 0.0) continue;
+
+            //Reject backfacing lights
+            const vec3 wi = unit_vector(ls.m_direction);
+            const double cos_theta = dot(wi, normal);
+            if (cos_theta <= 0.0) continue;
+
             //Cast shadow ray until just before surface
-            ray shadow_ray = ray(p, ls.m_direction);
+            ray shadow_ray = ray(p, wi);
             interval shadow_ray_t = interval(epsilon, ls.m_distance - epsilon);
 
             //Check if the light point we sampled would ever reach our light
@@ -287,25 +231,15 @@ private:
                     shadow_transmittance = medium_sampler::uninterupted_transmittance(shadow_ray, shadow_medium_intersections, shadow_ray_t);
                 }
 
-                //Geometry term for material
-                const double cos_mat = fmax(0.0, dot(shadow_ray.direction(), n));
-
                 const color light_emission = ls.m_radiance;
-                const color bsdf = mat->bsdf(isect, -r.direction(), shadow_ray.direction());
-
-                //The chance we sampled this direction (based on picking lights)
-                const double light_pdf_w = ls.m_pdf_w;
-                if (light_pdf_w <= 0.0) continue;
+                const color bsdf_val = mat->bsdf(isect, wo, wi);
+                const double bsdf_pdf = mat->pdf(isect, wo, wi);
 
                 //Add result to direct:
-                color contrib = light_emission * bsdf * shadow_transmittance * cos_mat / light_pdf_w;
+                color contrib = light_emission * bsdf_val * cos_theta * shadow_transmittance / light_pdf_w;
 
                 //Apply MIS
-                double bsdf_pdf = mat->pdf(isect, -r.direction(), shadow_ray.direction());
-                double w = power_heuristic(m_direct_samples * light_pdf_w, bsdf_pdf);
-
-
-                //DEBUG
+                double w = mis_weight(m_direct_samples * light_pdf_w, bsdf_pdf);
 
                 color add = contrib * w;
 
@@ -314,15 +248,10 @@ private:
             //Otherise we don't contribute
         }
 
-        if (!isfinite(direct.length())) {
-            //HERE
-            std::clog << "NON-FINITE DIRECT" << std::endl;
-        }
-
         return direct / m_direct_samples;
     }
 
-    color get_medium_direct_result(const ray& r, const medium_hit_rec& rec, const world& world) const {
+    color evaluate_direct_medium(const ray& r, const medium_hit_rec& rec, const world& world) const {
         color direct = colors::black;
 
         auto interaction = rec.m_interaction;
@@ -332,7 +261,11 @@ private:
         for (int i = 0; i < m_direct_samples; i++) {
             local_light_sample ls;
             //If we fail to sample, leave
-            if (!direct_light_sampler::sample_from_point(world, p, ls)) break;
+            if (!direct_light_sampler::sample_from_point(world, p, ls)) continue;
+
+            //The chance we sampled this direction (based on picking lights)
+            const double light_pdf_w = ls.m_pdf_w;
+            if (light_pdf_w <= 0.0) continue;
 
             //Cast shadow ray until just before surface
             ray shadow_ray = ray(p, ls.m_direction);
@@ -349,53 +282,92 @@ private:
                 }
 
                 const color light_emission = ls.m_radiance;
-                const double phase = mat->phase(interaction, -r.direction(), shadow_ray.direction());
-
-                //The chance we sampled this direction (based on picking lights)
-                const double light_pdf_w = ls.m_pdf_w;
-                if (light_pdf_w <= 0.0) continue;
-
+                const double phase_val = mat->phase(interaction, -r.direction(), shadow_ray.direction());
+                const double phase_pdf = phase_val;
 
                 //Add result to direct:
-                color contrib = light_emission * phase * shadow_transmittance / light_pdf_w;
+                color sigma_s = mat->sigma_s(p);
+                color contrib = light_emission * sigma_s * phase_val * shadow_transmittance / light_pdf_w;
 
                 //Apply MIS
-                double phase_pdf = mat->phase(interaction, -r.direction(), shadow_ray.direction());
-                double w = power_heuristic(m_direct_samples * light_pdf_w, phase_pdf);
+                double w = mis_weight(m_direct_samples * light_pdf_w, phase_pdf);
 
                 color add = contrib * w;
-
-                const double add_mag = max_component(add);
-                if (!std::isfinite(add_mag) || add_mag > 1e2) {
-                    std::clog
-                        << "\nFIRELLY (medium direct): add_mag=" << add_mag
-                        << " light_pdf_w=" << light_pdf_w
-                        << " phase_pdf=" << phase_pdf
-                        << " is_env=" << ls.m_is_env_light
-                        << std::endl;
-                }
 
                 direct += add;
             }
             //Otherise we don't contribute
         }
 
-        if(!isfinite(direct.length())) {
-            std::clog << "NON FINITE DIRECT" << std::endl;
-        }
-
         return direct / m_direct_samples;
-
     }
 
-    double power_heuristic(double a, double b) const {
-        if (!std::isfinite(a) || !std::isfinite(b)) return 0.0;
-        if (a <= 0.0) return 0.0;
-        if (b <= 0.0) return 1.0;
+    path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const surface_scatter_rec& srec, const surface_hit_rec& rec) const {
+        path_result indirect_res = path_result::empty_path_result();
+        path_state child_state = p_state;
+        child_state.depth++;
+        if (srec.is_delta) {
+            //----------------------------------------
+            // We didn't sample a direction, so our throughput is just the bsdf value.
+            // No cos term as it is considered to be "absorbed" into the bsdf for delta materials
+            child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
+            child_state.prev_was_delta = true;
+            child_state.prev_bsdf_pdf = 1.0;
 
-        double a2 = a * a;
-        double b2 = b * b;
-        return a2 / (a2 + b2);
+            if (!russian_roulette(child_state)) {
+                return path_result::empty_path_result();
+            }
+
+            indirect_res = path_trace(srec.s_ray, world, child_state);
+            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf;
+        }
+        else {
+            //----------------------------------------
+            // Our sample is over a uniform hemisphere, so our pdf is just 1/2pi.
+            // The cosine term is the geometry term for the material
+            vec3 scatter_dir = srec.s_ray.direction();
+            double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
+            double pdf = 1.0 / (2.0 * pi);
+            color throughput = srec.bsdf * cos_theta / pdf;
+
+            //----------------------------------------
+            // Keep track of overall throughput, to terminate paths with tiny contributions early
+            child_state.overall_throughput *= throughput;
+            child_state.prev_was_delta = false;
+            child_state.prev_bsdf_pdf = pdf;
+
+            if (!russian_roulette(child_state)) {
+                return path_result::empty_path_result();
+            }
+
+            indirect_res = path_trace(srec.s_ray, world, child_state);
+            indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;
+        }
+
+        return indirect_res;
+    }
+
+    bool russian_roulette(path_state& p_state) const {
+        if (p_state.depth < m_rr_start_depth) return true;
+
+        double p = rr_importance(p_state.overall_throughput);
+
+        if (random_double() > p) return false;
+
+        p_state.overall_throughput /= p;
+        return true;
+    }
+
+    double rr_importance(const vec3& throughput) const {
+        return std::clamp(max_component(throughput), 0.05, 0.95);
+    }
+
+    static double mis_weight(double pdf_a, double pdf_b) {
+        double a2 = pdf_a * pdf_a;
+        double b2 = pdf_b * pdf_b;
+        double sum = a2 + b2;
+        if (sum <= 0.0) return 0.0;
+        return a2 / (sum);
     }
 };
 

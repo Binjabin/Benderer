@@ -18,7 +18,7 @@ public:
 
     // Correctly override integrator::ray_color (const-correct signature)
     color ray_color(const ray &r, int depth, const world& world) const {
-        path_state p_state = initial_path_state();
+        path_state p_state = path_state::initial_path_state();
         path_result res = path_trace(r, world, p_state);
         return res.radiance_from_path;
     }
@@ -34,7 +34,7 @@ private:
         //---------------------------------------
         // Terminate if our throughput becomes 0 (or close)
         if (max_component(p_state.overall_throughput) < epsilon) {
-            return empty_path_result();
+            return path_result::empty_path_result();
         }
 
         //---------------------------------------
@@ -64,7 +64,7 @@ private:
             color col_from_sky = world.m_sky->sample_color(r.direction());
             color transmittance = intersect_medium ? medium_rec.m_transmittance : colors::white;
             col_from_sky *= transmittance;
-            return color_path_result(col_from_sky);
+            return path_result::color_path_result(col_from_sky);
         }
 
         //---------------------------------------
@@ -123,7 +123,7 @@ private:
         //---------------------------------------
         // We have a max depth. Terminate if the next sample would exceed that depth.
         if (p_state.depth + 1 >= m_max_depth) {
-            return color_path_result(emission * media_transmittance);
+            return path_result::color_path_result(emission * media_transmittance);
         }
 
         //---------------------------------------
@@ -134,7 +134,7 @@ private:
 
         //If we don't scatter, then we exit early
         if (!scattered) {
-            path_result no_scatter = color_path_result(emission * media_transmittance);
+            path_result no_scatter = path_result::color_path_result(emission * media_transmittance);
             return no_scatter;
         }
 
@@ -152,7 +152,7 @@ private:
     }
 
     path_result get_indirect_result(const ray& r, const world& world, const path_state& p_state, const surface_scatter_rec& srec, const surface_hit_rec& rec) const {
-        path_result indirect_res = empty_path_result();
+        path_result indirect_res = path_result::empty_path_result();
         path_state child_state = p_state;
         child_state.depth++;
         if (srec.is_delta) {
@@ -181,29 +181,6 @@ private:
         }
 
         return indirect_res;
-    }
-
-
-    path_state initial_path_state() const {
-        path_state p_state;
-        //Here depth starts from 0 and counts upwards
-        p_state.depth = 0;
-        p_state.overall_throughput = colors::white;
-        p_state.prev_bsdf_pdf = 1.0;
-        return p_state;
-    }
-
-    path_result color_path_result(color radiance) const {
-        path_result res = empty_path_result();
-        res.radiance_from_path = radiance;
-        return res;
-    }
-
-    path_result empty_path_result() const {
-        path_result out_result;
-        out_result.radiance_from_path = color(0,0,0);
-        out_result.terminated_on_light = false;
-        return out_result;
     }
 };
 
