@@ -29,24 +29,42 @@ public:
     medium_slice(std::vector<shared_ptr<medium_material>> ms, interval t)
         : m_mats(std::move(ms)), m_interval(t) {
 
-        sigma_t = colors::black;
-        sigma_s = colors::black;
-        emission = colors::black;
+        m_sigma_maj = colors::black;
         for (const auto& mat : m_mats) {
             //Arbitrary location since volumes are homogeneous!
-            sigma_t += mat->sigma_t(vec3(0.0, 0.0, 0.0));
-            sigma_s += mat->sigma_s(vec3(0.0, 0.0, 0.0));
-            emission += mat->emission(vec3(0.0, 0.0, 0.0));
+            m_sigma_maj += mat->sigma_maj();
         }
-        optical_thickness = sigma_t * m_interval.size();
+        maj_optical_thickness = m_sigma_maj * m_interval.size();
 
         is_empty = m_mats.empty();
     }
 
-    color sigma_s;
-    color sigma_t;
-    color emission;
-    color optical_thickness;
+    color sigma_s(const point3& p) const {
+        color sigma_s = colors::black;
+        for (const auto& mat : m_mats) {
+            sigma_s += mat->sigma_s(p);
+        }
+        return sigma_s;
+    }
+
+    color sigma_t(const point3& p) const {
+        color sigma_t = colors::black;
+        for (const auto& mat : m_mats) {
+            sigma_t += mat->sigma_t(p);
+        }
+        return sigma_t;
+    }
+
+    color emission(const point3& p) const {
+        color emission = colors::black;
+        for (const auto& mat : m_mats) {
+            emission += mat->emission(p);
+        }
+        return emission;
+    }
+
+    color m_sigma_maj;
+    color maj_optical_thickness;
     bool is_empty;
 };
 

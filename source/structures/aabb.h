@@ -82,6 +82,14 @@ public:
 
     static const aabb empty, universe;
 
+    //converts world space point into local box coordinates
+    vec3 offset(const point3& p) const {
+        return vec3(
+            (p.x() - x.min) / ( x.size() ),
+            (p.y() - y.min) / ( y.size() ),
+            (p.z() - z.min) / ( z.size() ));
+    }
+
 private:
     void pad_to_minimums() {
         if ( x.size() < epsilon ) x = x.expand( epsilon );

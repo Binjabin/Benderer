@@ -85,4 +85,5 @@ add_executable(Benderer source/main.cpp
         source/integrators/bd_medium_path_tracer.h
         source/records/path.h
         source/records/path_vertex.h
+        source/structures/density_grid.h
 )
