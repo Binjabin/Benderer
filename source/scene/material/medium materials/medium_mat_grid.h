@@ -61,7 +61,7 @@ public:
     }
 
     double phase(const interaction &isect, const vec3 &in, const vec3 &out) const override {
-        return 1.0 / (4.0 * pi);
+        return m_base->phase(isect, in, out);
     }
 
     color average_radiance() const override {

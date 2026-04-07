@@ -46,7 +46,7 @@ public:
     }
 
     bool is_delta() const override {
-        return true;
+        return false;
     }
 
 private:

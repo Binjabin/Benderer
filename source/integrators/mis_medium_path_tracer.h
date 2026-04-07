@@ -65,9 +65,9 @@ private:
             color col_from_sky = world.m_sky->sample_color(r.direction());
             color transmittance = intersect_medium ? medium_rec.m_transmittance : colors::white;
 
-            if (!p_state.prev_was_delta) {
+        if (!p_state.prev_was_delta) {
                 double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
-                col_from_sky *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
+                col_from_sky *= mis_weight(p_state.prev_bsdf_pdf, m_direct_samples * nee_pdf);
             }
 
             col_from_sky *= transmittance;
@@ -83,7 +83,7 @@ private:
 
             if (!p_state.prev_was_delta) {
                 double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
-                emittance *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
+                emittance *= mis_weight(p_state.prev_bsdf_pdf, m_direct_samples * nee_pdf);
             }
 
             //---------------------------------------
@@ -120,7 +120,7 @@ private:
             child_state.prev_bsdf_pdf = srec.w_pdf;
             child_state.prev_was_delta = false;
 
-            color sigma_s = medium_rec.m_mat->sigma_s(p);
+            color sigma_s = medium_rec.m_mat->sigma_s(medium_rec.m_local_p);
             double phase_factor = srec.phase_pdf / srec.w_pdf;
 
             // Update child throughput for path termination check
@@ -129,12 +129,12 @@ private:
 
             //Apply russian roulette
             if (!russian_roulette(child_state)) {
-                return path_result::color_path_result((emittance + direct) * medium_rec.m_transmittance);
+                return path_result::color_path_result((emittance + direct * mat_inv_pdf) * medium_rec.m_transmittance);
             }
 
             path_result indirect_res = path_trace(sray, world, child_state);
             color indirect_rad = indirect_res.radiance_from_path * sigma_s * phase_factor * mat_inv_pdf;
-            out_result.radiance_from_path = (indirect_rad + direct + emittance)  * medium_rec.m_transmittance;
+            out_result.radiance_from_path = (indirect_rad + direct * mat_inv_pdf + emittance)  * medium_rec.m_transmittance;
             return out_result;
         }
 
@@ -147,16 +147,12 @@ private:
         color emission = rec.m_mat->emission(rec.m_intersection);
 
 
-        //TODO: THIS IS STILL A HACK TO REMOVE FIREFLIES
-        if (rec.m_is_explicit_light) {
+        // MIS weight the emission: if previous bounce was not a delta,
+        // apply balance heuristic between BSDF sampling and NEE sampling.
+        // For explicit lights only (to avoid double-counting with NEE).
+        if (rec.m_is_explicit_light && !p_state.prev_was_delta) {
             double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
-            emission *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
-        }
-
-
-        if (!p_state.prev_was_delta) {
-            double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
-            emission *= mis_weight(p_state.prev_bsdf_pdf, nee_pdf);
+            emission *= mis_weight(p_state.prev_bsdf_pdf, m_direct_samples * nee_pdf);
         }
 
         //---------------------------------------
@@ -286,7 +282,7 @@ private:
                 const double phase_pdf = phase_val;
 
                 //Add result to direct:
-                color sigma_s = mat->sigma_s(p);
+                color sigma_s = mat->sigma_s(rec.m_local_p);
                 color contrib = light_emission * sigma_s * phase_val * shadow_transmittance / light_pdf_w;
 
                 //Apply MIS
@@ -323,12 +319,11 @@ private:
         }
         else {
             //----------------------------------------
-            // Our sample is over a uniform hemisphere, so our pdf is just 1/2pi.
-            // The cosine term is the geometry term for the material
+            // Use the actual sampling PDF from scatter_is (cosine-weighted)
             vec3 scatter_dir = srec.s_ray.direction();
             double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
-            double pdf = 1.0 / (2.0 * pi);
-            color throughput = srec.bsdf * cos_theta / pdf;
+            double pdf = srec.w_pdf;
+            color throughput = (pdf > 0.0) ? srec.bsdf * cos_theta / pdf : colors::black;
 
             //----------------------------------------
             // Keep track of overall throughput, to terminate paths with tiny contributions early

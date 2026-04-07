@@ -46,7 +46,7 @@ private:
     }
 
     double compute_actual_ratio() const {
-        return double(m_pixel_height) / double(m_pixel_width);
+        return double(m_pixel_width) / double(m_pixel_height);
     }
 
     void validate() {

@@ -25,6 +25,7 @@
 #include "material/surface materials/emissive.h"
 #include "material/surface materials/mat_metal.h"
 #include "material/medium materials/medium_mat_constant.h"
+#include "material/medium materials/medium_mat_hg_constant.h"
 #include "material/medium materials/medium_mat_grid.h"
 #include "../structures/density_grid.h"
 #include "../utility/perlin.h"
@@ -399,16 +400,16 @@ public:
 
         medium_list mediums;
 
-        // Define scattering-dominant smoke cloud in center
+        // Scattering-dominant smoke cloud in center of cornell box
         vec3 half_size(120, 180, 120);
         aabb smoke_bounds(-half_size, half_size);
-
         auto grid = make_smoke_grid(40, 40, 40, smoke_bounds);
 
-        auto base_mat = make_shared<medium_mat_constant>(
-            color(0.05, 0.05, 0.05),  // sigma_a (absorption)
-            color(0.25, 0.25, 0.25),  // sigma_s (scattering)
-            colors::black             // emission
+        auto base_mat = make_shared<medium_mat_hg_constant>(
+            color(0.002, 0.002, 0.002),  // sigma_a
+            color(0.04, 0.04, 0.04),     // sigma_s (τ ≈ 2.9 through center)
+            colors::black,               // emission
+            0.4                          // g (moderate forward scatter for smoke)
         );
         auto grid_mat = make_shared<medium_mat_grid>(grid, base_mat);
 
@@ -431,32 +432,42 @@ public:
         );
     }
 
+    // =========================================================================
+    // Cloud in open sky with ground plane and directional light
+    // =========================================================================
     static scene clouds() {
         camera cam;
-        cam.vfov = 35;
-        cam.lookfrom = point3( 0, 300, -800 );
-        cam.lookat = point3( 0, 300, 0 );
+        cam.vfov = 50;
+        cam.lookfrom = point3( 0, 200, -500 );
+        cam.lookat = point3( 0, 180, 200 );
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
         surface_list surfaces;
         medium_list mediums;
 
-        // Ground plane to show shadow
-        auto ground_mat = make_shared<lambertian>(colors::n_white);
+        // Ground plane
+        auto ground_mat = make_shared<lambertian>(color(0.4, 0.5, 0.3));
         surfaces.add(object_library::make_quad(point3(-2000, 0, -2000), vec3(4000, 0, 0), vec3(0, 0, 4000), ground_mat));
 
-        // Small, bright directional light to cast sharp shadows
-        auto light_mat = make_shared<emissive>( colors::bright_light );
-        auto light = object_library::make_quad( point3( -400, 1000, -400 ), vec3( 800, 0, 0 ), vec3( 0, 0, 800 ), light_mat );
+        // Overhead directional light (sun-like)
+        auto light_mat = make_shared<emissive>( color(20, 18, 14) );
+        auto light = object_library::make_quad( point3( -300, 800, -200 ), vec3( 600, 0, 0 ), vec3( 0, 0, 600 ), light_mat );
         surfaces.add( light );
 
-        // Single grey cloud centered in view
-        vec3 half_size(200, 80, 200);
+        // Cloud - scattering-dominant with density grid
+        vec3 half_size(180, 70, 180);
         aabb bounds(-half_size, half_size);
-        auto grid = make_smoke_grid(25, 20, 25, bounds);
+        auto grid = make_cloud_grid(30, 20, 30, bounds);
 
-        auto cloud_base = make_shared<medium_mat_constant>(color(0.5, 0.5, 0.5), 0.12, 0.11);
+        // For clouds: very low absorption, moderate scattering with HG forward scatter
+        // path ≈ 360, avg grid density ≈ 0.40: τ = 0.025 × 0.40 × 360 ≈ 3.6
+        auto cloud_base = make_shared<medium_mat_hg_constant>(
+            color(0.0001, 0.0001, 0.0001), // sigma_a (near-zero for white cloud)
+            color(0.025, 0.025, 0.025),    // sigma_s (increased for thicker appearance)
+            colors::black,                  // emission
+            0.76                            // g (strong forward scattering for bright cloud)
+        );
         auto grid_mat = make_shared<medium_mat_grid>(grid, cloud_base);
 
         mediums.add(object_library::make_box_medium(point3(0, 300, 200), half_size, grid_mat));
@@ -466,7 +477,268 @@ public:
 
         medium_list medium_lights;
 
-        auto const skybox = make_shared<gradient_skybox>(color(0.3, 0.3, 0.3), color(0.05, 0.05, 0.1));
+        auto const skybox = make_shared<gradient_skybox>(color(0.15, 0.2, 0.35), color(0.5, 0.6, 0.9));
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
+    // =========================================================================
+    // Volumetric god-rays: spotlight through fog in a dark room
+    // =========================================================================
+    static scene god_rays() {
+        camera cam;
+        cam.vfov = 50;
+        cam.lookfrom = point3( 278, 200, -500 );
+        cam.lookat = point3( 278, 200, 278 );
+        cam.vup = vec3( 0, 1, 0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        auto dark_wall = make_shared<lambertian>( color(0.15, 0.15, 0.18) );
+        auto floor_mat = make_shared<lambertian>( color(0.3, 0.25, 0.2) );
+
+        // Room walls
+        surfaces.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), dark_wall ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), dark_wall ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), floor_mat ) );
+        surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), dark_wall ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), dark_wall ) );
+
+        // Small bright ceiling light (creates shaft of light)
+        auto light_mat = make_shared<emissive>( color(30, 28, 22) );
+        auto light = object_library::make_quad( point3( 248, 554, 248 ), vec3( 60, 0, 0 ), vec3( 0, 0, 60 ), light_mat );
+        surfaces.add( light );
+
+        // Reflective sphere on the floor to catch god rays
+        auto mirror_mat = make_shared<metal>( color(0.9, 0.9, 0.95), 0.02 );
+        surfaces.add( object_library::make_sphere( point3(278, 80, 278), 80, mirror_mat ) );
+
+        // Homogeneous participating medium filling the room (light fog)
+        medium_list mediums;
+        auto fog_mat = make_shared<medium_mat_hg_constant>(
+            color(0.0003, 0.0003, 0.0003),  // sigma_a
+            color(0.003, 0.003, 0.003),     // sigma_s (τ ≈ 1.8 across room)
+            colors::black,                   // no emission
+            0.5                              // g (moderate forward scatter for god rays)
+        );
+        vec3 room_half(277, 277, 277);
+        mediums.add(object_library::make_box_medium(point3(278, 278, 278), room_half, fog_mat));
+
+        surface_list surface_lights;
+        surface_lights.add( light );
+        medium_list medium_lights;
+
+        auto const skybox = make_shared<solid_color_skybox>(colors::black);
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
+    // =========================================================================
+    // Nebula: coloured overlapping volumetric clouds in space
+    // =========================================================================
+    static scene nebula() {
+        camera cam;
+        cam.vfov = 45;
+        cam.lookfrom = point3( 0, 0, -500 );
+        cam.lookat = point3( 0, 0, 0 );
+        cam.vup = vec3( 0, 1, 0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        medium_list mediums;
+
+        // Embedded star light sources
+        auto star1_mat = make_shared<emissive>( color(12, 10, 6) );
+        auto star1 = object_library::make_sphere( point3(-60, 20, 50), 15, star1_mat );
+        surfaces.add( star1 );
+
+        auto star2_mat = make_shared<emissive>( color(4, 4, 12) );
+        auto star2 = object_library::make_sphere( point3(80, -30, -20), 10, star2_mat );
+        surfaces.add( star2 );
+
+        // Red/orange nebula cloud
+        vec3 hs1(120, 90, 120);
+        aabb bounds1(-hs1, hs1);
+        auto grid1 = make_smoke_grid(25, 20, 25, bounds1);
+        // path ≈ 240, avg density ≈ 0.19: τ_r = 0.025×0.19×240 ≈ 1.1
+        auto red_cloud_mat = make_shared<medium_mat_constant>(
+            color(0.001, 0.004, 0.004),    // sigma_a: absorb green/blue
+            color(0.025, 0.006, 0.003),    // sigma_s: scatter red
+            colors::black
+        );
+        auto grid_mat1 = make_shared<medium_mat_grid>(grid1, red_cloud_mat);
+        mediums.add(object_library::make_box_medium(point3(-40, 10, 30), hs1, grid_mat1));
+
+        // Blue/purple nebula cloud (overlapping)
+        vec3 hs2(100, 80, 100);
+        aabb bounds2(-hs2, hs2);
+        auto grid2 = make_smoke_grid(22, 18, 22, bounds2);
+        // path ≈ 200, avg density ≈ 0.19: τ_b = 0.025×0.19×200 ≈ 1.0
+        auto blue_cloud_mat = make_shared<medium_mat_constant>(
+            color(0.004, 0.002, 0.0005),   // sigma_a: absorb red
+            color(0.004, 0.008, 0.025),    // sigma_s: scatter blue
+            colors::black
+        );
+        auto grid_mat2 = make_shared<medium_mat_grid>(grid2, blue_cloud_mat);
+        mediums.add(object_library::make_box_medium(point3(50, -20, -10), hs2, grid_mat2));
+
+        surface_list surface_lights;
+        surface_lights.add( star1 );
+        surface_lights.add( star2 );
+        medium_list medium_lights;
+
+        auto const skybox = make_shared<solid_color_skybox>(color(0.002, 0.002, 0.005));
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
+    // =========================================================================
+    // Glass sphere with interior fog + exterior atmosphere
+    // =========================================================================
+    static scene foggy_glass() {
+        camera cam;
+        cam.vfov = 40;
+        cam.lookfrom = point3( 278, 278, -800 );
+        cam.lookat = point3( 278, 278, 0 );
+        cam.vup = vec3( 0, 1, 0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        auto red = make_shared<lambertian>( colors::n_red );
+        auto white = make_shared<lambertian>( colors::n_white );
+        auto green = make_shared<lambertian>( colors::n_green );
+
+        // Cornell box walls
+        surfaces.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
+
+        // Box pedestal
+        shared_ptr<surface> pedestal = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 100, 165 ), white );
+        pedestal = object_library::make_rotate( pedestal, 15 );
+        pedestal = object_library::make_translate( pedestal, vec3( 265, 0, 295 ) );
+        surfaces.add( pedestal );
+
+        // Glass sphere on pedestal
+        auto glass_mat = make_shared<dielectric>( 1.5 );
+        surfaces.add( object_library::make_sphere( point3(340, 220, 370), 100, glass_mat ) );
+
+        // Light
+        auto light_mat = make_shared<emissive>( colors::bright_light );
+        auto light = object_library::make_quad( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
+        surfaces.add( light );
+
+        medium_list mediums;
+
+        // Coloured fog inside the glass sphere
+        auto inner_fog = make_shared<medium_mat_constant>(
+            color(0.004, 0.001, 0.001),   // sigma_a
+            color(0.012, 0.003, 0.003),   // sigma_s (reddish, τ ≈ 3 across diameter)
+            colors::black
+        );
+        mediums.add(object_library::make_sphere_medium(point3(340, 220, 370), 99, inner_fog));
+
+        // Light atmospheric haze in the room
+        auto room_fog = make_shared<medium_mat_constant>(
+            color(0.0002, 0.0002, 0.0002),
+            color(0.001, 0.001, 0.001),    // (τ ≈ 0.7 across room)
+            colors::black
+        );
+        vec3 room_half(277, 277, 277);
+        mediums.add(object_library::make_box_medium(point3(278, 278, 278), room_half, room_fog));
+
+        surface_list surface_lights;
+        surface_lights.add( light );
+        medium_list medium_lights;
+
+        auto const skybox = make_shared<solid_color_skybox>(colors::black);
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
+    // =========================================================================
+    // Sunset clouds: multiple layered clouds lit from below
+    // =========================================================================
+    static scene sunset_clouds() {
+        camera cam;
+        cam.vfov = 40;
+        cam.lookfrom = point3( 0, 200, -700 );
+        cam.lookat = point3( 0, 260, 200 );
+        cam.vup = vec3( 0, 1, 0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        medium_list mediums;
+
+        // Ground (dark earth tones)
+        auto ground_mat = make_shared<lambertian>(color(0.15, 0.12, 0.08));
+        surfaces.add(object_library::make_quad(point3(-3000, 0, -3000), vec3(6000, 0, 0), vec3(0, 0, 6000), ground_mat));
+
+        // Low-angle warm "sun" light (sunset from the side)
+        auto sun_mat = make_shared<emissive>( color(25, 12, 4) );
+        auto sun = object_library::make_quad( point3( -800, 150, 400 ), vec3( 200, 0, 0 ), vec3( 0, 200, 0 ), sun_mat );
+        surfaces.add( sun );
+
+        // Cloud layer 1 - wide flat cloud
+        vec3 hs1(250, 40, 200);
+        aabb b1(-hs1, hs1);
+        auto g1 = make_cloud_grid(28, 12, 28, b1);
+        // path ≈ 500, avg grid density ≈ 0.40: τ = 0.018 × 0.40 × 500 ≈ 3.6
+        auto cloud_mat1 = make_shared<medium_mat_hg_constant>(
+            color(0.0001, 0.0001, 0.0001),
+            color(0.018, 0.018, 0.018),
+            colors::black,
+            0.76                             // strong forward scatter
+        );
+        auto gm1 = make_shared<medium_mat_grid>(g1, cloud_mat1);
+        mediums.add(object_library::make_box_medium(point3(-50, 280, 180), hs1, gm1));
+
+        // Cloud layer 2 - smaller high cloud
+        vec3 hs2(120, 35, 100);
+        aabb b2(-hs2, hs2);
+        auto g2 = make_cloud_grid(20, 10, 20, b2);
+        auto gm2 = make_shared<medium_mat_grid>(g2, cloud_mat1);
+        mediums.add(object_library::make_box_medium(point3(130, 340, 100), hs2, gm2));
+
+        // Cloud layer 3 - small wispy cloud
+        vec3 hs3(80, 25, 70);
+        aabb b3(-hs3, hs3);
+        auto g3 = make_cloud_grid(16, 8, 16, b3);
+        auto gm3 = make_shared<medium_mat_grid>(g3, cloud_mat1);
+        mediums.add(object_library::make_box_medium(point3(-180, 310, 250), hs3, gm3));
+
+        surface_list surface_lights;
+        surface_lights.add( sun );
+        medium_list medium_lights;
+
+        // Sunset gradient: warm orange at horizon, deep blue above
+        auto const skybox = make_shared<gradient_skybox>(color(0.6, 0.25, 0.05), color(0.05, 0.05, 0.2));
 
         return scene( cam,
             make_shared<surface_list>(surfaces),
@@ -478,6 +750,7 @@ public:
     }
 
 private:
+    // Smoke/turbulence grid with sharp falloff
     static shared_ptr<density_grid> make_smoke_grid(int nx, int ny, int nz, const aabb& bounds) {
         auto grid = make_shared<density_grid>();
         grid->nx = nx;
@@ -501,6 +774,44 @@ private:
                     density *= std::sin(x * pi) * std::sin(y * pi) * std::sin(z * pi);
 
                     grid->data[i + j * nx + k * nx * ny] = (float)density;
+                }
+            }
+        }
+        grid->precompute();
+        return grid;
+    }
+
+    // Cloud grid: smoother, wider shapes with softer edges
+    static shared_ptr<density_grid> make_cloud_grid(int nx, int ny, int nz, const aabb& bounds) {
+        auto grid = make_shared<density_grid>();
+        grid->nx = nx;
+        grid->ny = ny;
+        grid->nz = nz;
+        grid->bounds = bounds;
+        grid->data.resize(nx * ny * nz);
+
+        perlin p;
+        for (int k = 0; k < nz; k++) {
+            for (int j = 0; j < ny; j++) {
+                for (int i = 0; i < nx; i++) {
+                    double x = (double)i / (nx - 1);
+                    double y = (double)j / (ny - 1);
+                    double z = (double)k / (nz - 1);
+
+                    // Lower frequency noise for billowy look
+                    point3 pos(x * 3.0, y * 3.0, z * 3.0);
+                    double noise = 0.5 + 0.5 * p.turb(pos, 5);
+
+                    // Spherical falloff from center
+                    double dx = 2.0 * x - 1.0;
+                    double dy = 2.0 * y - 1.0;
+                    double dz = 2.0 * z - 1.0;
+                    double r2 = dx * dx + dy * dy + dz * dz;
+                    double falloff = std::max(0.0, 1.0 - r2);
+
+                    double density = noise * falloff * falloff;
+
+                    grid->data[i + j * nx + k * nx * ny] = (float)std::max(0.0, density);
                 }
             }
         }

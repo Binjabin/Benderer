@@ -105,7 +105,7 @@ public:
 
                     throughput *= slice_transmittance(slice, remaining);
 
-                    if (denom) {
+                    if (denom > epsilon) {
                         double weight = 1.0 / denom;
                         throughput *= weight;
 
@@ -149,6 +149,7 @@ public:
                     double chosen_sigma_s_h = 0.0;
                     double mat_pdf = 1.0;
 
+                    point3 chosen_local_p = global_p;
                     if (total_sigma_s_h > epsilon) {
                         double rand = random_double() * total_sigma_s_h;
 
@@ -161,6 +162,7 @@ public:
                             if (rand < cum_w) {
                                 chosen_mat = mat;
                                 chosen_sigma_s_h = w;
+                                chosen_local_p = local_p;
                                 mat_pdf = chosen_sigma_s_h / total_sigma_s_h;
                                 break;
                             }
@@ -171,6 +173,7 @@ public:
                             chosen_mat = entry.m_mat;
                             point3 local_p = entry.m_local_ray.at(t);
                             chosen_sigma_s_h = chosen_mat->sigma_s(local_p)[h];
+                            chosen_local_p = local_p;
                             mat_pdf = chosen_sigma_s_h / total_sigma_s_h;
                         }
                     }
@@ -181,13 +184,18 @@ public:
                     rec.m_mat = chosen_mat;
                     rec.m_emission = props.emission;
                     rec.set_p(global_p);
+                    rec.m_local_p = chosen_local_p;
                     rec.set_t(slice_t.min + offset + dt);
                     rec.m_mat_pdf = mat_pdf;
                     return true;
                 }
                 else {
                     //NULL COLLISION
-                    color sigma_n = slice.m_sigma_maj - actual_sigma_t;
+                    color sigma_n = color(
+                        std::max(0.0, slice.m_sigma_maj[0] - actual_sigma_t[0]),
+                        std::max(0.0, slice.m_sigma_maj[1] - actual_sigma_t[1]),
+                        std::max(0.0, slice.m_sigma_maj[2] - actual_sigma_t[2])
+                    );
 
                     double denom_n =
                         r_prob_accum * sigma_n[0] * r_transmittance +
@@ -226,22 +234,6 @@ public:
         std::vector<medium_slice> slices;
         intersections.get_cropped_slices(t, slices);
 
-        color total_optical_thickness = colors::black;
-        for (const medium_slice& slice : slices) {
-            total_optical_thickness += slice.maj_optical_thickness;
-        }
-
-        double sum = total_optical_thickness[0] + total_optical_thickness[1] + total_optical_thickness[2];
-        if (sum <= 0.0) return colors::white;
-
-        const double uniform_prob = 1.0 / 3.0;
-        const double tau_weight = 1.0 - uniform_prob;
-        double r_prop = tau_weight * (total_optical_thickness[0] / sum) + uniform_prob / 3.0;
-        double g_prop = tau_weight * (total_optical_thickness[1] / sum) + uniform_prob / 3.0;
-
-        double c_r = random_double();
-        int h = (c_r < r_prop) ? 0 : (c_r < r_prop + g_prop) ? 1 : 2;
-
         color transmittance = colors::white;
         double budget = -std::log(1.0 - random_double());
 
@@ -251,31 +243,35 @@ public:
             const interval slice_t = slice.m_interval;
             const color sigma_maj = slice.m_sigma_maj;
 
-            double sigma_maj_h = sigma_maj[h];
-            if (sigma_maj_h <= epsilon) continue;
+            // Use max-channel majorant as sampling rate so all per-channel ratios stay in [0,1]
+            double sigma_sample = std::max(sigma_maj[0], std::max(sigma_maj[1], sigma_maj[2]));
+            if (sigma_sample <= epsilon) continue;
 
             double remaining = slice_t.size();
             double offset = 0.0;
 
             while (true) {
-                double dt = budget / sigma_maj_h;
+                double dt = budget / sigma_sample;
 
                 if (dt >= remaining) {
-                    budget -= remaining * sigma_maj_h;
-                    transmittance *= exp(-sigma_maj * remaining);
+                    // Exited slice without event — no transmittance factor in ratio tracking
+                    budget -= remaining * sigma_sample;
                     break;
                 }
 
-                double t = slice_t.min + offset + dt;
-                medium_properties props = slice.sample(t);
+                double t_pos = slice_t.min + offset + dt;
+                medium_properties props = slice.sample(t_pos);
                 color actual_sigma_t = props.sigma_t;
-                color sigma_n = sigma_maj - actual_sigma_t;
 
+                // Ratio tracking: T *= (sigma_sample - sigma_t) / sigma_sample
                 color ratio;
                 for (int i = 0; i < 3; i++) {
-                    ratio[i] = (sigma_maj[i] > epsilon) ? sigma_n[i] / sigma_maj[i] : 1.0;
+                    ratio[i] = std::max(0.0, (sigma_sample - actual_sigma_t[i]) / sigma_sample);
                 }
-                transmittance *= exp(-sigma_maj * dt) * ratio;
+                transmittance *= ratio;
+
+                // Early termination if transmittance is negligible
+                if (max_component(transmittance) < 1e-10) return colors::black;
 
                 offset += dt;
                 remaining -= dt;

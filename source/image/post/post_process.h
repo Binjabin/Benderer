@@ -26,15 +26,15 @@ public:
             double g = sanitize(double_buf[i*3 + 1]) * exposure_mul;
             double b = sanitize(double_buf[i*3 + 2]) * exposure_mul;
 
+            // Tonemap before clamp (Reinhard)
+            r = tonemap(r);
+            g = tonemap(g);
+            b = tonemap(b);
+
             // clamp then gamma
             r = std::clamp(r, 0.0, 1.0);
             g = std::clamp(g, 0.0, 1.0);
             b = std::clamp(b, 0.0, 1.0);
-
-            //Tonemap
-            //r = tonemap(r);
-            //g = tonemap(g);
-            //b = tonemap(b);
 
             if (m_gamma > 0.0) {
                 r = gamma(r);

@@ -143,9 +143,9 @@ private:
         const medium_intersection* m_rec;
 
         bool operator<(const event& other) const {
-            if (std::abs(m_t - other.m_t) > epsilon)
+            if (m_t != other.m_t)
                 return m_t < other.m_t;
-            //We take enters before exits
+            // At exact same t, enters before exits
             return m_enter > other.m_enter;
         }
     };

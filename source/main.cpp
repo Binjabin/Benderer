@@ -18,9 +18,23 @@
 
 int main() {
 
-    scene our_scene = scene_library::clouds();
+    // Available scenes (uncomment one):
+    //scene our_scene = scene_library::checkered_spheres();
+    //scene our_scene = scene_library::earth();
+    //scene our_scene = scene_library::random_balls();
+    //scene our_scene = scene_library::perlin_spheres();
+    //scene our_scene = scene_library::quads();
+    //scene our_scene = scene_library::simple_light();
+    //scene our_scene = scene_library::cornell_box();
+    //scene our_scene = scene_library::cornell_ball();
+    //scene our_scene = scene_library::cornell_smoke();
+    //scene our_scene = scene_library::clouds();
+    //scene our_scene = scene_library::god_rays();
+    //scene our_scene = scene_library::nebula();
+    //scene our_scene = scene_library::foggy_glass();
+    //scene our_scene = scene_library::sunset_clouds();
     our_scene.finalize();
-    image_info info = image_info_library::micro_sol();
+    image_info info = image_info_library::micro_ultra();
 
     int w = info.pixel_width();
     int h = info.pixel_height();

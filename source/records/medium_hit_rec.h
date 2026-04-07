@@ -39,6 +39,9 @@ public:
 
     //The material we scattered off
     shared_ptr<medium_material> m_mat = nullptr;
+
+    //The scatter point in the chosen material's local coordinate space
+    point3 m_local_p = point3(0,0,0);
 };
 
 #endif //BENDERER_MEDIUM_HIT_REC_H
