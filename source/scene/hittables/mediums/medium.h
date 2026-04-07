@@ -10,7 +10,7 @@
 #include "../../../structures/ray.h"
 #include "../../../utility/color/color.h"
 
-class medium : public hittable {
+class medium : public hittable, public std::enable_shared_from_this<medium> {
 public:
     virtual ~medium() = default;
 
@@ -24,32 +24,18 @@ public:
         return m_volume;
     }
 
-    virtual color get_flux() const {
-        return m_flux;
-    }
-
     virtual double pdf_value(const point3& origin, const vec3& direction) const {
         return 0.0;
     }
-
-    virtual double get_flux_lum() const {
-        return luminance(m_flux);
-    }
-
-    virtual std::vector<shared_ptr<medium>> flatten() const = 0;
+    virtual std::vector<shared_ptr<medium>> flatten() = 0;
 
 protected:
-    void set_flux_rgb(const vec3& flux_rgb) {
-        m_flux = flux_rgb;
-    }
-
     void set_volume(const double volume) {
         m_volume = volume;
     }
 
 private:
     double m_volume = 0;
-    color m_flux = vec3(0, 0, 0);
 
 
 };

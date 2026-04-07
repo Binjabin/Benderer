@@ -20,7 +20,7 @@ int main() {
 
     scene our_scene = scene_library::cornell_ball();
     our_scene.finalize();
-    image_info info = image_info_library::small_high();
+    image_info info = image_info_library::micro_sol();
 
     int w = info.pixel_width();
     int h = info.pixel_height();

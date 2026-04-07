@@ -117,10 +117,11 @@ public:
                     break;
                 }
 
-                vec3 p = r.at(slice_t.min + offset + dt);
+                vec3 p = slice.m_local_ray.at(slice_t.min + offset + dt);
 
-                color actual_sigma_t = slice.sigma_t(p);
-                color actual_sigma_s = slice.sigma_s(p);
+                medium_properties props = slice.sample(p);
+                color actual_sigma_t = props.sigma_t;
+                color actual_sigma_s = props.sigma_s;
 
                 double r_transmittance = slice_transmittance_for_channel(slice, dt, 0);
                 double g_transmittance = slice_transmittance_for_channel(slice, dt, 1);
@@ -173,7 +174,7 @@ public:
                     //If we didn't choose a mat it was because scatter was < epsilon, so we absorb instead
                     rec.m_is_scatter = (chosen_mat != nullptr);
                     rec.m_mat = chosen_mat;
-                    rec.m_emission = slice.emission(p);
+                    rec.m_emission = props.emission;
                     rec.set_p(p);
                     rec.set_t(slice_t.min + offset + dt);
                     rec.m_mat_pdf = mat_pdf;
@@ -260,8 +261,9 @@ public:
                     break;
                 }
 
-                vec3 p = r.at(slice_t.min + offset + dt);
-                color actual_sigma_t = slice.sigma_t(p);
+                vec3 p = slice.m_local_ray.at(slice_t.min + offset + dt);
+                medium_properties props = slice.sample(p);
+                color actual_sigma_t = props.sigma_t;
                 color sigma_n = sigma_maj - actual_sigma_t;
 
                 color ratio;

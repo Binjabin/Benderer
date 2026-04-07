@@ -25,22 +25,7 @@ public:
 
     void add( shared_ptr<surface> surface ) {
         surfaces.push_back( surface );
-        bbox = aabb( bbox, surface->bounding_box() );
-
-        if (get_count() == 0) {
-            m_origin = surface->origin();
-            m_local_furthest_point = surface->local_furthest_point();
-        }
-        else {
-            vec3 offset = surface->origin() - m_origin;
-            double dist = offset.length();
-            double new_rad = (1.0 / 2.0) * (dist + m_local_furthest_point + surface->local_furthest_point());
-            m_origin = m_origin + (1.0 / dist) * (new_rad - m_local_furthest_point) * offset;
-            m_local_furthest_point = new_rad;
-        }
-
-        m_global_furthest_point = std::max(m_global_furthest_point, surface->global_furthest_point());
-        set_count(get_count() + surface->get_count());
+        add_hittable_properties(surface);
     }
 
     bool surface_hit( const ray& r, const interval& ray_t, surface_hit_rec& rec ) const override {
@@ -84,12 +69,12 @@ public:
     }
 
     double pdf_value(const point3& origin, const vec3& direction) const override {
-        double total_flux = get_flux_lum();
+        double total_flux = get_flux_weight();
         if (total_flux <= 0.0) return 0.0;
 
         auto sum = 0.0;
         for (const auto& surface : surfaces) {
-            double weight = surface->get_flux_lum() / total_flux;
+            double weight = surface->get_flux_weight() / total_flux;
             sum += weight * surface->pdf_value( origin, direction );
         }
 
@@ -97,21 +82,17 @@ public:
     }
 
     void compute_properties() override {
-
-        int sum_count = 0;
-        double sum_area = 0;
-        vec3 sum_flux_rgb = vec3(0,0,0);
+        double area = 0;
+        color flux = colors::black;
 
         for (const auto& surface : surfaces) {
             surface->compute_properties();
-            sum_count += surface->get_count();
-            sum_area += surface->get_surface_area();
-            sum_flux_rgb += surface->get_flux();
+            area += surface->get_surface_area();
+            flux += surface->get_flux();
         }
 
-        set_count(sum_count);
-        set_surface_area(sum_area);
-        set_flux_rgb(sum_flux_rgb);
+        set_surface_area(area);
+        set_flux(flux);
     }
 
     void set_explicit_light(bool is_light) override {
@@ -125,15 +106,15 @@ public:
             throw std::runtime_error("No objects in hittable list");
         }
 
-        auto total_flux = get_flux_lum();
+        auto total_flux = get_flux_weight();
         auto sample = seed * total_flux;
 
         double bottom = 0;
-        double top = surfaces[0]->get_flux_lum();
+        double top = surfaces[0]->get_flux_weight();
         double interval_range = top;
         int i = 0;
         while (top < sample && i + 1 < surfaces.size()) {
-            top += surfaces[i+1]->get_flux_lum();
+            top += surfaces[i+1]->get_flux_weight();
             bottom += interval_range;
             interval_range = top - bottom;
             i++;
@@ -146,21 +127,7 @@ public:
 
     }
 
-    aabb bounding_box() const override { return bbox; }
-
-    double global_furthest_point() const override {
-        return m_global_furthest_point;
-    }
-
-    double local_furthest_point() const override {
-        return m_local_furthest_point;
-    }
-
-    vec3 origin() const override {
-        return m_origin;
-    }
-
-    std::vector<shared_ptr<surface>> flatten() const override {
+    std::vector<shared_ptr<surface>> flatten() override {
         std::vector<shared_ptr<surface>> flattened;
         for (const auto& surface : surfaces) {
             auto child = surface ->flatten();
@@ -172,16 +139,10 @@ public:
 private:
     //The probability a flux based sample selected item i out of the list
     double get_discrete_flux_pdf(int i) const {
-        double total = get_flux_lum();
-        double p = surfaces[i]->get_flux_lum() / total;
+        double total = get_flux_weight();
+        double p = surfaces[i]->get_flux_weight() / total;
         return p;
     }
-
-    aabb bbox;
-
-    point3 m_origin;
-    double m_local_furthest_point;
-    double m_global_furthest_point;
 };
 
 #endif //BENDERER_SURFACE_LIST_H

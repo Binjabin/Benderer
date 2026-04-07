@@ -11,21 +11,18 @@ class transformed_surface : public surface {
 public:
     transformed_surface(shared_ptr<surface> object, shared_ptr<transform> transform)
         : m_surface(object), m_transform(transform) {
-        bbox = m_transform->transform_bbox(m_surface->bounding_box());
-
-        m_origin = m_transform->transform_point( object->origin());
-        m_local_furthest_point = object->local_furthest_point();
-
-        m_global_furthest_point = m_origin.length() + m_local_furthest_point;
+        set_bbox(m_transform->transform_bbox(m_surface->bounding_box()));
+        set_origin(m_transform->transform_point(m_surface->origin()));
+        set_local_furthest_point(m_surface->local_furthest_point());
+        set_global_furthest_point(origin().length() + local_furthest_point());
     }
-
 
     void compute_properties() override {
         if (m_surface){
             m_surface->compute_properties();
             set_count(m_surface->get_count());
             set_surface_area(m_surface->get_surface_area());
-            set_flux_rgb(m_surface->get_flux());
+            set_flux(m_surface->get_flux());
         }
     }
 
@@ -60,29 +57,13 @@ public:
         return child_sample;
     }
 
-    aabb bounding_box() const override {
-        return bbox;
-    }
-
-    double global_furthest_point() const override {
-        return m_global_furthest_point;
-    }
-
-    double local_furthest_point() const override {
-        return m_local_furthest_point;
-    }
-
-    vec3 origin() const override {
-        return m_origin;
-    }
-
     double pdf_value(const point3 &origin, const vec3 &direction) const override {
         point3 p = m_transform->transform_point(origin);
         vec3 local_dir = m_transform->transform_direction(direction);
         return m_surface->pdf_value(p, local_dir);
     }
 
-    std::vector<shared_ptr<surface>> flatten() const override {
+    std::vector<shared_ptr<surface>> flatten() override {
         std::vector<shared_ptr<surface>> flattened;
 
         auto child_flattened = m_surface->flatten();
@@ -101,11 +82,6 @@ public:
 private:
     shared_ptr<surface> m_surface;
     shared_ptr<transform> m_transform;
-    aabb bbox;
-
-    double m_global_furthest_point;
-    double m_local_furthest_point;
-    point3 m_origin;
 };
 
 #endif //BENDERER_TRANSFORMED_H

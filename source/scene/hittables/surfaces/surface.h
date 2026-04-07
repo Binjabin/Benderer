@@ -6,7 +6,7 @@
 #define BENDERER_SURFACE_H
 #include "../hittable.h"
 
-class surface : public hittable {
+class surface : public hittable, public std::enable_shared_from_this<surface>{
 public:
     virtual bool surface_hit( const ray& r, const interval& ray_t, surface_hit_rec& rec ) const = 0;
 
@@ -20,24 +20,13 @@ public:
         return m_surface_area;
     }
 
-    virtual color get_flux() const {
-        return m_flux;
-    }
-
     virtual double pdf_value(const point3& origin, const vec3& direction) const {
         return 0.0;
     }
 
-    virtual double get_flux_lum() const {
-        return luminance(m_flux);
-    }
-
-    virtual std::vector<shared_ptr<surface>> flatten() const = 0;
+    virtual std::vector<shared_ptr<surface>> flatten() = 0;
 
 protected:
-    void set_flux_rgb(const vec3& flux_rgb) {
-        m_flux = flux_rgb;
-    }
 
     void set_surface_area(const double surface_area) {
         m_surface_area = surface_area;
@@ -45,7 +34,6 @@ protected:
 
 private:
     double m_surface_area = 0;
-    color m_flux = vec3(0, 0, 0);
 };
 
 #endif //BENDERER_SURFACE_H

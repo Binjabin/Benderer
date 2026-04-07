@@ -12,11 +12,12 @@
 
 //The intersection along a ray with a medium
 struct medium_intersection {
-    medium_intersection(shared_ptr<medium_material> mat, interval t, int priority)
-        : m_mat(std::move(mat)), m_t(t), m_excluder_priority(priority) {}
+    medium_intersection(shared_ptr<medium_material> mat, interval t, const ray& local_ray, int priority)
+        : m_mat(std::move(mat)), m_t(t), m_local_ray(local_ray), m_excluder_priority(priority) {}
 
     shared_ptr<medium_material> m_mat;
     interval m_t;
+    ray m_local_ray;
     int m_excluder_priority;
 };
 
@@ -63,6 +64,17 @@ public:
         return emission;
     }
 
+    medium_properties sample(const point3& p) const {
+        medium_properties total = {colors::black, colors::black, colors::black};
+        for (const auto& mat : m_mats) {
+            medium_properties props = mat->sample(p);
+            total.sigma_t += props.sigma_t;
+            total.sigma_s += props.sigma_s;
+            total.emission += props.emission;
+        }
+        return total;
+    }
+
     color m_sigma_maj;
     color maj_optical_thickness;
     bool is_empty;
@@ -72,8 +84,8 @@ class medium_intersections {
 public:
     medium_intersections() = default;
 
-    void add(shared_ptr<medium_material> mat, interval med_t, int excluder_priority) {
-        m_intersections.emplace_back(std::move(mat), med_t, excluder_priority);
+    void add(shared_ptr<medium_material> mat, interval med_t, const ray& local_ray, int excluder_priority = 0) {
+        m_intersections.emplace_back(std::move(mat), med_t, local_ray, excluder_priority);
         sliced = false;
     }
 

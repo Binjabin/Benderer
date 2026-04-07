@@ -2,16 +2,16 @@
 // Created by binjabin on 1/30/26.
 //
 
-#ifndef BENDERER_MEDIUM_MAT_CONSTANT_H
-#define BENDERER_MEDIUM_MAT_CONSTANT_H
+#ifndef BENDERER_MEDIUM_MAT_GRID_H
+#define BENDERER_MEDIUM_MAT_GRID_H
 #include <algorithm>
 
 #include "../medium_material.h"
 #include "../../../structures/density_grid.h"
 
-class medium_mat_constant : public medium_material {
+class medium_mat_grid : public medium_material {
 public:
-    medium_mat_constant(shared_ptr<density_grid> grid, shared_ptr<medium_material> base)
+    medium_mat_grid(shared_ptr<density_grid> grid, shared_ptr<medium_material> base)
         : m_density_grid(grid), m_base(base){
         m_sigma_maj = compute_majorant();
         m_average_density = average_density();
@@ -39,7 +39,13 @@ public:
 
     color emission(const point3& p) const override {
         float d = m_density_grid->sample_density(p);
-        return m_base->sigma_t(p) * d;
+        return m_base->emission(p) * d;
+    }
+
+    medium_properties sample(const point3& p) const override {
+        float d = m_density_grid->sample_density(p);
+        medium_properties base_props = m_base->sample(p);
+        return {base_props.sigma_t * d, base_props.sigma_s * d, base_props.emission * d};
     }
 
     color sigma_maj() const override {
@@ -93,4 +99,4 @@ private:
 
 };
 
-#endif //BENDERER_MEDIUM_MAT_CONSTANT_H
+#endif //BENDERER_MEDIUM_MAT_GRID_H

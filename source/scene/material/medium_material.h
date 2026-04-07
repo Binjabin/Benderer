@@ -12,9 +12,18 @@
 #include "../../structures/vec3.h"
 #include "../../records/surface_scatter_rec.h"
 
+struct medium_properties {
+    color sigma_t;
+    color sigma_s;
+    color emission;
+};
+
 class medium_material {
 public:
     virtual ~medium_material() = default;
+
+    //Sample all properties at once
+    virtual medium_properties sample(const point3& p) const = 0;
 
     //The probability density of absorption
     virtual color sigma_a(const point3& p) const = 0;

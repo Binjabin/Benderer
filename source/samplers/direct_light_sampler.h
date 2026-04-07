@@ -24,11 +24,11 @@ public:
         //Values for MIS/pdfs
         const double sky_weight = sky ? sky->get_flux_weight() : 0.0;
 
-        const bool have_surface_lights = (surface_lights && surface_lights->get_count() && surface_lights->get_flux_lum() > 0.0);
-        const double surface_lights_weight = have_surface_lights ? (std::max(surface_lights->get_flux_lum(), 0.0)) : 0.0;
+        const bool have_surface_lights = (surface_lights && surface_lights->get_count() && surface_lights->get_flux_weight() > 0.0);
+        const double surface_lights_weight = have_surface_lights ? (std::max(surface_lights->get_flux_weight(), 0.0)) : 0.0;
 
-        const bool have_volume_lights = (volume_lights && volume_lights->get_count() && volume_lights->get_flux_lum() > 0.0);
-        const double volume_lights_weight = have_volume_lights ? (std::max(volume_lights->get_flux_lum(), 0.0)) : 0.0;
+        const bool have_volume_lights = (volume_lights && volume_lights->get_count() && volume_lights->get_flux_weight() > 0.0);
+        const double volume_lights_weight = have_volume_lights ? (std::max(volume_lights->get_flux_weight(), 0.0)) : 0.0;
 
         const double flux_sum = sky_weight + surface_lights_weight + volume_lights_weight;
 
@@ -136,11 +136,11 @@ public:
         //Values for MIS/pdfs
         const double sky_weight = sky ? sky->get_flux_weight() : 0.0;
 
-        const bool have_surface_lights = (surface_lights && surface_lights->get_count() && surface_lights->get_flux_lum() > 0.0);
-        const double surface_lights_weight = have_surface_lights ? (std::max(surface_lights->get_flux_lum(), 0.0)) : 0.0;
+        const bool have_surface_lights = (surface_lights && surface_lights->get_count() && surface_lights->get_flux_weight() > 0.0);
+        const double surface_lights_weight = have_surface_lights ? (std::max(surface_lights->get_flux_weight(), 0.0)) : 0.0;
 
-        const bool have_volume_lights = (volume_lights && volume_lights->get_count() && volume_lights->get_flux_lum() > 0.0);
-        const double volume_lights_weight = have_volume_lights ? (std::max(volume_lights->get_flux_lum(), 0.0)) : 0.0;
+        const bool have_volume_lights = (volume_lights && volume_lights->get_count() && volume_lights->get_flux_weight() > 0.0);
+        const double volume_lights_weight = have_volume_lights ? (std::max(volume_lights->get_flux_weight(), 0.0)) : 0.0;
 
         const double flux_sum = sky_weight + surface_lights_weight + volume_lights_weight;
 

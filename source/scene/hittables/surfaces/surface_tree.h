@@ -17,16 +17,20 @@ public:
 
     surface_tree_node( shared_ptr<surface> root ) {
         std::vector<shared_ptr<surface>> flattened = root->flatten();
-        *this = surface_tree_node( flattened, 0, flattened.size() );
+        build_tree(flattened, 0, flattened.size());
     }
 
     //construct leaf node. list of hittable objects
     surface_tree_node( std::vector<shared_ptr<surface>>& surfaces, size_t start, size_t end ) {
-        //create a bounding box of all source items
-        bbox = aabb::empty;
-        for ( size_t object_index = start; object_index < end; object_index++ ) {
-            bbox = aabb(bbox, surfaces[object_index]->bounding_box());
+        build_tree(surfaces, start, end);
+    }
+
+    void build_tree(std::vector<shared_ptr<surface>>& surfaces, size_t start, size_t end) {
+        aabb bbox = aabb::empty;
+        for ( size_t i = start; i < end; i++ ) {
+            bbox = aabb(bbox, surfaces[i]->bounding_box());
         }
+        set_bbox(bbox);
 
         //select random axis to sort along, and get function for sorting
         int axis = bbox.longest_axis();
@@ -43,37 +47,25 @@ public:
         }
         else {
             //sort along some axis (from comparator)
-            std::sort( std::begin( surfaces ) + start, std::begin( surfaces ) + end, comparator );
+            std::sort( surfaces.begin() + start, surfaces.begin() + end, comparator );
             //then split in through the middle into left and right subtrees
             auto mid = start + object_span / 2;
             left = make_shared<surface_tree_node>( surfaces, start, mid );
             right = make_shared<surface_tree_node>( surfaces, mid, end );
         }
 
-        //Bounding sphere
-        vec3 offset = left->origin() - right->origin();
-        double dist = offset.length();
-        double new_rad = (1.0 / 2.0) * (dist  + left->local_furthest_point() + right->local_furthest_point());
-        m_origin = left->origin() + (1.0 / dist) * (new_rad - left->local_furthest_point()) * offset;
-        m_local_furthest_point = new_rad;
-        m_global_furthest_point = std::max(right->global_furthest_point(), left->global_furthest_point());
-
-        int count_sum = 0;
-        double area_sum = 0;
-        vec3 flux_sum = vec3(0,0,0);
-        for ( size_t i = start; i < end; i++ ) {
-            count_sum += surfaces[i]->get_count();
-            area_sum += surfaces[i]->get_surface_area();
-            flux_sum += surfaces[i]->get_flux();
+        if (left == right) {
+            add_hittable_properties(left);
         }
-        set_count(count_sum);
-        set_surface_area(area_sum);
-        set_flux_rgb(flux_sum);
+        else {
+            add_hittable_properties(left);
+            add_hittable_properties(right);
+        }
     }
 
     //check if we hit any objects in the subtree
     bool surface_hit( const ray& r, const interval& ray_t, surface_hit_rec& rec ) const override {
-        if ( !bbox.hit( r, ray_t ) )
+        if ( !bounding_box().hit( r, ray_t ) )
             return false;
 
         surface_hit_rec l_rec = surface_hit_rec();
@@ -93,7 +85,7 @@ public:
     }
 
     bool surface_hit_check( const ray& r, interval ray_t ) const override {
-        if ( !bbox.hit( r, ray_t ) )
+        if ( !bounding_box().hit( r, ray_t ) )
             return false;
 
         bool hit_left = left->surface_hit_check( r, ray_t );
@@ -101,13 +93,11 @@ public:
         return right->surface_hit_check( r, ray_t );
     }
 
-    aabb bounding_box() const override { return bbox; }
-
     void compute_properties() override {
         left->compute_properties();
         right->compute_properties();
         set_surface_area(left->get_surface_area() + right->get_surface_area());
-        set_flux_rgb(left->get_flux() + right->get_flux());
+        set_flux(left->get_flux() + right->get_flux());
     }
 
     void set_explicit_light(bool is_light) override {
@@ -117,8 +107,8 @@ public:
 
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
 
-        double l_flux = left->get_flux_lum();
-        double r_flux = right->get_flux_lum();
+        double l_flux = left->get_flux_weight();
+        double r_flux = right->get_flux_weight();
         double total_flux = l_flux + r_flux;
         double sample = seed * total_flux;
 
@@ -132,19 +122,7 @@ public:
         return right->sample_light_over_flux(new_seed, running_prob * prob);
     }
 
-    double global_furthest_point() const override {
-        return m_global_furthest_point;
-    }
-
-    double local_furthest_point() const override {
-        return m_local_furthest_point;
-    }
-
-    vec3 origin() const override {
-        return m_origin;
-    }
-
-    std::vector<shared_ptr<surface>> flatten() const override {
+    std::vector<shared_ptr<surface>> flatten() override {
         std::vector<shared_ptr<surface>> flattened;
         flattened.insert(flattened.end(), left->flatten().begin(), left->flatten().end());
         flattened.insert(flattened.end(), right->flatten().begin(), right->flatten().end());
@@ -152,8 +130,8 @@ public:
     }
 
     double pdf_value(const point3 &origin, const vec3 &direction) const override {
-        double lflux = left->get_flux_lum();
-        double rflux = right->get_flux_lum();
+        double lflux = left->get_flux_weight();
+        double rflux = right->get_flux_weight();
         double total_flux = lflux + rflux;
         if (total_flux <= 0.0) return 0.0;
 
@@ -164,11 +142,6 @@ public:
 private:
     shared_ptr<surface> left;
     shared_ptr<surface> right;
-    aabb bbox;
-
-    point3 m_origin;
-    double m_local_furthest_point;
-    double m_global_furthest_point;
 
     static bool box_compare( const shared_ptr<surface> a, const shared_ptr<surface> b, int axis_index ) {
         //compare by minimum of ranges

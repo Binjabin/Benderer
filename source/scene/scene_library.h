@@ -25,6 +25,9 @@
 #include "material/surface materials/emissive.h"
 #include "material/surface materials/mat_metal.h"
 #include "material/medium materials/medium_mat_constant.h"
+#include "material/medium materials/medium_mat_grid.h"
+#include "../structures/density_grid.h"
+#include "../utility/perlin.h"
 #include "skyboxes/gradient_skybox.h"
 #include "skyboxes/solid_color_skybox.h"
 
@@ -369,6 +372,133 @@ public:
             make_shared<medium_list>(medium_lights),
             skybox
         );
+    }
+
+    static scene cornell_smoke() {
+        camera cam;
+        cam.vfov = 40;
+        cam.lookfrom = point3( 278, 278, -800 );
+        cam.lookat = point3( 278, 278, 0 );
+        cam.vup = vec3( 0, 1, 0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        auto red = make_shared<lambertian>( colors::n_red );
+        auto white = make_shared<lambertian>( colors::n_white );
+        auto green = make_shared<lambertian>( colors::n_green );
+
+        surfaces.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
+
+        auto light_mat = make_shared<emissive>( colors::bright_light );
+        auto light = object_library::make_quad( point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
+        surfaces.add( light );
+
+        medium_list mediums;
+
+        // Define smoke box
+        vec3 half_size(100, 150, 100);
+        aabb smoke_bounds(-half_size, half_size);
+
+        auto grid = make_smoke_grid(32, 32, 32, smoke_bounds);
+
+        auto base_mat = make_shared<medium_mat_constant>(color(0.2, 0.2, 0.2), 0.3, 0.02);
+        auto grid_mat = make_shared<medium_mat_grid>(grid, base_mat);
+
+        auto smoke = object_library::make_box_medium(point3(278, 150, 278), half_size, grid_mat);
+        mediums.add(smoke);
+
+        surface_list surface_lights;
+        surface_lights.add( light );
+
+        medium_list medium_lights;
+
+        auto const skybox = make_shared<solid_color_skybox>(colors::black);
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
+    static scene clouds() {
+        camera cam;
+        cam.vfov = 20;
+        cam.lookfrom = point3( 0, 0, -2000 );
+        cam.lookat = point3( 0, 0, 0 );
+        cam.vup = vec3( 0, 1, 0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        medium_list mediums;
+
+        // A simple ground
+        auto ground_mat = make_shared<lambertian>(colors::n_green);
+        surfaces.add(object_library::make_quad(point3(-2000, -500, -2000), vec3(4000, 0, 0), vec3(0, 0, 4000), ground_mat));
+
+        // Add some clouds
+        for (int i = 0; i < 5; i++) {
+            vec3 half_size(random_double(150, 300), random_double(50, 100), random_double(150, 300));
+            point3 center(random_double(-800, 800), random_double(200, 500), random_double(-500, 500));
+
+            aabb bounds(-half_size, half_size);
+            auto grid = make_smoke_grid(20, 15, 20, bounds);
+
+            auto cloud_base = make_shared<medium_mat_constant>(colors::white, 0.02, 0.02);
+            auto grid_mat = make_shared<medium_mat_grid>(grid, cloud_base);
+
+            mediums.add(object_library::make_box_medium(center, half_size, grid_mat));
+        }
+
+        surface_list surface_lights;
+        medium_list medium_lights;
+
+        auto const skybox = make_shared<gradient_skybox>(colors::white, colors::sky);
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
+private:
+    static shared_ptr<density_grid> make_smoke_grid(int nx, int ny, int nz, const aabb& bounds) {
+        auto grid = make_shared<density_grid>();
+        grid->nx = nx;
+        grid->ny = ny;
+        grid->nz = nz;
+        grid->bounds = bounds;
+        grid->data.resize(nx * ny * nz);
+
+        perlin p;
+        for (int k = 0; k < nz; k++) {
+            for (int j = 0; j < ny; j++) {
+                for (int i = 0; i < nx; i++) {
+                    double x = (double)i / (nx - 1);
+                    double y = (double)j / (ny - 1);
+                    double z = (double)k / (nz - 1);
+
+                    point3 pos(x * 4.0, y * 4.0, z * 4.0);
+                    double density = std::abs(p.turb(pos, 7));
+
+                    // Simple falloff towards edges
+                    density *= std::sin(x * pi) * std::sin(y * pi) * std::sin(z * pi);
+
+                    grid->data[i + j * nx + k * nx * ny] = (float)density;
+                }
+            }
+        }
+        grid->precompute();
+        return grid;
     }
 };
 

@@ -17,25 +17,31 @@
 
 #include "shapes/flats/quad.h"
 #include "shapes/solids/sphere.h"
+#include "shapes/solids/box.h"
 
-namespace object_library {
-
-    inline shared_ptr<surface> make_sphere( const point3& o, double r, shared_ptr<surface_material> mat ) {
+class object_library {
+public:
+    static inline shared_ptr<surface> make_sphere( const point3& o, double r, shared_ptr<surface_material> mat ) {
         auto ball = make_shared<primitive_surface>(make_shared<sphere>(r), mat);
         return make_shared<transformed_surface>(ball, make_shared<translate>(o));
     }
 
-    inline shared_ptr<medium> make_sphere_medium( const point3& o, double r, shared_ptr<medium_material> mat ) {
+    static inline shared_ptr<medium> make_sphere_medium( const point3& o, double r, shared_ptr<medium_material> mat ) {
         auto ball = make_shared<primitive_medium>(make_shared<sphere>(r), mat);
         return make_shared<transformed_medium>(ball, make_shared<translate>(o));
     }
 
-    inline shared_ptr<surface> make_quad(const point3& o, const vec3& u, const vec3& v, shared_ptr<surface_material> mat) {
+    static inline shared_ptr<medium> make_box_medium( const point3& center, const vec3& half_size, shared_ptr<medium_material> mat ) {
+        auto b = make_shared<primitive_medium>(make_shared<box>(half_size), mat);
+        return make_shared<transformed_medium>(b, make_shared<translate>(center));
+    }
+
+    static inline shared_ptr<surface> make_quad(const point3& o, const vec3& u, const vec3& v, shared_ptr<surface_material> mat) {
         auto ball = make_shared<primitive_surface>(make_shared<quad>(u, v), mat);
         return make_shared<transformed_surface>(ball, make_shared<translate>(o));
     }
 
-    inline shared_ptr<surface> make_box(const point3& a, const point3& b, shared_ptr<surface_material> mat) {
+    static inline shared_ptr<surface> make_box(const point3& a, const point3& b, shared_ptr<surface_material> mat) {
         auto sides = make_shared<surface_list>();
 
         // Construct the two opposite vertices with the minimum and maximum coordinates.
@@ -56,14 +62,14 @@ namespace object_library {
         return sides;
     }
 
-    inline shared_ptr<surface> make_rotate(shared_ptr<surface> obj, double theta) {
+    static inline shared_ptr<surface> make_rotate(shared_ptr<surface> obj, double theta) {
         return make_shared<transformed_surface>(obj, make_shared<rotate_y>(theta));
     }
 
-    inline shared_ptr<surface> make_translate(shared_ptr<surface> obj, const vec3& offset) {
+    static inline shared_ptr<surface> make_translate(shared_ptr<surface> obj, const vec3& offset) {
         return make_shared<transformed_surface>(obj, make_shared<translate>(offset));
     }
 
-}
+};
 
 #endif //BENDERER_OBJECT_LIBRARY_H

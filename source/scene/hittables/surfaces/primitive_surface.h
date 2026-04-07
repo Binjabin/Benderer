@@ -15,16 +15,17 @@ public:
     primitive_surface(shared_ptr<shape> shape, shared_ptr<surface_material> mat)
         : m_shape(shape),  m_mat(mat) {
         set_count(1);
-        bbox = m_shape->bounding_box();
-
-        m_furthest_point = m_shape->furthest_point();
+        set_bbox(m_shape->bounding_box());
+        set_origin(point3(0, 0, 0));
+        set_local_furthest_point(m_shape->furthest_point());
+        set_global_furthest_point(m_shape->furthest_point());
     }
 
     void compute_properties() override {
         if (m_mat) {
             double area = m_shape->surface_area();
             set_surface_area(area);
-            set_flux_rgb(pi * area * m_mat->average_radiance());
+            set_flux(pi * area * m_mat->average_radiance());
         }
     }
 
@@ -83,23 +84,9 @@ public:
         return result;
     }
 
-    aabb bounding_box() const override { return bbox; }
-
-    point3 origin() const override {
-        return point3(0,0,0);
-    }
-
-    double global_furthest_point() const override {
-        return m_furthest_point;
-    }
-
-    double local_furthest_point() const override {
-        return m_furthest_point;
-    }
-
-    std::vector<shared_ptr<surface>> flatten() const override {
+    std::vector<shared_ptr<surface>> flatten() override {
         std::vector<shared_ptr<surface>> flattened;
-        flattened.push_back(make_shared<primitive_surface>(*this));
+        flattened.push_back(shared_from_this());
         return flattened;
     }
 
@@ -107,10 +94,6 @@ private:
     bool m_is_explicit_light = false;
     shared_ptr<shape> m_shape;
     shared_ptr<surface_material> m_mat;
-    aabb bbox;
-    point3 m_origin;
-    double m_furthest_point;
-
 
 };
 

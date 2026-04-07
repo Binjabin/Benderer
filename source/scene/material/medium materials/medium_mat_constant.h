@@ -56,6 +56,10 @@ public:
         return m_emission;
     }
 
+    medium_properties sample(const point3& p) const override {
+        return {m_sigma_t, m_sigma_s, m_emission};
+    }
+
     color sigma_maj() const override {
         return m_sigma_t;
     }

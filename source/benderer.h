@@ -29,6 +29,10 @@ inline double degrees_to_radians( double degrees ) {
     return degrees * pi / 180.0;
 }
 
+inline double linear_interp(double a, double b, double t) {
+    return a * (1.0 - t) + b * t;
+}
+
 inline double random_double() {
     static std::uniform_real_distribution<double> distribution( 0.0, 1.0 );
     static std::mt19937 generator;
