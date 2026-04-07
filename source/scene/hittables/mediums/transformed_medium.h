@@ -21,10 +21,15 @@ public:
     bool medium_hit(const ray& r, const interval& ray_t, medium_intersections& rec) const override {
         //We keep intersection values as t values so don't need to worry about these for transformations
         ray offset_r = m_transform->transform_ray(r);
-        if ( !m_medium->medium_hit( offset_r, ray_t, rec ) ) {
-            return false;
+
+        medium_intersections local_rec;
+        if ( !m_medium->medium_hit( offset_r, ray_t, local_rec ) ) return false;
+
+        for (auto slice : local_rec.slices()) {
+            m_transform->reverse_transform_interval(r, slice.m_interval);
         }
 
+        rec.fuse(local_rec);
         return true;
     }
 

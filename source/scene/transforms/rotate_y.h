@@ -83,6 +83,8 @@ public:
 
         return aabb( min, max );
     }
+
+
 private:
     double angle;
     double cos_theta;

@@ -22,6 +22,22 @@ public:
 
     virtual vec3 transform_direction(const vec3& direction) const = 0;
 
+    void reverse_transform_interval(const ray &r, interval &t) const {
+        ray r_local = transform_ray(r);
+
+        auto map_t = [&](double t_local) {
+            point3 p_local = r_local.at(t_local);
+            point3 p_world = reverse_transform_point(p_local);
+            const vec3 d = r.direction();
+            return dot(p_world - r.origin(), d) / dot(d, d);
+        };
+
+        double t0 = map_t(t.min);
+        double t1 = map_t(t.max);
+
+        t = interval(std::min(t0, t1), std::max(t0, t1));
+    }
+
     virtual ~transform() = default;
 };
 

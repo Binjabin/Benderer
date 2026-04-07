@@ -117,9 +117,10 @@ public:
                     break;
                 }
 
-                vec3 p = slice.m_local_ray.at(slice_t.min + offset + dt);
+                double t = slice_t.min + offset + dt;
+                point3 global_p = r.at(t);
 
-                medium_properties props = slice.sample(p);
+                medium_properties props = slice.sample(t);
                 color actual_sigma_t = props.sigma_t;
                 color actual_sigma_s = props.sigma_s;
 
@@ -152,8 +153,10 @@ public:
                         double rand = random_double() * total_sigma_s_h;
 
                         double cum_w = 0.0;
-                        for (const auto& mat : slice.m_mats) {
-                            double w = mat->sigma_s(p)[h];
+                        for (const auto& slice_entry : slice.m_entries) {
+                            auto mat = slice_entry.m_mat;
+                            point3 local_p = slice_entry.m_local_ray.at(t);
+                            double w = mat->sigma_s(local_p)[h];
                             cum_w += w;
                             if (rand < cum_w) {
                                 chosen_mat = mat;
@@ -164,8 +167,10 @@ public:
                         }
 
                         if (!chosen_mat) {
-                            chosen_mat = slice.m_mats.back();
-                            chosen_sigma_s_h = chosen_mat->sigma_s(p)[h];
+                            auto entry = slice.m_entries.back();
+                            chosen_mat = entry.m_mat;
+                            point3 local_p = entry.m_local_ray.at(t);
+                            chosen_sigma_s_h = chosen_mat->sigma_s(local_p)[h];
                             mat_pdf = chosen_sigma_s_h / total_sigma_s_h;
                         }
                     }
@@ -175,7 +180,7 @@ public:
                     rec.m_is_scatter = (chosen_mat != nullptr);
                     rec.m_mat = chosen_mat;
                     rec.m_emission = props.emission;
-                    rec.set_p(p);
+                    rec.set_p(global_p);
                     rec.set_t(slice_t.min + offset + dt);
                     rec.m_mat_pdf = mat_pdf;
                     return true;
@@ -261,8 +266,8 @@ public:
                     break;
                 }
 
-                vec3 p = slice.m_local_ray.at(slice_t.min + offset + dt);
-                medium_properties props = slice.sample(p);
+                double t = slice_t.min + offset + dt;
+                medium_properties props = slice.sample(t);
                 color actual_sigma_t = props.sigma_t;
                 color sigma_n = sigma_maj - actual_sigma_t;
 

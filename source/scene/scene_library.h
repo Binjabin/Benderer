@@ -399,16 +399,20 @@ public:
 
         medium_list mediums;
 
-        // Define smoke box
-        vec3 half_size(100, 150, 100);
+        // Define scattering-dominant smoke cloud in center
+        vec3 half_size(120, 180, 120);
         aabb smoke_bounds(-half_size, half_size);
 
-        auto grid = make_smoke_grid(32, 32, 32, smoke_bounds);
+        auto grid = make_smoke_grid(40, 40, 40, smoke_bounds);
 
-        auto base_mat = make_shared<medium_mat_constant>(color(0.2, 0.2, 0.2), 0.3, 0.02);
+        auto base_mat = make_shared<medium_mat_constant>(
+            color(0.05, 0.05, 0.05),  // sigma_a (absorption)
+            color(0.25, 0.25, 0.25),  // sigma_s (scattering)
+            colors::black             // emission
+        );
         auto grid_mat = make_shared<medium_mat_grid>(grid, base_mat);
 
-        auto smoke = object_library::make_box_medium(point3(278, 150, 278), half_size, grid_mat);
+        auto smoke = object_library::make_box_medium(point3(278, 200, 278), half_size, grid_mat);
         mediums.add(smoke);
 
         surface_list surface_lights;
@@ -429,37 +433,40 @@ public:
 
     static scene clouds() {
         camera cam;
-        cam.vfov = 20;
-        cam.lookfrom = point3( 0, 0, -2000 );
-        cam.lookat = point3( 0, 0, 0 );
+        cam.vfov = 35;
+        cam.lookfrom = point3( 0, 300, -800 );
+        cam.lookat = point3( 0, 300, 0 );
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
         surface_list surfaces;
         medium_list mediums;
 
-        // A simple ground
-        auto ground_mat = make_shared<lambertian>(colors::n_green);
-        surfaces.add(object_library::make_quad(point3(-2000, -500, -2000), vec3(4000, 0, 0), vec3(0, 0, 4000), ground_mat));
+        // Ground plane to show shadow
+        auto ground_mat = make_shared<lambertian>(colors::n_white);
+        surfaces.add(object_library::make_quad(point3(-2000, 0, -2000), vec3(4000, 0, 0), vec3(0, 0, 4000), ground_mat));
 
-        // Add some clouds
-        for (int i = 0; i < 5; i++) {
-            vec3 half_size(random_double(150, 300), random_double(50, 100), random_double(150, 300));
-            point3 center(random_double(-800, 800), random_double(200, 500), random_double(-500, 500));
+        // Small, bright directional light to cast sharp shadows
+        auto light_mat = make_shared<emissive>( colors::bright_light );
+        auto light = object_library::make_quad( point3( -400, 1000, -400 ), vec3( 800, 0, 0 ), vec3( 0, 0, 800 ), light_mat );
+        surfaces.add( light );
 
-            aabb bounds(-half_size, half_size);
-            auto grid = make_smoke_grid(20, 15, 20, bounds);
+        // Single grey cloud centered in view
+        vec3 half_size(200, 80, 200);
+        aabb bounds(-half_size, half_size);
+        auto grid = make_smoke_grid(25, 20, 25, bounds);
 
-            auto cloud_base = make_shared<medium_mat_constant>(colors::white, 0.02, 0.02);
-            auto grid_mat = make_shared<medium_mat_grid>(grid, cloud_base);
+        auto cloud_base = make_shared<medium_mat_constant>(color(0.5, 0.5, 0.5), 0.12, 0.11);
+        auto grid_mat = make_shared<medium_mat_grid>(grid, cloud_base);
 
-            mediums.add(object_library::make_box_medium(center, half_size, grid_mat));
-        }
+        mediums.add(object_library::make_box_medium(point3(0, 300, 200), half_size, grid_mat));
 
         surface_list surface_lights;
+        surface_lights.add( light );
+
         medium_list medium_lights;
 
-        auto const skybox = make_shared<gradient_skybox>(colors::white, colors::sky);
+        auto const skybox = make_shared<gradient_skybox>(color(0.3, 0.3, 0.3), color(0.05, 0.05, 0.1));
 
         return scene( cam,
             make_shared<surface_list>(surfaces),

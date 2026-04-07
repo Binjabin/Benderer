@@ -21,53 +21,62 @@ struct medium_intersection {
     int m_excluder_priority;
 };
 
+struct slice_entry {
+    shared_ptr<medium_material> m_mat;
+    ray m_local_ray;
+};
+
 //A sub-segment of a ray with some media on it
 class medium_slice {
 public:
-    std::vector<shared_ptr<medium_material>> m_mats;
+    std::vector<slice_entry> m_entries;
     interval m_interval;
 
-    medium_slice(std::vector<shared_ptr<medium_material>> ms, interval t)
-        : m_mats(std::move(ms)), m_interval(t) {
+    medium_slice(std::vector<slice_entry> entries, interval t)
+        : m_entries(std::move(entries)), m_interval(t) {
 
         m_sigma_maj = colors::black;
-        for (const auto& mat : m_mats) {
+        for (const auto& entry : m_entries) {
             //Arbitrary location since volumes are homogeneous!
-            m_sigma_maj += mat->sigma_maj();
+            m_sigma_maj += entry.m_mat->sigma_maj();
         }
         maj_optical_thickness = m_sigma_maj * m_interval.size();
 
-        is_empty = m_mats.empty();
+        is_empty = m_entries.empty();
     }
 
-    color sigma_s(const point3& p) const {
+    color sigma_s(const double t) const {
         color sigma_s = colors::black;
-        for (const auto& mat : m_mats) {
-            sigma_s += mat->sigma_s(p);
+        for (const auto& entry : m_entries) {
+            vec3 local_p = entry.m_local_ray.at(t);
+            sigma_s += entry.m_mat->sigma_s(local_p);
         }
         return sigma_s;
     }
 
-    color sigma_t(const point3& p) const {
+    color sigma_t(const double t) const {
         color sigma_t = colors::black;
-        for (const auto& mat : m_mats) {
-            sigma_t += mat->sigma_t(p);
+        for (const auto& entry : m_entries) {
+            vec3 local_p = entry.m_local_ray.at(t);
+            sigma_t += entry.m_mat->sigma_t(local_p);
         }
         return sigma_t;
     }
 
-    color emission(const point3& p) const {
+    color emission(const double t) const {
         color emission = colors::black;
-        for (const auto& mat : m_mats) {
-            emission += mat->emission(p);
+        for (const auto& entry : m_entries) {
+            vec3 local_p = entry.m_local_ray.at(t);
+            emission += entry.m_mat->emission(local_p);
         }
         return emission;
     }
 
-    medium_properties sample(const point3& p) const {
+    medium_properties sample(const double t) const {
         medium_properties total = {colors::black, colors::black, colors::black};
-        for (const auto& mat : m_mats) {
-            medium_properties props = mat->sample(p);
+        for (const auto& entry : m_entries) {
+            vec3 local_p = entry.m_local_ray.at(t);
+            medium_properties props = entry.m_mat->sample(local_p);
             total.sigma_t += props.sigma_t;
             total.sigma_s += props.sigma_s;
             total.emission += props.emission;
@@ -117,7 +126,7 @@ public:
             double new_max = std::min(slice.m_interval.max, t.max);
 
             if (new_max > new_min) {
-                out_slices.push_back({slice.m_mats, interval(new_min, new_max)});
+                out_slices.push_back({slice.m_entries, interval(new_min, new_max)});
             }
         }
     }
@@ -200,16 +209,17 @@ private:
                     }
 
                     //choose everything of equal priority
-                    std::vector<shared_ptr<medium_material>> filtered_mats;
+                    std::vector<slice_entry> filtered_slices;
                     for (const auto* rec : m_active) {
                         if (rec->m_excluder_priority == max_priority && rec->m_mat) {
-                            filtered_mats.push_back(rec->m_mat);
+                            slice_entry entry{rec->m_mat, rec->m_local_ray};
+                            filtered_slices.push_back(entry);
                         }
                     }
 
                     //Add all the unfiltered lists and intervals.
-                    if (!filtered_mats.empty()) {
-                        m_slices.push_back({std::move(filtered_mats), interval(start_t, end_t)});
+                    if (!filtered_slices.empty()) {
+                        m_slices.push_back({std::move(filtered_slices), interval(start_t, end_t)});
                     }
                 }
             }
