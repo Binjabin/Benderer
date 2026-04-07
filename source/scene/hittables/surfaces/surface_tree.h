@@ -96,6 +96,7 @@ public:
     void compute_properties() override {
         left->compute_properties();
         right->compute_properties();
+        set_count(left == right ? left->get_count() : left->get_count() + right->get_count());
         set_surface_area(left->get_surface_area() + right->get_surface_area());
         set_flux(left->get_flux() + right->get_flux());
     }

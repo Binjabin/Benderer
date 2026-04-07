@@ -28,13 +28,13 @@ int main() {
     //scene our_scene = scene_library::cornell_box();
     //scene our_scene = scene_library::cornell_ball();
     //scene our_scene = scene_library::cornell_smoke();
-    //scene our_scene = scene_library::clouds();
+    scene our_scene = scene_library::clouds();
     //scene our_scene = scene_library::god_rays();
     //scene our_scene = scene_library::nebula();
     //scene our_scene = scene_library::foggy_glass();
     //scene our_scene = scene_library::sunset_clouds();
     our_scene.finalize();
-    image_info info = image_info_library::micro_ultra();
+    image_info info = image_info_library::small_high();
 
     int w = info.pixel_width();
     int h = info.pixel_height();

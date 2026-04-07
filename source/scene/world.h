@@ -23,10 +23,25 @@ public:
     }
 
     void accelerate() {
-        if (m_surfaces->get_count() > 0) m_surfaces = make_shared<surface_tree_node>(m_surfaces);
-        if (m_media->get_count() > 0) m_media = make_shared<medium_tree_node>(m_media);
-        if (m_surface_lights->get_count() > 0) m_surface_lights = make_shared<surface_tree_node>(m_surface_lights);
-        if (m_volume_lights->get_count() > 0) m_volume_lights = make_shared<medium_tree_node>(m_volume_lights);
+        if (m_surfaces->get_count() > 0) {
+            m_surfaces = make_shared<surface_tree_node>(m_surfaces);
+            m_surfaces->compute_properties();
+        }
+
+        if (m_media->get_count() > 0) {
+            m_media = make_shared<medium_tree_node>(m_media);
+            m_media->compute_properties();
+        }
+
+        if (m_surface_lights->get_count() > 0) {
+            m_surface_lights = make_shared<surface_tree_node>(m_surface_lights);
+            m_surface_lights->compute_properties();
+        }
+
+        if (m_volume_lights->get_count() > 0) {
+            m_volume_lights = make_shared<medium_tree_node>(m_volume_lights);
+            m_volume_lights->compute_properties();
+        }
     }
 
     shared_ptr<surface> m_surfaces;

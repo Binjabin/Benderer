@@ -437,9 +437,9 @@ public:
     // =========================================================================
     static scene clouds() {
         camera cam;
-        cam.vfov = 50;
-        cam.lookfrom = point3( 0, 200, -500 );
-        cam.lookat = point3( 0, 180, 200 );
+        cam.vfov = 45;
+        cam.lookfrom = point3( 0, 120, -800 );
+        cam.lookat = point3( 0, 280, 100 );
         cam.vup = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
 
@@ -448,36 +448,35 @@ public:
 
         // Ground plane
         auto ground_mat = make_shared<lambertian>(color(0.4, 0.5, 0.3));
-        surfaces.add(object_library::make_quad(point3(-2000, 0, -2000), vec3(4000, 0, 0), vec3(0, 0, 4000), ground_mat));
+        surfaces.add(object_library::make_quad(point3(-3000, 0, -3000), vec3(6000, 0, 0), vec3(0, 0, 6000), ground_mat));
 
-        // Overhead directional light (sun-like)
-        auto light_mat = make_shared<emissive>( color(20, 18, 14) );
-        auto light = object_library::make_quad( point3( -300, 800, -200 ), vec3( 600, 0, 0 ), vec3( 0, 0, 600 ), light_mat );
+        // Sun - high and behind/above the cloud for top-lit look
+        auto light_mat = make_shared<emissive>( color(18, 16, 12) );
+        auto light = object_library::make_quad( point3( -100, 600, 0 ), vec3( 200, 0, 0 ), vec3( 0, 0, 200 ), light_mat );
         surfaces.add( light );
 
-        // Cloud - scattering-dominant with density grid
-        vec3 half_size(180, 70, 180);
+        // Large cumulus cloud
+        vec3 half_size(300, 200, 250);
         aabb bounds(-half_size, half_size);
-        auto grid = make_cloud_grid(30, 20, 30, bounds);
+        auto grid = make_cloud_grid(64, 48, 64, bounds);
 
-        // For clouds: very low absorption, moderate scattering with HG forward scatter
-        // path ≈ 360, avg grid density ≈ 0.40: τ = 0.025 × 0.40 × 360 ≈ 3.6
+        // sigma_s: path through center ≈ 600, avg density ≈ 0.25: τ ≈ 0.03 * 0.25 * 600 ≈ 4.5
         auto cloud_base = make_shared<medium_mat_hg_constant>(
             color(0.0001, 0.0001, 0.0001), // sigma_a (near-zero for white cloud)
-            color(0.025, 0.025, 0.025),    // sigma_s (increased for thicker appearance)
+            color(0.03, 0.03, 0.03),       // sigma_s
             colors::black,                  // emission
-            0.76                            // g (strong forward scattering for bright cloud)
+            0.76                            // g (strong forward scattering)
         );
         auto grid_mat = make_shared<medium_mat_grid>(grid, cloud_base);
 
-        mediums.add(object_library::make_box_medium(point3(0, 300, 200), half_size, grid_mat));
+        mediums.add(object_library::make_box_medium(point3(0, 320, 100), half_size, grid_mat));
 
         surface_list surface_lights;
         surface_lights.add( light );
 
         medium_list medium_lights;
 
-        auto const skybox = make_shared<gradient_skybox>(color(0.15, 0.2, 0.35), color(0.5, 0.6, 0.9));
+        auto const skybox = make_shared<solid_color_skybox>(colors::black);
 
         return scene( cam,
             make_shared<surface_list>(surfaces),
@@ -782,6 +781,17 @@ private:
     }
 
     // Cloud grid: smoother, wider shapes with softer edges
+    // Smooth metaball-style falloff: 1 at center, 0 at distance >= radius
+    static double lobe(double dx, double dy, double dz, double cx, double cy, double cz, double r) {
+        double ex = (dx - cx) / r;
+        double ey = (dy - cy) / r;
+        double ez = (dz - cz) / r;
+        double d2 = ex*ex + ey*ey + ez*ez;
+        if (d2 >= 1.0) return 0.0;
+        double t = 1.0 - d2;
+        return t * t; // smooth quartic falloff
+    }
+
     static shared_ptr<density_grid> make_cloud_grid(int nx, int ny, int nz, const aabb& bounds) {
         auto grid = make_shared<density_grid>();
         grid->nx = nx;
@@ -791,25 +801,71 @@ private:
         grid->data.resize(nx * ny * nz);
 
         perlin p;
+
+        // Multi-lobe cumulus structure:
+        // coords in [-1, 1] normalized space
+        // Lobes: (cx, cy, cz, radius, weight)
+        // Tall dome on top, wider base, secondary turrets
+        struct Lobe { double cx, cy, cz, r, w; };
+        Lobe lobes[] = {
+            // Main central dome (large, top-heavy)
+            {  0.0,   0.15,  0.0,   0.65,  1.0  },
+            // Upper turrets (billowy top)
+            { -0.25,  0.45,  0.0,   0.40,  0.9  },
+            {  0.25,  0.50, -0.10,  0.35,  0.85 },
+            {  0.0,   0.55,  0.15,  0.30,  0.8  },
+            // Side lobes (width)
+            { -0.50,  0.0,   0.10,  0.40,  0.7  },
+            {  0.50,  0.0,  -0.05,  0.38,  0.7  },
+            {  0.0,  -0.05,  0.40,  0.35,  0.6  },
+            {  0.0,  -0.05, -0.40,  0.35,  0.6  },
+            // Smaller detail lobes
+            { -0.15,  0.60,  0.20,  0.22,  0.5  },
+            {  0.30,  0.35,  0.25,  0.28,  0.55 },
+            { -0.35,  0.30, -0.20,  0.25,  0.5  },
+        };
+        int n_lobes = sizeof(lobes) / sizeof(lobes[0]);
+
         for (int k = 0; k < nz; k++) {
             for (int j = 0; j < ny; j++) {
                 for (int i = 0; i < nx; i++) {
-                    double x = (double)i / (nx - 1);
-                    double y = (double)j / (ny - 1);
-                    double z = (double)k / (nz - 1);
+                    // Normalized [0,1]
+                    double u = (double)i / (nx - 1);
+                    double v = (double)j / (ny - 1);
+                    double w = (double)k / (nz - 1);
 
-                    // Lower frequency noise for billowy look
-                    point3 pos(x * 3.0, y * 3.0, z * 3.0);
-                    double noise = 0.5 + 0.5 * p.turb(pos, 5);
+                    // Map to [-1, 1]
+                    double dx = 2.0 * u - 1.0;
+                    double dy = 2.0 * v - 1.0;
+                    double dz = 2.0 * w - 1.0;
 
-                    // Spherical falloff from center
-                    double dx = 2.0 * x - 1.0;
-                    double dy = 2.0 * y - 1.0;
-                    double dz = 2.0 * z - 1.0;
-                    double r2 = dx * dx + dy * dy + dz * dz;
-                    double falloff = std::max(0.0, 1.0 - r2);
+                    // Sum all lobes (soft union via max-like blend)
+                    double shape = 0.0;
+                    for (int l = 0; l < n_lobes; l++) {
+                        shape = std::max(shape, lobes[l].w * lobe(dx, dy, dz,
+                            lobes[l].cx, lobes[l].cy, lobes[l].cz, lobes[l].r));
+                    }
 
-                    double density = noise * falloff * falloff;
+                    if (shape < 0.01) {
+                        grid->data[i + j * nx + k * nx * ny] = 0.0f;
+                        continue;
+                    }
+
+                    // Multi-octave noise for billowy detail
+                    point3 pos(u * 6.0, v * 6.0, w * 6.0);
+                    double noise_val = 0.5 + 0.5 * p.turb(pos, 6);
+
+                    // Finer detail layer
+                    point3 pos2(u * 14.0 + 3.7, v * 14.0 + 1.2, w * 14.0 + 5.9);
+                    double detail = 0.5 + 0.5 * p.turb(pos2, 4);
+
+                    // Blend: shape modulated by noise
+                    double density = shape * (0.6 * noise_val + 0.4 * detail);
+
+                    // Vertical gradient: denser at top, wispier at bottom
+                    double vert = (dy + 1.0) * 0.5; // 0 at bottom, 1 at top
+                    double vert_mod = 0.4 + 0.6 * vert;
+                    density *= vert_mod;
 
                     grid->data[i + j * nx + k * nx * ny] = (float)std::max(0.0, density);
                 }

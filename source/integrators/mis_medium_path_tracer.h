@@ -65,7 +65,7 @@ private:
             color col_from_sky = world.m_sky->sample_color(r.direction());
             color transmittance = intersect_medium ? medium_rec.m_transmittance : colors::white;
 
-        if (!p_state.prev_was_delta) {
+        if (p_state.depth > 0 && !p_state.prev_was_delta) {
                 double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
                 col_from_sky *= mis_weight(p_state.prev_bsdf_pdf, m_direct_samples * nee_pdf);
             }
@@ -81,7 +81,7 @@ private:
             auto p = medium_rec.m_p();
             color emittance = medium_rec.m_emission;
 
-            if (!p_state.prev_was_delta) {
+            if (p_state.depth > 0 && !p_state.prev_was_delta) {
                 double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
                 emittance *= mis_weight(p_state.prev_bsdf_pdf, m_direct_samples * nee_pdf);
             }
@@ -150,7 +150,7 @@ private:
         // MIS weight the emission: if previous bounce was not a delta,
         // apply balance heuristic between BSDF sampling and NEE sampling.
         // For explicit lights only (to avoid double-counting with NEE).
-        if (rec.m_is_explicit_light && !p_state.prev_was_delta) {
+        if (rec.m_is_explicit_light && p_state.depth > 0 && !p_state.prev_was_delta) {
             double nee_pdf = direct_light_sampler::pdf_w(world, p_state.prev_p, r.direction());
             emission *= mis_weight(p_state.prev_bsdf_pdf, m_direct_samples * nee_pdf);
         }

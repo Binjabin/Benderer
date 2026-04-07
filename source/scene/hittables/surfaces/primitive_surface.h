@@ -60,7 +60,8 @@ public:
         const double dist2 = to_light.length_squared();
         if (dist2 <= epsilon) return 0.0;
 
-        const double cos_light = dot(rec.get_normal(), -d);
+        const vec3 light_normal = m_shape->get_normal(rec.get_p());
+        const double cos_light = dot(light_normal, -d);
         if (cos_light <= epsilon) return 0.0;
 
         return rec.m_pdf_v * (dist2 / cos_light);

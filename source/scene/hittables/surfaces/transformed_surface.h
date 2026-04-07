@@ -15,6 +15,7 @@ public:
         set_origin(m_transform->transform_point(m_surface->origin()));
         set_local_furthest_point(m_surface->local_furthest_point());
         set_global_furthest_point(origin().length() + local_furthest_point());
+        set_count(m_surface->get_count());
     }
 
     void compute_properties() override {

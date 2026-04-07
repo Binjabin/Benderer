@@ -16,6 +16,7 @@ public:
         set_origin(m_transform->transform_point(m_medium->origin()));
         set_local_furthest_point(m_medium->local_furthest_point());
         set_global_furthest_point(origin().length() + local_furthest_point());
+        set_count(m_medium->get_count());
     }
 
     bool medium_hit(const ray& r, const interval& ray_t, medium_intersections& rec) const override {
