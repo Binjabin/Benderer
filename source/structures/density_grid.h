@@ -17,9 +17,10 @@ public:
     aabb bounds;
 
     void precompute() {
-        kx = (nx - 1) / bounds.x.size();
-        ky = (ny - 1) / bounds.y.size();
-        kz = (nz - 1) / bounds.z.size();
+        auto safe = [](double s){return s > 0.0 ? s : 1.0;};
+        kx = (nx - 1) / safe(bounds.x.size());
+        ky = (ny - 1) / safe(bounds.y.size());
+        kz = (nz - 1) / safe(bounds.z.size());
         ox = -bounds.x.min * kx;
         oy = -bounds.y.min * ky;
         oz = -bounds.z.min * kz;

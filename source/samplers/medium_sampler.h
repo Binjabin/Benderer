@@ -205,11 +205,13 @@ public:
                     throughput *= slice_transmittance(slice, dt);
 
                     if (denom_n > epsilon) {
-                        double weight_n = sigma_n[h] / denom_n;
-                        throughput *= weight_n;
-                        r_prob_accum *= sigma_n[0] * r_transmittance * weight_n / sigma_n[h];
-                        g_prob_accum *= sigma_n[1] * g_transmittance * weight_n / sigma_n[h];
-                        b_prob_accum *= sigma_n[2] * b_transmittance * weight_n / sigma_n[h];
+                        double inv_denom_n = 1.0 / denom_n;
+                        throughput[0] *= sigma_n[0] * inv_denom_n;
+                        throughput[1] *= sigma_n[1] * inv_denom_n;
+                        throughput[2] *= sigma_n[2] * inv_denom_n;
+                        r_prob_accum *= sigma_n[0] * r_transmittance * inv_denom_n;
+                        g_prob_accum *= sigma_n[1] * g_transmittance * inv_denom_n;
+                        b_prob_accum *= sigma_n[2] * b_transmittance * inv_denom_n;
                     }
 
                     offset += dt;

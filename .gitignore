@@ -31,3 +31,22 @@
 *.out
 *.app
 cmake-build-debug/output.ppm
+
+# build output
+cmake-build-*/
+build/
+
+# IDE
+.idea/
+.vscode/
++
+# generated render output
+preview.ppm
+output_*.png
+output_*.ppm
+
+# artifacts
+Benderer_test
+source.zip
+changes.diff
+CLAUDE.md

@@ -6,8 +6,6 @@
 #define BENDERER_IMAGE_INFO_LIBRARY_H
 #include "image_info.h"
 
-#endif //BENDERER_IMAGE_INFO_LIBRARY_H
-
 class image_info_library {
 public:
     static image_info micro_low() {
@@ -101,6 +99,6 @@ public:
     }
 };
 
-
+#endif //BENDERER_IMAGE_INFO_LIBRARY_H
 
 
