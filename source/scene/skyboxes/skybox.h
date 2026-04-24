@@ -12,10 +12,10 @@ public:
 
     virtual color sample_color(vec3 direction) const = 0;
 
-    virtual color get_flux_rgb() const = 0;
+    virtual color get_flux() const = 0;
 
     virtual double get_flux_weight() const {
-        return luminance(get_flux_rgb());
+        return luminance(get_flux());
     };
 
     virtual environment_light_sample sample_light_over_flux(double running_p) const = 0;

@@ -232,7 +232,7 @@ public:
         return false;
     }
 
-    static color uninterupted_transmittance(const ray& r, medium_intersections& intersections, const interval& t) {
+    static color uninterrupted_transmittance(const ray& r, medium_intersections& intersections, const interval& t) {
         std::vector<medium_slice> slices;
         intersections.get_cropped_slices(t, slices);
 

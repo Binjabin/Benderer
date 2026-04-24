@@ -15,7 +15,7 @@
 
 class medium_list : public medium {
 public:
-    std::vector<shared_ptr<medium>> mediums;
+    std::vector<shared_ptr<medium>> m_mediums;
 
     medium_list() {
     }
@@ -25,20 +25,20 @@ public:
         set_count(mediums->get_count());
     }
 
-    void clear() { mediums.clear(); }
+    void clear() { m_mediums.clear(); }
 
     void add( shared_ptr<medium> medium ) {
-        mediums.push_back( medium );
+        m_mediums.push_back( medium );
         add_hittable_properties(medium);
     }
 
     bool medium_hit( const ray& r, const interval& ray_t, medium_intersections& rec ) const override {
-        if (mediums.empty()) return false;
+        if (m_mediums.empty()) return false;
 
         bool hit_anything = false;
 
-        for (int i = 0; i < mediums.size(); i++) {
-            auto medium = mediums[i];
+        for (int i = 0; i < m_mediums.size(); i++) {
+            auto medium = m_mediums[i];
             medium_intersections sub_recs;
             if ( medium->medium_hit( r, ray_t, sub_recs ) ) {
                 hit_anything = true;
@@ -54,7 +54,7 @@ public:
         if (total_flux <= 0.0) return 0.0;
 
         auto sum = 0.0;
-        for (const auto& medium : mediums) {
+        for (const auto& medium : m_mediums) {
             double weight = medium->get_flux_weight() / total_flux;
             sum += weight * medium->pdf_value( origin, direction );
         }
@@ -67,7 +67,7 @@ public:
         double sum_volume = 0;
         vec3 sum_flux_rgb = vec3(0,0,0);
 
-        for (const auto& medium : mediums) {
+        for (const auto& medium : m_mediums) {
             medium->compute_properties();
             sum_count += medium->get_count();
             sum_volume += medium->get_volume();
@@ -80,13 +80,13 @@ public:
     }
 
     void set_explicit_light(bool is_light) override {
-        for (const auto& medium : mediums) {
+        for (const auto& medium : m_mediums) {
             medium->set_explicit_light(is_light);
         }
     }
 
     volume_light_sample sample_light_over_flux(double seed, double running_prob) const override {
-        if (mediums.size() <= 0) {
+        if (m_mediums.size() <= 0) {
             throw std::runtime_error("No objects in hittable list");
         }
 
@@ -94,11 +94,11 @@ public:
         auto sample = seed * total_flux;
 
         double bottom = 0;
-        double top = mediums[0]->get_flux_weight();
+        double top = m_mediums[0]->get_flux_weight();
         double interval_range = top;
         int i = 0;
-        while (top < sample && i + 1 < mediums.size()) {
-            top += mediums[i+1]->get_flux_weight();
+        while (top < sample && i + 1 < m_mediums.size()) {
+            top += m_mediums[i+1]->get_flux_weight();
             bottom += interval_range;
             interval_range = top - bottom;
             i++;
@@ -107,14 +107,14 @@ public:
         //We end under a specific item
         double new_seed = (sample - bottom) / interval_range;
         double prob = interval_range / total_flux;
-        return mediums[i]->sample_light_over_flux(new_seed, running_prob * prob);
+        return m_mediums[i]->sample_light_over_flux(new_seed, running_prob * prob);
 
     }
 
 
     std::vector<shared_ptr<medium>> flatten() override {
         std::vector<shared_ptr<medium>> flattened;
-        for (const auto& medium : mediums) {
+        for (const auto& medium : m_mediums) {
             auto child = medium ->flatten();
             flattened.insert(flattened.end(), child.begin(), child.end());
         }

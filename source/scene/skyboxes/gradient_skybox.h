@@ -16,7 +16,7 @@ public:
         return ( 1.0 - a ) * m_top + a * m_bottom;
     }
 
-    color get_flux_rgb() const override {
+    color get_flux() const override {
         return 4 * pi * ( m_top + m_bottom ) * 0.5;
     }
 

@@ -11,7 +11,7 @@
 
 class surface_list : public surface {
 public:
-    std::vector<shared_ptr<surface>> surfaces;
+    std::vector<shared_ptr<surface>> m_surfaces;
 
     surface_list() {
     }
@@ -21,10 +21,10 @@ public:
         set_count(surface->get_count());
     }
 
-    void clear() { surfaces.clear(); }
+    void clear() { m_surfaces.clear(); }
 
     void add( shared_ptr<surface> surface ) {
-        surfaces.push_back( surface );
+        m_surfaces.push_back( surface );
         add_hittable_properties(surface);
     }
 
@@ -33,11 +33,11 @@ public:
         bool hit_anything = false;
         auto closest_so_far = ray_t.max;
 
-        if (surfaces.empty()) return false;
+        if (m_surfaces.empty()) return false;
 
         auto closest_object_i = -1;
-        for (int i = 0; i < surfaces.size(); i++) {
-            auto surface = surfaces[i];
+        for (int i = 0; i < m_surfaces.size(); i++) {
+            auto surface = m_surfaces[i];
             auto new_interval = interval( ray_t.min, closest_so_far );
             if ( surface->surface_hit( r, new_interval, temp_rec ) ) {
                 hit_anything = true;
@@ -56,10 +56,10 @@ public:
     }
 
     bool surface_hit_check(const ray &r, interval ray_t) const override {
-        if (surfaces.empty()) return false;
+        if (m_surfaces.empty()) return false;
 
-        for (int i = 0; i < surfaces.size(); i++) {
-            auto surface = surfaces[i];
+        for (int i = 0; i < m_surfaces.size(); i++) {
+            auto surface = m_surfaces[i];
             if ( surface->surface_hit_check( r, ray_t ) ) {
                 return true;
             }
@@ -73,7 +73,7 @@ public:
         if (total_flux <= 0.0) return 0.0;
 
         auto sum = 0.0;
-        for (const auto& surface : surfaces) {
+        for (const auto& surface : m_surfaces) {
             double weight = surface->get_flux_weight() / total_flux;
             sum += weight * surface->pdf_value( origin, direction );
         }
@@ -85,7 +85,7 @@ public:
         double area = 0;
         color flux = colors::black;
 
-        for (const auto& surface : surfaces) {
+        for (const auto& surface : m_surfaces) {
             surface->compute_properties();
             area += surface->get_surface_area();
             flux += surface->get_flux();
@@ -96,13 +96,13 @@ public:
     }
 
     void set_explicit_light(bool is_light) override {
-        for (const auto& surface : surfaces) {
+        for (const auto& surface : m_surfaces) {
             surface->set_explicit_light(is_light);
         }
     }
 
     surface_light_sample sample_light_over_flux(double seed, double running_prob) const override {
-        if (surfaces.size() <= 0) {
+        if (m_surfaces.size() <= 0) {
             throw std::runtime_error("No objects in hittable list");
         }
 
@@ -110,11 +110,11 @@ public:
         auto sample = seed * total_flux;
 
         double bottom = 0;
-        double top = surfaces[0]->get_flux_weight();
+        double top = m_surfaces[0]->get_flux_weight();
         double interval_range = top;
         int i = 0;
-        while (top < sample && i + 1 < surfaces.size()) {
-            top += surfaces[i+1]->get_flux_weight();
+        while (top < sample && i + 1 < m_surfaces.size()) {
+            top += m_surfaces[i+1]->get_flux_weight();
             bottom += interval_range;
             interval_range = top - bottom;
             i++;
@@ -123,13 +123,13 @@ public:
         //We end under a specific item
         double new_seed = (sample - bottom) / interval_range;
         double prob = interval_range / total_flux;
-        return surfaces[i]->sample_light_over_flux(new_seed, running_prob * prob);
+        return m_surfaces[i]->sample_light_over_flux(new_seed, running_prob * prob);
 
     }
 
     std::vector<shared_ptr<surface>> flatten() override {
         std::vector<shared_ptr<surface>> flattened;
-        for (const auto& surface : surfaces) {
+        for (const auto& surface : m_surfaces) {
             auto child = surface ->flatten();
             flattened.insert(flattened.end(), child.begin(), child.end());
         }
@@ -140,7 +140,7 @@ private:
     //The probability a flux based sample selected item i out of the list
     double get_discrete_flux_pdf(int i) const {
         double total = get_flux_weight();
-        double p = surfaces[i]->get_flux_weight() / total;
+        double p = m_surfaces[i]->get_flux_weight() / total;
         return p;
     }
 };

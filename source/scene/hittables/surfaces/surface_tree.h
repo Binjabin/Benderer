@@ -48,7 +48,7 @@ public:
         else {
             //sort along some axis (from comparator)
             std::sort( surfaces.begin() + start, surfaces.begin() + end, comparator );
-            //then split in through the middle into left and right subtrees
+            //then split in through the middle into m_left and m_right subtrees
             auto mid = start + object_span / 2;
             left = make_shared<surface_tree_node>( surfaces, start, mid );
             right = make_shared<surface_tree_node>( surfaces, mid, end );
@@ -77,7 +77,7 @@ public:
 
         if (!hit_left && !hit_right) return false;
 
-        //If we hit right it was closer
+        //If we hit m_right it was closer
         if (hit_right) rec = r_rec;
         else if (hit_left) rec = l_rec;
 

@@ -89,7 +89,7 @@ private:
             //prev bsdf is meaningless for specular. Just keep sensible.
             child_state.prev_bsdf_pdf = 1.0;
 
-            //attenuation is like the throughput of spec surfaces
+            //attenuation is like the throughput of spec m_surfaces
             child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
             indirect_res = path_trace(srec.s_ray, world, child_state);
             indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf;

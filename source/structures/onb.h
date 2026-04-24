@@ -14,7 +14,7 @@ public:
         axis[2] = unit_vector( n );
         //select an axis not parallel with onb's z to create a plane with
         vec3 a = ( std::fabs( axis[2].x()  ) > 0.9 ) ? vec3( 0, 1, 0 ) : vec3( 1, 0, 0 );
-        //get right angle vector to plane
+        //get m_right angle vector to plane
         axis[1] = unit_vector( cross( axis[2], a ) );
         //get last axis
         axis[0] = cross( axis[2], axis[1] );

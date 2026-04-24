@@ -219,12 +219,12 @@ private:
 
             //Check if the light point we sampled would ever reach our light
             if (!world.m_surfaces->surface_hit_check(shadow_ray, shadow_ray_t)) {
-                //Path to light not blocked by surfaces, do media
+                //Path to light not blocked by m_surfaces, do media
                 color shadow_transmittance = colors::white;
                 medium_intersections shadow_medium_intersections;
                 bool shadow_hit_medium = world.m_media->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
                 if (shadow_hit_medium) {
-                    shadow_transmittance = medium_sampler::uninterupted_transmittance(shadow_ray, shadow_medium_intersections, shadow_ray_t);
+                    shadow_transmittance = medium_sampler::uninterrupted_transmittance(shadow_ray, shadow_medium_intersections, shadow_ray_t);
                 }
 
                 const color light_emission = ls.m_radiance;
@@ -269,12 +269,12 @@ private:
 
             //Check if the light point we sampled would ever reach our light
             if (!world.m_surfaces->surface_hit_check(shadow_ray, shadow_ray_t)) {
-                //Path to light not blocked by surfaces, do media
+                //Path to light not blocked by m_surfaces, do media
                 color shadow_transmittance = colors::white;
                 medium_intersections shadow_medium_intersections;
                 bool shadow_hit_medium = world.m_media->medium_hit(shadow_ray, shadow_ray_t, shadow_medium_intersections);
                 if (shadow_hit_medium) {
-                    shadow_transmittance = medium_sampler::uninterupted_transmittance(shadow_ray, shadow_medium_intersections, shadow_ray_t);
+                    shadow_transmittance = medium_sampler::uninterrupted_transmittance(shadow_ray, shadow_medium_intersections, shadow_ray_t);
                 }
 
                 const color light_emission = ls.m_radiance;

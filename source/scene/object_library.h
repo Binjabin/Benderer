@@ -53,9 +53,9 @@ public:
         auto dz = vec3( 0, 0, max.z() - min.z() );
 
         sides->add( make_quad( point3( min.x(), min.y(), max.z() ), dx, dy, mat ) ); // front
-        sides->add( make_quad( point3( max.x(), min.y(), max.z() ), -dz, dy, mat ) ); // right
+        sides->add( make_quad( point3( max.x(), min.y(), max.z() ), -dz, dy, mat ) ); // m_right
         sides->add( make_quad( point3( max.x(), min.y(), min.z() ), -dx, dy, mat ) ); // back
-        sides->add( make_quad( point3( min.x(), min.y(), min.z() ), dz, dy, mat ) ); // left
+        sides->add( make_quad( point3( min.x(), min.y(), min.z() ), dz, dy, mat ) ); // m_left
         sides->add( make_quad( point3( min.x(), max.y(), max.z() ), dx, -dz, mat ) ); // top
         sides->add( make_quad( point3( min.x(), min.y(), min.z() ), dx, dz, mat ) ); // bottom
 

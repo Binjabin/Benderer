@@ -38,27 +38,27 @@ public:
 
         //if there are 1 or 2 objects, just split them the obvious way, and make the subtrees just the objects
         if ( object_span == 1 ) {
-            left = right = media[start];
+            m_left = m_right = media[start];
         }
         else if ( object_span == 2 ) {
-            left = media[start];
-            right = media[start + 1];
+            m_left = media[start];
+            m_right = media[start + 1];
         }
         else {
             //sort along some axis (from comparator)
             std::sort( media.begin() + start, media.begin() + end, comparator );
-            //then split in through the middle into left and right subtrees
+            //then split in through the middle into m_left and m_right subtrees
             auto mid = start + object_span / 2;
-            left = make_shared<medium_tree_node>( media, start, mid );
-            right = make_shared<medium_tree_node>( media, mid, end );
+            m_left = make_shared<medium_tree_node>( media, start, mid );
+            m_right = make_shared<medium_tree_node>( media, mid, end );
         }
 
-        if (left == right) {
-            add_hittable_properties(left);
+        if (m_left == m_right) {
+            add_hittable_properties(m_left);
         }
         else {
-            add_hittable_properties(left);
-            add_hittable_properties(right);
+            add_hittable_properties(m_left);
+            add_hittable_properties(m_right);
         }
     }
 
@@ -68,10 +68,10 @@ public:
             return false;
 
         medium_intersections l_rec = medium_intersections();
-        bool hit_left = left->medium_hit( r, ray_t, l_rec );
+        bool hit_left = m_left->medium_hit( r, ray_t, l_rec );
 
         medium_intersections r_rec = medium_intersections();
-        bool hit_right = right->medium_hit( r, ray_t, r_rec );
+        bool hit_right = m_right->medium_hit( r, ray_t, r_rec );
 
         if (!hit_left && !hit_right) return false;
 
@@ -81,55 +81,55 @@ public:
     }
 
     void compute_properties() override {
-        left->compute_properties();
-        right->compute_properties();
-        set_count(left == right ? left->get_count() : left->get_count() + right->get_count());
-        set_volume(left->get_volume() + right->get_volume());
-        set_flux(left->get_flux() + right->get_flux());
+        m_left->compute_properties();
+        m_right->compute_properties();
+        set_count(m_left == m_right ? m_left->get_count() : m_left->get_count() + m_right->get_count());
+        set_volume(m_left->get_volume() + m_right->get_volume());
+        set_flux(m_left->get_flux() + m_right->get_flux());
     }
 
     void set_explicit_light(bool is_light) override {
-        left->set_explicit_light(is_light);
-        right->set_explicit_light(is_light);
+        m_left->set_explicit_light(is_light);
+        m_right->set_explicit_light(is_light);
     }
 
     volume_light_sample sample_light_over_flux(double seed, double running_prob) const override {
 
-        double l_flux = left->get_flux_weight();
-        double r_flux = right->get_flux_weight();
+        double l_flux = m_left->get_flux_weight();
+        double r_flux = m_right->get_flux_weight();
         double total_flux = l_flux + r_flux;
         double sample = seed * total_flux;
 
         if (sample < l_flux) {
             auto new_seed = sample / l_flux;
             double prob = l_flux / total_flux;
-            return left->sample_light_over_flux(new_seed, running_prob * prob);
+            return m_left->sample_light_over_flux(new_seed, running_prob * prob);
         }
         auto new_seed = (sample - l_flux) / r_flux;
         double prob = r_flux / total_flux;
-        return right->sample_light_over_flux(new_seed, running_prob * prob);
+        return m_right->sample_light_over_flux(new_seed, running_prob * prob);
     }
 
     double pdf_value(const point3 &origin, const vec3 &direction) const override {
-        double lflux = left->get_flux_weight();
-        double rflux = right->get_flux_weight();
+        double lflux = m_left->get_flux_weight();
+        double rflux = m_right->get_flux_weight();
         double total_flux = lflux + rflux;
         if (total_flux <= 0.0) return 0.0;
 
-        return (lflux / total_flux) * left->pdf_value(origin, direction) +
-            (rflux / total_flux) * right->pdf_value(origin, direction);
+        return (lflux / total_flux) * m_left->pdf_value(origin, direction) +
+            (rflux / total_flux) * m_right->pdf_value(origin, direction);
     }
 
     std::vector<shared_ptr<medium>> flatten() override {
         std::vector<shared_ptr<medium>> flattened;
-        flattened.insert(flattened.end(), left->flatten().begin(), left->flatten().end());
-        flattened.insert(flattened.end(), right->flatten().begin(), right->flatten().end());
+        flattened.insert(flattened.end(), m_left->flatten().begin(), m_left->flatten().end());
+        flattened.insert(flattened.end(), m_right->flatten().begin(), m_right->flatten().end());
         return flattened;
     }
 
 private:
-    shared_ptr<medium> left;
-    shared_ptr<medium> right;
+    shared_ptr<medium> m_left;
+    shared_ptr<medium> m_right;
 
     static bool box_compare( const shared_ptr<medium> a, const shared_ptr<medium> b, int axis_index ) {
         //compare by minimum of ranges
