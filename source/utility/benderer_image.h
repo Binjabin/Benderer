@@ -19,7 +19,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_FALIURE_USERMSG
-#include "../../external/stb_image.h"
+#include "../external/stb_image.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -36,13 +36,13 @@ public:
         // Hunt for the image file in some likely locations.
         if ( imagedir && load( std::string( imagedir ) + "/" + image_filename ) ) return;
         if ( load( filename ) ) return;
-        if ( load( "images/" + filename ) ) return;
-        if ( load( "../images/" + filename ) ) return;
-        if ( load( "../../images/" + filename ) ) return;
-        if ( load( "../../../images/" + filename ) ) return;
-        if ( load( "../../../../images/" + filename ) ) return;
-        if ( load( "../../../../../images/" + filename ) ) return;
-        if ( load( "../../../../../../images/" + filename ) ) return;
+        if ( load( "Textures/" + filename ) ) return;
+        if ( load( "../Textures/" + filename ) ) return;
+        if ( load( "../../Textures/" + filename ) ) return;
+        if ( load( "../../../Textures/" + filename ) ) return;
+        if ( load( "../../../../Textures/" + filename ) ) return;
+        if ( load( "../../../../../Textures/" + filename ) ) return;
+        if ( load( "../../../../../../Textures/" + filename ) ) return;
 
         std::cerr << "ERROR: Could not load image file '" << image_filename << "'.\n";
     }

@@ -16,9 +16,6 @@ public:
     }
 
     void apply_post(std::vector<double>& double_buf ) {
-
-        //Not sure what this is??
-
         const int pxCount = m_height * m_width;
 
         for (int i = 0; i < pxCount; ++i) {

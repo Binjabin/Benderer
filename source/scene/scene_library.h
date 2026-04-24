@@ -513,10 +513,9 @@ public:
         aabb bounds(-half_size, half_size);
         auto grid = make_cloud_grid(64, 48, 64, bounds);
 
-        // sigma_s: path through center ≈ 600, avg density ≈ 0.25: τ ≈ 0.03 * 0.25 * 600 ≈ 4.5
         auto cloud_base = make_shared<medium_mat_hg_constant>(
-            color(0.0001, 0.0001, 0.0001), // sigma_a (near-zero for white cloud)
-            color(0.03, 0.03, 0.03),       // sigma_s
+            color(0.00005, 0.00005, 0.00005), // sigma_a (near-zero for white cloud)
+            color(0.008, 0.008, 0.008),       // sigma_s
             colors::black,                  // emission
             0.76                            // g (strong forward scattering)
         );
@@ -807,6 +806,30 @@ public:
         );
     }
 
+    static scene by_name(const std::string& name) {
+        if (name == "checkered_spheres") return checkered_spheres();
+        if (name == "earth") return earth();
+        if (name == "random_balls") return random_balls();
+        if (name == "perlin_spheres") return perlin_spheres();
+        if (name == "quads") return quads();
+        if (name == "simple_light") return simple_light();
+
+        if (name == "cornell_box") return cornell_box();
+        if (name == "cornell_ball") return cornell_ball();
+        if (name == "cornell_blue_ball") return cornell_blue_ball();
+        if (name == "cornell_smoke") return cornell_smoke();
+
+        if (name == "clouds") return clouds();
+        if (name == "sunset_clouds") return sunset_clouds();
+        if (name == "god_rays") return god_rays();
+        if (name == "nebula") return nebula();
+        if (name == "foggy_glass") return foggy_glass();
+
+        // Optional: default fallback
+        std::cerr << "Unknown scene: " << name << "\n";
+        return checkered_spheres();
+    }
+
 private:
     // Smoke/turbulence grid with sharp falloff
     static shared_ptr<density_grid> make_smoke_grid(int nx, int ny, int nz, const aabb& bounds) {
@@ -922,18 +945,18 @@ private:
 
                     // Multi-octave noise for billowy detail
                     point3 pos(u * 6.0, v * 6.0, w * 6.0);
-                    double noise_val = 0.5 + 0.5 * p.turb(pos, 6);
+                    double noise_val = p.turb(pos, 6);
 
                     // Finer detail layer
                     point3 pos2(u * 14.0 + 3.7, v * 14.0 + 1.2, w * 14.0 + 5.9);
-                    double detail = 0.5 + 0.5 * p.turb(pos2, 4);
+                    double detail = p.turb(pos2, 4);
 
                     // Blend: shape modulated by noise
-                    double density = shape * (0.6 * noise_val + 0.4 * detail);
+                    double density = shape * std::max(0.0, 0.6 * noise_val + 0.4 * detail - 0.15);
 
-                    // Vertical gradient: denser at top, wispier at bottom
-                    double vert = (dy + 1.0) * 0.5; // 0 at bottom, 1 at top
-                    double vert_mod = 0.4 + 0.6 * vert;
+                    // Vertical gradient: denser at bottom, wispier at top
+                    double vert = (dy + 1.0) * 0.5;
+                    double vert_mod = 1.0 - 0.6 * vert;
                     density *= vert_mod;
 
                     grid->data[i + j * nx + k * nx * ny] = (float)std::max(0.0, density);

@@ -1,5 +1,5 @@
 /* stb_image_write - v0.98 - public domain - http://nothings.org/stb/stb_image_write.h
-   writes out PNG/BMP/TGA images to C stdio - Sean Barrett 2010
+   writes out PNG/BMP/TGA Textures to C stdio - Sean Barrett 2010
                             no warranty implied; use at your own risk
 
 
@@ -13,7 +13,7 @@
 
 ABOUT:
 
-   This header file is a library for writing images to C stdio. It could be
+   This header file is a library for writing Textures to C stdio. It could be
    adapted to write to memory or a general streaming interface; let me know.
 
    The PNG output is not optimal; it is 20-50% larger than the file
@@ -285,7 +285,7 @@ void stbiw__write_hdr_scanline(FILE *f, int width, int comp, unsigned char *scra
    scanlineheader[2] = (width&0xff00)>>8;
    scanlineheader[3] = (width&0x00ff);
 
-   /* skip RLE for images too small or large */
+   /* skip RLE for Textures too small or large */
    if (width < 8 || width >= 32768) {
       for (x=0; x < width; x++) {
          switch (comp) {

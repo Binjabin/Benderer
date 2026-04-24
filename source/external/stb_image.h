@@ -18,7 +18,7 @@
 
    QUICK NOTES:
       Primarily of interest to game developers and other people who can
-          avoid problematic images and only need the trivial interface
+          avoid problematic Textures and only need the trivial interface
 
       JPEG baseline & progressive (12 bpc/arithmetic not supported, same as stock IJG lib)
       PNG 1/2/4/8-bit-per-channel (16 bpc not supported)
@@ -121,7 +121,7 @@
         assumption is that almost nobody was doing this, and those who
         were will find the built-in SIMD more satisfactory anyway.
 
-      - RGB values computed for JPEG images are slightly different from
+      - RGB values computed for JPEG Textures are slightly different from
         previous versions of stb_image. (This is due to using less
         integer precision in SIMD.) The C code has been adjusted so
         that the same RGB values will be computed regardless of whether
@@ -266,7 +266,7 @@ License:
 // compiling these strings at all, and STBI_FAILURE_USERMSG to get slightly
 // more user-friendly ones.
 //
-// Paletted PNG, BMP, GIF, and PIC images are automatically depalettized.
+// Paletted PNG, BMP, GIF, and PIC Textures are automatically depalettized.
 //
 // ===========================================================================
 //
@@ -335,7 +335,7 @@ License:
 //
 // HDR image support   (disable by defining STBI_NO_HDR)
 //
-// stb_image now supports loading HDR images in general, and currently
+// stb_image now supports loading HDR Textures in general, and currently
 // the Radiance .HDR file format, although the support is provided
 // generically. You can still load any file through the existing interface;
 // if you attempt to load an HDR file, it will be automatically remapped to
@@ -353,7 +353,7 @@ License:
 //
 //    float *data = stbi_loadf(filename, &x, &y, &n, 0);
 //
-// If you load LDR images through this interface, those images will
+// If you load LDR Textures through this interface, those Textures will
 // be promoted to floating point values, run through the inverse of
 // constants corresponding to the above:
 //
@@ -379,7 +379,7 @@ License:
 //
 // Call stbi_set_unpremultiply_on_load(1) as well to force a divide per
 // pixel to remove any premultiplied alpha *only* if the image file explicitly
-// says there's premultiplied data (currently only happens in iPhone images,
+// says there's premultiplied data (currently only happens in iPhone Textures,
 // and only if iPhone convert-to-rgb processing is on).
 //
 
@@ -414,7 +414,7 @@ extern "C" {
 
 //////////////////////////////////////////////////////////////////////////////
 //
-// PRIMARY API - works on images of any type
+// PRIMARY API - works on Textures of any type
 //
 
 //
@@ -490,7 +490,7 @@ STBIDEF int      stbi_info_from_file  (FILE *f,                  int *x, int *y,
 // unpremultiplication. results are undefined if the unpremultiply overflow.
 STBIDEF void stbi_set_unpremultiply_on_load(int flag_true_if_should_unpremultiply);
 
-// indicate whether we should process iphone images back to canonical format,
+// indicate whether we should process iphone Textures back to canonical format,
 // or just pass them through "as-is"
 STBIDEF void stbi_convert_iphone_png_to_rgb(int flag_true_if_should_convert);
 
@@ -734,7 +734,7 @@ static int stbi__sse2_available()
 //
 //  stbi__context struct and start_xxx functions
 
-// stbi__context structure is our basic context used by all images, so it
+// stbi__context structure is our basic context used by all Textures, so it
 // contains all the IO context, plus some basic image information
 typedef struct
 {
@@ -3654,7 +3654,7 @@ static int stbi__parse_huffman_block(stbi__zbuf *a)
             zout = a->zout;
          }
          p = (stbi_uc *) (zout - dist);
-         if (dist == 1) { // run of one byte; common in images.
+         if (dist == 1) { // run of one byte; common in Textures.
             stbi_uc v = *p;
             if (len) { do *zout++ = v; while (--len); }
          } else {
@@ -4374,7 +4374,7 @@ static int stbi__parse_png_file(stbi__png *z, int scan, int req_comp)
                if (c.length != (stbi__uint32) s->img_n*2) return stbi__err("bad tRNS len","Corrupt PNG");
                has_trans = 1;
                for (k=0; k < s->img_n; ++k)
-                  tc[k] = (stbi_uc) (stbi__get16be(s) & 255) * stbi__depth_scale_table[depth]; // non 8-bit images will be larger
+                  tc[k] = (stbi_uc) (stbi__get16be(s) & 255) * stbi__depth_scale_table[depth]; // non 8-bit Textures will be larger
             }
             break;
          }
@@ -6341,7 +6341,7 @@ STBIDEF int stbi_info_from_callbacks(stbi_io_callbacks const *c, void *user, int
               remove duplicate typedef
       1.36  (2014-06-03)
               convert to header file single-file library
-              if de-iphone isn't set, load iphone images color-swapped instead of returning NULL
+              if de-iphone isn't set, load iphone Textures color-swapped instead of returning NULL
       1.35  (2014-05-27)
               various warnings
               fix broken STBI_SIMD path

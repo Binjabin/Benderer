@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "../../../external/stb_image_write.h"
+#include "../../external/stb_image_write.h"
 
 class png_writer : public image_writer {
 public:

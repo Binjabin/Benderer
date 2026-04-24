@@ -12,7 +12,7 @@
 #include <fstream>
 
 #include "image_writer.h"
-#include "../../../external/stb_image_write.h"
+#include "../../external/stb_image_write.h"
 
 class psix_writer : public image_writer {
 public:

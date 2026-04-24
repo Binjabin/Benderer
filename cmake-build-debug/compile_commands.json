@@ -1,14 +1,14 @@
 [
 {
   "directory": "/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug",
-  "command": "/usr/bin/c++ -g -std=gnu++20 -fdiagnostics-color=always -o CMakeFiles/Benderer.dir/source/main.cpp.o -c /home/binjabin/Coding/Oxford/Project/Benderer/source/main.cpp",
-  "file": "/home/binjabin/Coding/Oxford/Project/Benderer/source/main.cpp",
-  "output": "/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/CMakeFiles/Benderer.dir/source/main.cpp.o"
+  "command": "/usr/bin/c++ -g -std=gnu++20 -fdiagnostics-color=always -Wall -Wextra -o CMakeFiles/Benderer.dir/source/image/writer/stb_impl.cpp.o -c /home/binjabin/Coding/Oxford/Project/Benderer/source/image/writer/stb_impl.cpp",
+  "file": "/home/binjabin/Coding/Oxford/Project/Benderer/source/image/writer/stb_impl.cpp",
+  "output": "/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/CMakeFiles/Benderer.dir/source/image/writer/stb_impl.cpp.o"
 },
 {
   "directory": "/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug",
-  "command": "/usr/bin/c++ -g -std=gnu++20 -fdiagnostics-color=always -o CMakeFiles/Benderer.dir/source/image/writer/stb_impl.cpp.o -c /home/binjabin/Coding/Oxford/Project/Benderer/source/image/writer/stb_impl.cpp",
-  "file": "/home/binjabin/Coding/Oxford/Project/Benderer/source/image/writer/stb_impl.cpp",
-  "output": "/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/CMakeFiles/Benderer.dir/source/image/writer/stb_impl.cpp.o"
+  "command": "/usr/bin/c++ -g -std=gnu++20 -fdiagnostics-color=always -Wall -Wextra -o CMakeFiles/Benderer.dir/source/main.cpp.o -c /home/binjabin/Coding/Oxford/Project/Benderer/source/main.cpp",
+  "file": "/home/binjabin/Coding/Oxford/Project/Benderer/source/main.cpp",
+  "output": "/home/binjabin/Coding/Oxford/Project/Benderer/cmake-build-debug/CMakeFiles/Benderer.dir/source/main.cpp.o"
 }
 ]

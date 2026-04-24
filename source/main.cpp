@@ -16,24 +16,10 @@
 #include "integrators/simple_path_tracer.h"
 #include "scene/hittables/surfaces/surface_tree.h"
 
-int main() {
+int main(int argc, char** argv) {
+    const std::string scene_name = argc > 1 ? argv[1] : "clouds";
+    scene our_scene = scene_library::by_name(scene_name);
 
-    // Available scenes (uncomment one):
-    //scene our_scene = scene_library::checkered_spheres();
-    //scene our_scene = scene_library::earth();
-    //scene our_scene = scene_library::random_balls();
-    //scene our_scene = scene_library::perlin_spheres();
-    //scene our_scene = scene_library::quads();
-    //scene our_scene = scene_library::simple_light();
-    //scene our_scene = scene_library::cornell_box();
-    //scene our_scene = scene_library::cornell_ball();
-    //scene our_scene = scene_library::cornell_blue_ball();
-    //scene our_scene = scene_library::cornell_smoke();
-    //scene our_scene = scene_library::clouds();
-    //scene our_scene = scene_library::god_rays();
-    //scene our_scene = scene_library::nebula();
-    //scene our_scene = scene_library::foggy_glass();
-    scene our_scene = scene_library::sunset_clouds();
     our_scene.finalize();
     image_info info = image_info_library::small_high();
 

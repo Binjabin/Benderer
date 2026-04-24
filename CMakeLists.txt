@@ -2,88 +2,21 @@ cmake_minimum_required(VERSION 3.31)
 project(Benderer)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(Benderer source/main.cpp
-        source/structures/vec3.h
-        source/utility/color/color.h
-        source/structures/ray.h
-        source/scene/hittables/hittable.h
-        source/benderer.h
-        source/structures/interval.h
-        source/scene/camera.h
-        source/scene/material/surface_material.h
-        source/structures/aabb.h
-        source/scene/texture/texture.h
-        source/utility/perlin.h
-        source/structures/onb.h
-        source/structures/pdf.h
-        source/scene/texture/textures/tex_solid_colour.h
-        source/scene/texture/textures/tex_checker.h
-        source/scene/texture/textures/tex_image.h
-        source/scene/texture/textures/tex_noise.h
-        "source/scene/material/surface materials/mat_lambertian.h"
-        unused_source/mat_isotropic.h
-        "source/scene/material/surface materials/mat_dielectric.h"
-        "source/scene/material/surface materials/mat_metal.h"
-        "source/scene/material/surface materials/emissive.h"
-        source/scene/scene.h
-        source/scene/scene_library.h
-        source/image/image_info.h
-        source/records/surface_scatter_rec.h
-        source/image/image_info_library.h
-        source/records/light_sample.h
-        source/scene/hittables/surfaces/primitive_surface.h
-        source/scene/transforms/transform.h
-        source/scene/transforms/translate.h
-        source/scene/transforms/rotate_y.h
-        source/integrators/integrator.h
-        source/scene/skyboxes/skybox.h
-        source/scene/skyboxes/gradient_skybox.h
-        source/scene/skyboxes/solid_color_skybox.h
-        source/records/path_state.h
-        source/records/path_result.h
-        source/integrators/is_path_tracer.h
-        source/scene/world.h
-        source/records/surface_hit_rec.h
-        source/scene/hittables/mediums/medium.h
-        source/records/medium_intersection.h
-        source/scene/shapes/shape.h
-        source/records/intersection.h
-        source/records/interaction.h
-        source/scene/shapes/solids/sphere.h
-        source/scene/shapes/flats/quad.h
-        source/scene/shapes/flats/flat.h
-        source/scene/shapes/solids/solid.h
-        source/scene/hittables/surfaces/transformed_surface.h
-        source/scene/object_library.h
-        source/image/writer/png_writer.h
-        source/image/writer/image_writer.h
-        source/image/post/post_process.h
-        source/utility/benderer_image.h
-        source/utility/time.h
-        source/image/writer/stb_impl.cpp
-        source/scene/hittables/surfaces/surface.h
-        source/scene/hittables/surfaces/surface_tree.h
-        source/scene/hittables/surfaces/surface_list.h
-        source/scene/hittables/mediums/primitive_medium.h
-        source/scene/hittables/mediums/transformed_medium.h
-        unused_source/medium_material.h
-        unused_source/medium_mat_constant.h
-        source/scene/hittables/mediums/medium_list.h
-        source/scene/hittables/mediums/medium_tree.h
-        source/integrators/is_medium_path_tracer.h
-        source/records/medium_scatter_rec.h
-        source/scene/material/medium_material.h
-        "source/scene/material/medium materials/medium_mat_constant.h"
-        source/samplers/medium_sampler.h
-        source/records/medium_hit_rec.h
-        source/records/pdf_rec.h
-        source/utility/color/spectrum.h
-        source/utility/color/sampled_spectrum.h
-        source/utility/color/spectra/constant_spectrum.h
-        source/samplers/direct_light_sampler.h
-        source/integrators/bd_medium_path_tracer.h
-        source/records/path.h
-        source/records/path_vertex.h
-        source/structures/density_grid.h
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra)
+    add_compile_options($<$<CONFIG:Release>:-O3>)
+    add_compile_options($<$<CONFIG:Release>:-march=native>)
+endif()
+
+file(GLOB_RECURSE BENDERER_SOURCES CONFIGURE_DEPENDS
+    "source/*.h"
+    "source/*.cpp"
 )
+
+add_executable(Benderer ${BENDERER_SOURCES})
