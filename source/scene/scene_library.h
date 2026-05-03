@@ -987,6 +987,171 @@ public:
         );
     }
 
+    // Hero shot: sun streaming through dramatic cumulus, with a large
+    // crystal glass ball front-of-frame and a smaller "lens" element
+    // (a second dielectric sphere set inside a thin matte-black lens
+    // barrel) off to one side. Composed to read like a piece of
+    // lensball photography rather than a tech demo.
+    static scene hero_shot() {
+        camera cam;
+        cam.vfov          = 42;
+        cam.lookfrom      = point3(   0,  100, -360 );
+        cam.lookat        = point3(   0,  240,  220 );
+        cam.vup           = vec3(     0,    1,    0 );
+        // Subtle shallow depth-of-field, focused on the crystal ball.
+        cam.focus_dist    = 285;
+        cam.defocus_angle = 0.45;
+
+        surface_list surfaces;
+        medium_list  mediums;
+
+        // Distant ground — kept dim and cool so the eye stays in the sky.
+        auto ground_mat = make_shared<lambertian>( color(0.18, 0.22, 0.20) );
+        surfaces.add( object_library::make_quad(
+            point3(-5000, 0, -5000), vec3(10000, 0, 0), vec3(0, 0, 10000), ground_mat ) );
+
+        // Sun — small, very bright, warm. Placed up-and-to-the-right
+        // behind the main cumulus so its rays graze the cloud's shoulder
+        // and create a silver lining + crepuscular highlight inside the
+        // glass ball.
+        auto sun_mat = make_shared<emissive>( color(260, 195, 120) );
+        auto sun = object_library::make_quad(
+            point3( 160, 560, 760 ),
+            vec3(  130,   0,   0 ),
+            vec3(    0, 130,   0 ),
+            sun_mat );
+        surfaces.add( sun );
+
+        // Main hero cumulus — sun peeks past the upper-right shoulder.
+        {
+            vec3 half_size( 360, 230, 280 );
+            aabb bounds( -half_size, half_size );
+            auto grid = make_cloud_grid( 96, 72, 96, bounds );
+
+            // Strongly forward-scattering, near-zero absorption so the
+            // back-lit edges glow brilliantly.
+            auto cloud_mat = make_shared<medium_mat_hg_constant>(
+                color(0.00002, 0.00002, 0.00002),
+                color(0.030,   0.030,   0.030  ),
+                colors::black,
+                0.85
+            );
+            auto cloud_grid_mat = make_shared<medium_mat_grid>( grid, cloud_mat );
+            mediums.add( object_library::make_box_medium(
+                point3( -70, 390, 220 ), half_size, cloud_grid_mat ) );
+        }
+
+        // Thin foreground wisp — adds depth and a soft veil over the ball.
+        {
+            vec3 wisp_half( 260, 55, 180 );
+            aabb wisp_bounds( -wisp_half, wisp_half );
+            auto wisp_grid = make_cloud_grid( 48, 16, 48, wisp_bounds );
+            auto wisp_mat = make_shared<medium_mat_hg_constant>(
+                color(0.00002, 0.00002, 0.00002),
+                color(0.008,   0.008,   0.008  ),
+                colors::black,
+                0.80
+            );
+            auto wisp_grid_mat = make_shared<medium_mat_grid>( wisp_grid, wisp_mat );
+            mediums.add( object_library::make_box_medium(
+                point3( 240, 230, -120 ), wisp_half, wisp_grid_mat ) );
+        }
+
+        // Light atmospheric haze — a giant, very thin homogeneous box
+        // around the whole shot. Picks up a bit of forward-scattered
+        // sunlight and gives the hero crystal that "in the world"
+        // feel rather than sitting on a flat sky.
+        {
+            auto haze = make_shared<medium_mat_constant>(
+                color(0.00005, 0.00005, 0.00005),
+                color(0.00040, 0.00045, 0.00055),
+                colors::black
+            );
+            mediums.add( object_library::make_box_medium(
+                point3( 0, 200, 0 ), vec3( 1500, 600, 1500 ), haze ) );
+        }
+
+        // ─── HERO REFRACTIVE ELEMENTS ──────────────────────────────────
+        // Crystal glass ball — the main subject. Lower-left of frame so
+        // the sun is mirrored/refracted across it.
+        auto crystal_mat = make_shared<dielectric>( 1.5 );
+        const point3 ball_c( -55, 75, -185 );
+        const double ball_r = 78;
+        surfaces.add( object_library::make_sphere( ball_c, ball_r, crystal_mat ) );
+
+        // Lens element — smaller dielectric sphere with a higher IOR
+        // (flint-glass-ish), positioned to the right and a bit closer
+        // to camera. Different IOR means it forms a tighter, brighter
+        // caustic of the sun than the big ball.
+        auto lens_glass = make_shared<dielectric>( 1.62 );
+        const point3 lens_c( 95, 55, -255 );
+        const double lens_r = 30;
+        surfaces.add( object_library::make_sphere( lens_c, lens_r, lens_glass ) );
+
+        // Lens barrel — thin matte-black metal frame just in front of
+        // the lens element. Four narrow quads forming a square ring
+        // that, from the camera, reads as the front rim of a lens.
+        // Sized so the inner opening matches the lens's apparent disc.
+        auto barrel_mat = make_shared<metal>( color(0.025, 0.025, 0.030), 0.25 );
+        {
+            // Project the lens disc to a frame plane that sits just in
+            // front of the lens (camera-side). The camera is at z=-360,
+            // lens centre is at z=-255; we place the frame at z=-292.
+            const double frame_z = lens_c.z() - 37;            // -292
+            const double cam_z   = -360.0;
+            const double s       = ( frame_z - cam_z ) / ( lens_c.z() - cam_z );
+            // Outer/inner half-extents in the frame plane.
+            const double inner   = lens_r * s + 1.5;           // hugs the disc
+            const double outer   = inner + 4.0;                // thin rim
+            const double fx      = lens_c.x() * s;             // perspective-aligned
+            const double fy      = lens_c.y() * s;
+            const double t       = outer - inner;              // rim thickness
+            // Top
+            surfaces.add( object_library::make_quad(
+                point3( fx - outer, fy + inner, frame_z ),
+                vec3( 2 * outer, 0, 0 ),
+                vec3( 0, t, 0 ),
+                barrel_mat ) );
+            // Bottom
+            surfaces.add( object_library::make_quad(
+                point3( fx - outer, fy - outer, frame_z ),
+                vec3( 2 * outer, 0, 0 ),
+                vec3( 0, t, 0 ),
+                barrel_mat ) );
+            // Left
+            surfaces.add( object_library::make_quad(
+                point3( fx - outer, fy - inner, frame_z ),
+                vec3( t, 0, 0 ),
+                vec3( 0, 2 * inner, 0 ),
+                barrel_mat ) );
+            // Right
+            surfaces.add( object_library::make_quad(
+                point3( fx + inner, fy - inner, frame_z ),
+                vec3( t, 0, 0 ),
+                vec3( 0, 2 * inner, 0 ),
+                barrel_mat ) );
+        }
+        // ────────────────────────────────────────────────────────────────
+
+        surface_list surface_lights;
+        surface_lights.add( sun );          // NEE/MIS targets the sun
+        medium_list  medium_lights;
+
+        // Clear sky: deep zenith blue → warm hazy horizon.
+        auto const skybox = make_shared<gradient_skybox>(
+            color(0.26, 0.52, 0.93),
+            color(0.95, 0.88, 0.78)
+        );
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
     static scene by_name(const std::string& name) {
         if (name == "checkered_spheres") return checkered_spheres();
         if (name == "earth") return earth();
@@ -1001,6 +1166,7 @@ public:
         if (name == "cornell_smoke") return cornell_smoke();
         if (name == "cornell_showcase") return cornell_showcase();
         if (name == "sun_through_clouds") return sun_through_clouds();
+        if (name == "hero_shot") return hero_shot();
 
         if (name == "clouds") return clouds();
         if (name == "sunset_clouds") return sunset_clouds();

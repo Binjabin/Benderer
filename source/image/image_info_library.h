@@ -161,6 +161,20 @@ public:
             );
     }
 
+    // Balanced settings for the sun-through-clouds + glass-ball + lens
+    // hero shot: enough resolution to show the refraction and silver
+    // lining, enough samples to clean up the dielectric noise, and
+    // enough max-depth to bounce through the ball, the lens, the
+    // forward-scattering cloud, and back out to the sun.
+    static image_info hero_shot() {
+        return image_info(
+            1.0,
+            960,
+            512,
+            32
+            );
+    }
+
 };
 
 #endif //BENDERER_IMAGE_INFO_LIBRARY_H
