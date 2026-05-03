@@ -111,6 +111,13 @@ public:
         return m_slices;
     }
 
+    std::vector<medium_slice>& mod_slices() {
+        if (!sliced) {
+            make_slices();
+        }
+        return m_slices;
+    }
+
     void get_cropped_slices(interval t, std::vector<medium_slice>& out_slices){
         //Make the slices if we haven't already.
         if (!sliced) {

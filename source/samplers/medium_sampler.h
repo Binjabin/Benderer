@@ -206,9 +206,8 @@ public:
 
                     if (denom_n > epsilon) {
                         double inv_denom_n = 1.0 / denom_n;
-                        throughput[0] *= sigma_n[0] * inv_denom_n;
-                        throughput[1] *= sigma_n[1] * inv_denom_n;
-                        throughput[2] *= sigma_n[2] * inv_denom_n;
+                        color weight_n_color = color(sigma_n[0], sigma_n[1], sigma_n[2]) * inv_denom_n;
+                        throughput *= weight_n_color;
                         r_prob_accum *= sigma_n[0] * r_transmittance * inv_denom_n;
                         g_prob_accum *= sigma_n[1] * g_transmittance * inv_denom_n;
                         b_prob_accum *= sigma_n[2] * b_transmittance * inv_denom_n;

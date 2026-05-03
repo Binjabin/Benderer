@@ -26,7 +26,7 @@ public:
         medium_intersections local_rec;
         if ( !m_medium->medium_hit( offset_r, ray_t, local_rec ) ) return false;
 
-        for (auto slice : local_rec.slices()) {
+        for (auto& slice : local_rec.mod_slices()) {
             m_transform->reverse_transform_interval(r, slice.m_interval);
         }
 

@@ -9,7 +9,7 @@ GEOMETRY="800x800"
 trap "kill $FEH_PID 2>/dev/null" EXIT
 
 # Start renderer
-$BIN &
+$BIN "$@" &
 RENDER_PID=$!
 
 # Wait for first valid file

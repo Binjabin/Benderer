@@ -97,6 +97,52 @@ public:
             32
             );
     }
+
+    static image_info ablation_1() {
+        return image_info(
+            1.0,
+            256,
+            4,
+            16
+            );
+    }
+
+    static image_info ablation_2() {
+        return image_info(
+            1.0,
+            256,
+            16,
+            16
+            );
+    }
+
+    static image_info ablation_3() {
+        return image_info(
+            1.0,
+            256,
+            64,
+            16
+            );
+    }
+
+    static image_info ablation_4() {
+        return image_info(
+            1.0,
+            256,
+            256,
+            16
+            );
+    }
+
+    static image_info ablation_ref() {
+        return image_info(
+            1.0,
+            256,
+            4096,
+            16
+            );
+    }
+
 };
 
 #endif //BENDERER_IMAGE_INFO_LIBRARY_H

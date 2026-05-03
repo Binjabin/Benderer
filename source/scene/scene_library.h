@@ -519,16 +519,22 @@ public:
             colors::black,                  // emission
             0.76                            // g (strong forward scattering)
         );
+
+        mediums.add(object_library::make_box_medium(point3(0, 320, 100), half_size, cloud_base));
+
         auto grid_mat = make_shared<medium_mat_grid>(grid, cloud_base);
 
-        mediums.add(object_library::make_box_medium(point3(0, 320, 100), half_size, grid_mat));
+        //mediums.add(object_library::make_box_medium(point3(0, 320, 100), half_size, grid_mat));
 
         surface_list surface_lights;
         surface_lights.add( light );
 
         medium_list medium_lights;
 
-        auto const skybox = make_shared<solid_color_skybox>(colors::black);
+        auto const skybox = make_shared<gradient_skybox>(
+            color(0.55, 0.70, 0.95),   // zenith
+            color(0.85, 0.88, 0.92)    // horizon
+        );
 
         return scene( cam,
             make_shared<surface_list>(surfaces),
@@ -806,6 +812,101 @@ public:
         );
     }
 
+    // =========================================================================
+    // Cornell-style showcase: glass+medium ball, metal box, wispy smoke,
+    // a back alcove with a coloured emissive panel. Designed as a single
+    // scene that exercises every renderer feature (specular, dielectric,
+    // homogeneous medium, heterogeneous medium, multiple emitters).
+    // =========================================================================
+    static scene cornell_showcase() {
+        camera cam;
+        cam.vfov = 40;
+        cam.lookfrom = point3( 278, 278, -800 );
+        cam.lookat = point3( 278, 278, 0 );
+        cam.vup = vec3( 0, 1, 0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        auto red    = make_shared<lambertian>( colors::n_red );
+        auto white  = make_shared<lambertian>( colors::n_white );
+        auto green  = make_shared<lambertian>( colors::n_green );
+        auto teal   = make_shared<lambertian>( colors::n_teal );
+
+        // Outer box
+        surfaces.add( object_library::make_quad( point3( 555, 0, 0 ),     vec3( 0, 555, 0 ), vec3( 0, 0, 555 ),  green ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ),       vec3( 0, 555, 0 ), vec3( 0, 0, 555 ),  red ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ),       vec3( 555, 0, 0 ), vec3( 0, 0, 555 ),  white ) );
+        surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 555 ),     vec3( 555, 0, 0 ), vec3( 0, 555, 0 ),  teal ) );
+
+        // Tall mirror-finish metal box (left, behind glass)
+        auto aluminum = make_shared<metal>( colors::metal_grey, 0.0 );
+        shared_ptr<surface> tall_box = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), aluminum );
+        tall_box = object_library::make_rotate( tall_box, 18 );
+        tall_box = object_library::make_translate( tall_box, vec3( 90, 0, 320 ) );
+        surfaces.add( tall_box );
+
+        // Glass sphere (front-right) — exterior surface for refraction
+        auto glass_mat = make_shared<dielectric>( 1.5 );
+        auto glass_ball = object_library::make_sphere( point3( 380, 110, 200 ), 110, glass_mat );
+        surfaces.add( glass_ball );
+
+        // Ceiling area light
+        auto light_mat = make_shared<emissive>( colors::bright_light );
+        auto light = object_library::make_quad(
+            point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
+        surfaces.add( light );
+
+        // Small warm accent light (low, behind the metal box) — extra light
+        // sample target for testing direct light sampling against multiple emitters.
+        auto warm_mat = make_shared<emissive>( color(8, 4, 1) );
+        auto warm_light = object_library::make_quad(
+            point3( 30, 40, 540 ), vec3( 80, 0, 0 ), vec3( 0, 80, 0 ), warm_mat );
+        surfaces.add( warm_light );
+
+        medium_list mediums;
+
+        // (1) Homogeneous coloured medium *inside* the glass sphere — tests
+        //     surface/medium interaction.
+        auto inner_fog = make_shared<medium_mat_constant>(
+            color(0.001, 0.004, 0.006),  // sigma_a — absorbs cool wavelengths
+            color(0.012, 0.004, 0.002),  // sigma_s — scatters warm
+            colors::black
+        );
+        mediums.add(object_library::make_sphere_medium(point3(380, 110, 200), 109, inner_fog));
+
+        // (2) Thin heterogeneous wisp drifting near the ceiling — visible enough
+        //     to demonstrate non-homogeneous tracking but not dense enough to
+        //     dominate the image.
+        vec3 wisp_half(180, 60, 140);
+        aabb wisp_bounds(-wisp_half, wisp_half);
+        auto wisp_grid = make_smoke_grid(32, 16, 32, wisp_bounds);
+        auto wisp_mat = make_shared<medium_mat_hg_constant>(
+            color(0.0008, 0.0008, 0.0008),
+            color(0.010, 0.010, 0.010),
+            colors::black,
+            0.3
+        );
+        auto wisp_grid_mat = make_shared<medium_mat_grid>(wisp_grid, wisp_mat);
+        mediums.add(object_library::make_box_medium(point3(278, 430, 278), wisp_half, wisp_grid_mat));
+
+        surface_list surface_lights;
+        surface_lights.add( light );
+        surface_lights.add( warm_light );
+
+        medium_list medium_lights;
+
+        auto const skybox = make_shared<solid_color_skybox>(colors::black);
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
     static scene by_name(const std::string& name) {
         if (name == "checkered_spheres") return checkered_spheres();
         if (name == "earth") return earth();
@@ -818,6 +919,7 @@ public:
         if (name == "cornell_ball") return cornell_ball();
         if (name == "cornell_blue_ball") return cornell_blue_ball();
         if (name == "cornell_smoke") return cornell_smoke();
+        if (name == "cornell_showcase") return cornell_showcase();
 
         if (name == "clouds") return clouds();
         if (name == "sunset_clouds") return sunset_clouds();
