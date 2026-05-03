@@ -143,6 +143,30 @@ public:
             );
     }
 
+    // High-quality preset for the cover image. 1920px square, 2048 spp and
+    // depth 64 — clouds need many scatter events for the bright forward-lit
+    // edges to converge. With mis_medium_path_tracer(64, 8, 8) this will be
+    // slow but very low noise.
+    static image_info cover_hero() {
+        return image_info(
+            1.0,
+            1920,
+            2048,
+            64
+            );
+    }
+
+    // Faster look-dev preset — same composition, ~16x cheaper, a bit noisier.
+    // Use this to dial in the cloud / sun framing before a full render.
+    static image_info cover_lookdev() {
+        return image_info(
+            1.0,
+            960,
+            256,
+            48
+            );
+    }
+
 };
 
 #endif //BENDERER_IMAGE_INFO_LIBRARY_H

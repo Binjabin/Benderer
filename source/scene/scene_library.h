@@ -741,6 +741,92 @@ public:
         );
     }
 
+    // =========================================================================
+    // Hero shot: backlit cumulus cloud with sun peeking through.
+    // Camera is low and in front; sun sits behind/above the cloud so we get
+    // a strong silver lining + forward-scatter glow through the thinner edges.
+    // Tuned for a low-noise cover render with mis_medium_path_tracer.
+    // =========================================================================
+    static scene sun_through_clouds() {
+        camera cam;
+        cam.vfov          = 38;
+        cam.lookfrom      = point3(  0, 120, -650 );
+        cam.lookat        = point3(  0, 360,  120 );
+        cam.vup           = vec3(   0,   1,    0 );
+        cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        medium_list  mediums;
+
+        // Distant ground (kept dim so it doesn't compete with the cloud).
+        auto ground_mat = make_shared<lambertian>( color(0.22, 0.26, 0.20) );
+        surfaces.add( object_library::make_quad(
+            point3(-5000, 0, -5000), vec3(10000, 0, 0), vec3(0, 0, 10000), ground_mat ) );
+
+        // Sun — bright warm disc placed behind and slightly above the cloud
+        // (relative to the camera) so its rays graze the cloud silhouette.
+        // Small area => crisp shadow edges; high radiance => silver lining.
+        auto sun_mat = make_shared<emissive>( color(180, 150, 110) );
+        auto sun = object_library::make_quad(
+            point3(  60, 520, 700 ),
+            vec3(  120,   0,   0 ),
+            vec3(    0, 120,   0 ),
+            sun_mat );
+        surfaces.add( sun );
+
+        // Single hero cumulus, fairly large, biased so the sun peeks past the
+        // upper-right shoulder rather than being dead-centre behind it.
+        vec3 half_size( 320, 220, 260 );
+        aabb bounds( -half_size, half_size );
+        auto grid = make_cloud_grid( 96, 72, 96, bounds );
+
+        // Strongly forward-scattering, near-zero absorption => bright white
+        // cloud with a glowing rim where the sun shines through thin regions.
+        auto cloud_mat = make_shared<medium_mat_hg_constant>(
+            color(0.00002, 0.00002, 0.00002), // sigma_a (basically non-absorbing)
+            color(0.030,   0.030,   0.030  ), // sigma_s (τ ~ 4 through the body)
+            colors::black,                    // no emission
+            0.85                              // strong forward scatter (Mie-ish)
+        );
+        auto cloud_grid_mat = make_shared<medium_mat_grid>( grid, cloud_mat );
+        mediums.add( object_library::make_box_medium(
+            point3( -40, 360, 140 ), half_size, cloud_grid_mat ) );
+
+        // A second, much thinner wisp slightly in front of the main cloud to
+        // catch a bit of forward-scattered light and add depth. Optional —
+        // remove if you want a cleaner silhouette.
+        vec3 wisp_half( 220, 50, 160 );
+        aabb wisp_bounds( -wisp_half, wisp_half );
+        auto wisp_grid = make_cloud_grid( 48, 16, 48, wisp_bounds );
+        auto wisp_mat = make_shared<medium_mat_hg_constant>(
+            color(0.00002, 0.00002, 0.00002),
+            color(0.010,   0.010,   0.010  ),
+            colors::black,
+            0.80
+        );
+        auto wisp_grid_mat = make_shared<medium_mat_grid>( wisp_grid, wisp_mat );
+        mediums.add( object_library::make_box_medium(
+            point3( 200, 220, -200 ), wisp_half, wisp_grid_mat ) );
+
+        surface_list surface_lights;
+        surface_lights.add( sun );          // critical: NEE/MIS targets the sun
+        medium_list  medium_lights;
+
+        // Clear-sky gradient: saturated blue zenith, pale warm horizon.
+        auto const skybox = make_shared<gradient_skybox>(
+            color(0.30, 0.55, 0.92),    // zenith
+            color(0.88, 0.90, 0.92)     // horizon
+        );
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+    }
+
     static scene sunset_clouds() {
         camera cam;
         cam.vfov = 50;
@@ -923,6 +1009,7 @@ public:
 
         if (name == "clouds") return clouds();
         if (name == "sunset_clouds") return sunset_clouds();
+        if (name == "sun_through_clouds") return sun_through_clouds();
         if (name == "god_rays") return god_rays();
         if (name == "nebula") return nebula();
         if (name == "foggy_glass") return foggy_glass();
