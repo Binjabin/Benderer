@@ -1015,10 +1015,12 @@ public:
         // and create a silver lining + crepuscular highlight inside the
         // glass ball.
         auto sun_mat = make_shared<emissive>( color(260, 195, 120) );
+        // u and v are ordered so cross(u, v) points back toward the camera
+        // (-z); emissive only emits from the front face.
         auto sun = object_library::make_quad(
             point3( 160, 560, 760 ),
-            vec3(  130,   0,   0 ),
             vec3(    0, 130,   0 ),
+            vec3(  130,   0,   0 ),
             sun_mat );
         surfaces.add( sun );
 
