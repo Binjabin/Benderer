@@ -17,7 +17,7 @@
 #include "scene/hittables/surfaces/surface_tree.h"
 
 int main(int argc, char** argv) {
-    const std::string scene_name = argc > 1 ? argv[1] : "cornell_showcase";
+    const std::string scene_name = argc > 1 ? argv[1] : "sun_through_clouds";
     scene our_scene = scene_library::by_name(scene_name);
 
     our_scene.finalize();
@@ -25,8 +25,10 @@ int main(int argc, char** argv) {
     //auto info = image_info_library::ablation_1();
     //auto info = image_info_library::ablation_2();
     //auto info = image_info_library::ablation_3();
-    auto info = image_info_library::ablation_4();
+    //auto info = image_info_library::ablation_4();
     //auto info = image_info_library::ablation_ref();
+
+    auto info = image_info_library::cover_lookdev();
 
     int w = info.pixel_width();
     int h = info.pixel_height();

@@ -143,6 +143,24 @@ public:
             );
     }
 
+    static image_info cover_hero() {
+        return image_info(
+            1.0,
+            1920,
+            2048,
+            64
+            );
+    }
+
+    static image_info cover_lookdev() {
+        return image_info(
+            1.0,
+            128,
+            64,
+            48
+            );
+    }
+
 };
 
 #endif //BENDERER_IMAGE_INFO_LIBRARY_H
