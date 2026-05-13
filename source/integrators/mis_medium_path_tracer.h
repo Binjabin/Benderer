@@ -24,6 +24,12 @@ public:
     color ray_color(const ray &r, int depth, const world& world) const {
         path_state p_state = path_state::initial_path_state();
         path_result res = path_trace(r, world, p_state);
+
+        constexpr double k_max_path_lum = 100.0;
+        color& c = res.radiance_from_path;
+        double lum = luminance(c);
+        if (lum > k_max_path_lum) c *= (k_max_path_lum / lum);
+
         return res.radiance_from_path;
     }
 
@@ -110,7 +116,7 @@ private:
 
             medium_scatter_rec srec;
             medium_rec.m_mat->scatter_is(-r.direction(), srec);
-            ray sray = ray(p, srec.s_dir);
+            ray sray = ray(p + srec.s_dir * epsilon, srec.s_dir);
 
             //---------------------------------------
             // Then send out the next ray
@@ -354,7 +360,7 @@ private:
     }
 
     double rr_importance(const vec3& throughput) const {
-        return std::clamp(max_component(throughput), 0.05, 0.95);
+        return std::clamp(luminance(throughput), 0.05, 0.95);
     }
 
     static double mis_weight(double pdf_a, double pdf_b) {

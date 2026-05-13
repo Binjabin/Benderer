@@ -92,7 +92,7 @@ private:
             // First calculate scatter direction
             medium_scatter_rec srec;
             medium_rec.m_mat->scatter(-r.direction(), srec);
-            ray sray = ray(p, srec.s_dir);
+            ray sray = ray(p + srec.s_dir * epsilon, srec.s_dir);
 
             //---------------------------------------
             // Then send out the next ray

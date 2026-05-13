@@ -64,6 +64,10 @@ public:
         return m_sigma_t;
     }
 
+    color scatter_maj() const override {
+        return m_sigma_s;
+    }
+
     void scatter(const vec3 &in_dir, medium_scatter_rec &srec) const override {
         sphere_pdf d_pdf = sphere_pdf();
         pdf_rec prec;

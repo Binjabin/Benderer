@@ -36,11 +36,13 @@ public:
         : m_entries(std::move(entries)), m_interval(t) {
 
         m_sigma_maj = colors::black;
+        m_scatter_maj = colors::black;
         for (const auto& entry : m_entries) {
-            //Arbitrary location since volumes are homogeneous!
             m_sigma_maj += entry.m_mat->sigma_maj();
+            m_scatter_maj += entry.m_mat->scatter_maj();
         }
         maj_optical_thickness = m_sigma_maj * m_interval.size();
+        maj_scatter_thickness = m_scatter_maj * m_interval.size();
 
         is_empty = m_entries.empty();
     }
@@ -85,7 +87,9 @@ public:
     }
 
     color m_sigma_maj;
+    color m_scatter_maj;
     color maj_optical_thickness;
+    color maj_scatter_thickness;
     bool is_empty;
 };
 

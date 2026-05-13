@@ -32,6 +32,7 @@ public:
     }
 
     color sigma_maj() const override { return m_sigma_t; }
+    color scatter_maj() const override { return m_sigma_s; }
 
     color average_radiance() const override { return m_emission; }
 

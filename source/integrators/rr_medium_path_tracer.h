@@ -209,7 +209,7 @@ private:
     }
 
     double rr_importance(const vec3& throughput) const {
-        return std::clamp(max_component(throughput), 0.05, 0.95);
+        return std::clamp(luminance(throughput), 0.05, 0.95);
     }
 
 };

@@ -46,6 +46,7 @@ public:
         scatter_pdf.sample(prec);
 
         srec.s_ray = ray(i.get_p() + prec.direction * epsilon, prec.direction, i.get_time());
+        srec.w_pdf =  1.0 / (2.0 * pi);
         srec.bsdf = bsdf(i, in, srec.s_ray.direction());
         srec.is_delta = false;
 

@@ -146,8 +146,8 @@ public:
     static image_info cover_hero() {
         return image_info(
             1.0,
-            1920,
-            2048,
+            516,
+            256,
             64
             );
     }
@@ -159,6 +159,33 @@ public:
             64,
             48
             );
+    }
+
+    static image_info error_ref() {
+        return image_info(
+            1.0,
+             64,
+             8196,
+             64
+        );
+    }
+
+    static image_info standard_simple_thumb() {
+        return image_info(
+            1.0,
+             256,
+             64,
+             64
+        );
+    }
+
+    static image_info standard_optimized_thumb() {
+        return image_info(
+            1.0,
+             256,
+             8,
+             64
+        );
     }
 
 };

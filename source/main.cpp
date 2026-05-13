@@ -17,7 +17,7 @@
 #include "scene/hittables/surfaces/surface_tree.h"
 
 int main(int argc, char** argv) {
-    const std::string scene_name = argc > 1 ? argv[1] : "sun_through_clouds";
+    const std::string scene_name = argc > 1 ? argv[1] : "cornell_ball";
     scene our_scene = scene_library::by_name(scene_name);
 
     our_scene.finalize();
@@ -28,7 +28,12 @@ int main(int argc, char** argv) {
     //auto info = image_info_library::ablation_4();
     //auto info = image_info_library::ablation_ref();
 
-    auto info = image_info_library::cover_lookdev();
+    //auto info = image_info_library::cover_lookdev();
+    //auto info = image_info_library::cover_hero();
+    //auto info = image_info_library::error_ref();
+
+    //auto info = image_info_library::standard_simple_thumb();
+    auto info = image_info_library::standard_optimized_thumb();
 
     int w = info.pixel_width();
     int h = info.pixel_height();
@@ -39,6 +44,7 @@ int main(int argc, char** argv) {
     std::string filename = "output_";
     filename += get_time_string();
 
+    //auto itgr = simple_path_tracer(info.max_depth());
     //auto itgr = simple_medium_path_tracer(info.max_depth());
     //auto itgr = is_medium_path_tracer(info.max_depth());
     //auto itgr = rr_medium_path_tracer(info.max_depth(), 8);

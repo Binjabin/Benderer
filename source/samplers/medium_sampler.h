@@ -40,10 +40,13 @@ public:
 
         //Calculate total optical thickness
         color total_optical_thickness = colors::black;
+        color total_scatter_thickness = colors::black;
         for (const medium_slice& slice : slices) {
             total_optical_thickness += slice.maj_optical_thickness;
+            total_scatter_thickness += slice.m_scatter_maj;
         }
-        double sum = total_optical_thickness[0] + total_optical_thickness[1] + total_optical_thickness[2];
+        color hero_weight = total_optical_thickness + total_scatter_thickness;
+        double sum = hero_weight[0] + hero_weight[1] + hero_weight[2];
         //No thickness!
         if (sum <= 0.0) {
             rec.m_transmittance = colors::white;
@@ -57,9 +60,9 @@ public:
         const double uniform_prob = 1.0 / 3.0;
         const double tau_weight = 1.0 - uniform_prob;
 
-        double r_prop = tau_weight * (total_optical_thickness[0] / sum) + uniform_prob / 3.0;
-        double g_prop = tau_weight * (total_optical_thickness[1] / sum) + uniform_prob / 3.0;
-        double b_prop = tau_weight * (total_optical_thickness[2] / sum) + uniform_prob / 3.0;
+        double r_prop = tau_weight * (hero_weight[0] / sum) + uniform_prob / 3.0;
+        double g_prop = tau_weight * (hero_weight[1] / sum) + uniform_prob / 3.0;
+        double b_prop = tau_weight * (hero_weight[2] / sum) + uniform_prob / 3.0;
 
         //Randomly select hero channel
         double c_r = random_double();
@@ -176,6 +179,15 @@ public:
                             chosen_local_p = local_p;
                             mat_pdf = chosen_sigma_s_h / total_sigma_s_h;
                         }
+                    }
+
+                    if (chosen_mat == nullptr) {
+                        //treat as null collision
+                        offset += dt;
+                        remaining-=dt;
+                        c_d = random_double();
+                        budget = -std::log(1.0 - c_d);
+                        continue;
                     }
 
                     rec.m_transmittance = throughput;

@@ -51,6 +51,8 @@ public:
 
     virtual color sigma_maj() const = 0;
 
+    virtual color scatter_maj() const = 0;
+
     virtual color average_radiance() const = 0;
 };
 

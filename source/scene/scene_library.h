@@ -281,13 +281,13 @@ public:
         auto red = make_shared<lambertian>( colors::n_red );
         auto white = make_shared<lambertian>( colors::n_white );
         auto green = make_shared<lambertian>( colors::n_green );
-        auto aluminum = make_shared<metal>( colors::n_orange, 0.01 );
+        auto box_mat = make_shared<lambertian>(colors::n_blue);
         surfaces.add( object_library::make_quad( point3( 555, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), green ) );
         surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 0, 555, 0 ), vec3( 0, 0, 555 ), red ) );
         surfaces.add( object_library::make_quad( point3( 0, 0, 0 ), vec3( 555, 0, 0 ), vec3( 0, 0, 555 ), white ) );
         surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
         surfaces.add( object_library::make_quad( point3( 0, 0, 555 ), vec3( 555, 0, 0 ), vec3( 0, 555, 0 ), white ) );
-        shared_ptr<surface> box1 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), aluminum );
+        shared_ptr<surface> box1 = object_library::make_box( point3( 0, 0, 0 ), point3( 165, 330, 165 ), box_mat );
         box1 = object_library::make_rotate( box1, 20 );
         box1 = object_library::make_translate( box1, vec3( 265, 0, 295 ) );
         surfaces.add( box1 );
@@ -758,7 +758,7 @@ public:
             point3(-3000, 0, -3000), vec3(6000, 0, 0), vec3(0, 0, 6000), ground_mat));
 
         // Low-angle warm "sun" light (sunset from the side, much brighter)
-        auto sun_mat = make_shared<emissive>( color(60, 25, 6) );
+        auto sun_mat = make_shared<emissive>( color(100, 15, 6) );
         auto sun = object_library::make_quad(
             point3( 1500, 180, 800 ), vec3( 0, 200, 0 ), vec3( 0, 0, 200 ), sun_mat );
         surfaces.add( sun );
@@ -812,12 +812,6 @@ public:
         );
     }
 
-    // =========================================================================
-    // Cornell-style showcase: glass+medium ball, metal box, wispy smoke,
-    // a back alcove with a coloured emissive panel. Designed as a single
-    // scene that exercises every renderer feature (specular, dielectric,
-    // homogeneous medium, heterogeneous medium, multiple emitters).
-    // =========================================================================
     static scene cornell_showcase() {
         camera cam;
         cam.vfov = 40;
@@ -907,75 +901,191 @@ public:
         );
     }
 
-    static scene sun_through_clouds() {
+    static scene cornell_error() {
         camera cam;
-        cam.vfov          = 38;
-        cam.lookfrom      = point3(  0, 120, -650 );
-        cam.lookat        = point3(  0, 360,  120 );
-        cam.vup           = vec3(   0,   1,    0 );
+        cam.vfov = 40;
+        cam.lookfrom = point3( 278, 278, -800 );
+        cam.lookat   = point3( 278, 278, 0 );
+        cam.vup      = vec3( 0, 1, 0 );
         cam.defocus_angle = 0;
+
+        surface_list surfaces;
+        auto red   = make_shared<lambertian>( colors::n_red );
+        auto white = make_shared<lambertian>( colors::n_white );
+        auto cream = make_shared<lambertian>( color(0.8, 0.6, 0.3) );
+        auto green = make_shared<lambertian>( colors::n_green );
+
+        // Cornell box walls
+        surfaces.add( object_library::make_quad( point3( 555, 0, 0 ),     vec3( 0, 555, 0 ),  vec3( 0, 0, 555 ),  green ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ),       vec3( 0, 555, 0 ),  vec3( 0, 0, 555 ),  red ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 0 ),       vec3( 555, 0, 0 ),  vec3( 0, 0, 555 ),  white ) );
+        surfaces.add( object_library::make_quad( point3( 555, 555, 555 ), vec3( -555, 0, 0 ), vec3( 0, 0, -555 ), white ) );
+        surfaces.add( object_library::make_quad( point3( 0, 0, 555 ),     vec3( 555, 0, 0 ),  vec3( 0, 555, 0 ),  cream ) );
+
+        // Ceiling area light
+        auto light_mat = make_shared<emissive>( color(15, 10, 5) );
+        auto light = object_library::make_quad(
+            point3( 343, 554, 332 ), vec3( -130, 0, 0 ), vec3( 0, 0, -105 ), light_mat );
+        surfaces.add( light );
+
+        // ─── BALLS ──────────────────────────────────────────────────────
+        // All small, same radius, sitting on the floor. Two rows: three at
+        // the back (mirror / frosted / coloured) and two at the front
+        // (clear / lambertian).
+        const double r = 80.0;
+        const double r2 = 40.0;
+        const double r3 = 65.0;
+        auto glass_mat = make_shared<dielectric>( 1.5 );
+
+        auto mirror_mat = make_shared<metal>( colors::metal_grey, 0.01 );
+        surfaces.add( object_library::make_sphere( point3( 110, r, 400 ), r, mirror_mat ) );
+
+        const point3 frosted_c( 278, r3, 300 );
+        surfaces.add( object_library::make_sphere( frosted_c, r3, glass_mat ) );
+
+        const point3 coloured_c( 385, r2, 140 );
+        surfaces.add( object_library::make_sphere( coloured_c, r2, glass_mat ) );
+
+        surfaces.add( object_library::make_sphere( point3( 180, r2, 140 ), r2, glass_mat ) );
+
+        auto lamb_ball_mat = make_shared<lambertian>( color( 0.95, 0.4, 0.5 ) );
+        surfaces.add( object_library::make_sphere( point3( 445, r, 400 ), r, lamb_ball_mat ) );
+
+        // ─── MEDIA ──────────────────────────────────────────────────────
+        medium_list mediums;
+
+        auto frosted_inside = make_shared<medium_mat_constant>(
+            color( 0.01, 0.01, 0.001 ),  // sigma_a (essentially clear)
+            color( 0.04,  0.04,  0.04  ),  // sigma_s (frost)
+            colors::black
+        );
+        mediums.add( object_library::make_sphere_medium( frosted_c, r3 - 1, frosted_inside ) );
+
+        auto coloured_inside = make_shared<medium_mat_constant>(
+            color( 0.005, 0.150, 0.30 ),  // sigma_a — absorbs green & blue, transmits red
+            color( 0.001,   0.001,   0.001   ),  // sigma_s = 0 → not frosted
+            colors::black
+        );
+        mediums.add( object_library::make_sphere_medium( coloured_c, r2-epsilon, coloured_inside ) );
+
+        {
+            vec3 half_size( 250, 80, 150 );
+            aabb bounds( -half_size, half_size );
+            auto grid = make_cloud_grid( 48, 28, 48, bounds );
+
+            auto cloud_mat = make_shared<medium_mat_hg_constant>(
+                color( 0.0018, 0.001, 0.0018 ),
+                color( 4.0, 4.0, 4.0 ),
+                colors::black,
+                0.9                            // g — moderate forward scatter
+            );
+            auto cloud_grid_mat = make_shared<medium_mat_grid>( grid, cloud_mat );
+            mediums.add( object_library::make_box_medium(
+                point3( 278, 350, 300 ), half_size, cloud_grid_mat ) );
+        }
+
+        surface_list surface_lights;
+        surface_lights.add( light );
+        medium_list medium_lights;
+
+        auto const skybox = make_shared<solid_color_skybox>( colors::black );
+
+        return scene( cam,
+            make_shared<surface_list>(surfaces),
+            make_shared<medium_list>(mediums),
+            make_shared<surface_list>(surface_lights),
+            make_shared<medium_list>(medium_lights),
+            skybox
+        );
+
+    }
+
+    static scene hero_shot() {
+        camera cam;
+        cam.vfov          = 42;
+        cam.lookfrom      = point3(   0,  100, -360 );
+        cam.lookat        = point3(   0,  240,  220 );
+        cam.vup           = vec3(     0,    1,    0 );
+        // Subtle shallow depth-of-field, focused on the crystal ball.
+        cam.focus_dist    = 285;
+        cam.defocus_angle = 0.45;
 
         surface_list surfaces;
         medium_list  mediums;
 
-        // Distant ground (kept dim so it doesn't compete with the cloud).
-        auto ground_mat = make_shared<lambertian>( color(0.22, 0.26, 0.20) );
+        // Distant ground — kept dim and cool so the eye stays in the sky.
+        auto ground_mat = make_shared<lambertian>( color(0.18, 0.22, 0.20) );
         surfaces.add( object_library::make_quad(
-            point3(-5000, 0, -5000), vec3(10000, 0, 0), vec3(0, 0, 10000), ground_mat ) );
+            point3(-5000, 50, -5000), vec3(10000, 0, 0), vec3(0, 0, 10000), ground_mat ) );
 
-        // Sun — bright warm disc placed behind and slightly above the cloud
-        // (relative to the camera) so its rays graze the cloud silhouette.
-        // Small area => crisp shadow edges; high radiance => silver lining.
-        auto sun_mat = make_shared<emissive>( color(180, 150, 110) );
-        auto sun = object_library::make_quad(
-            point3(  60, 520, 700 ),
-            vec3(  120,   0,   0 ),
-            vec3(    0, 120,   0 ),
+
+        auto sun_mat = make_shared<emissive>( color(70, 30, 0.2) );
+        auto sun = object_library::make_sphere(
+            point3( 220, 630, 760 ),
+            40.0,
             sun_mat );
         surfaces.add( sun );
 
-        // Single hero cumulus, fairly large, biased so the sun peeks past the
-        // upper-right shoulder rather than being dead-centre behind it.
-        vec3 half_size( 320, 220, 260 );
-        aabb bounds( -half_size, half_size );
-        auto grid = make_cloud_grid( 96, 72, 96, bounds );
+        // Main hero cumulus — sun peeks past the upper-right shoulder.
+        {
+            vec3 half_size( 300, 70, 180 );
+            aabb bounds( -half_size, half_size );
+            auto grid = make_cloud_grid( 96, 72, 96, bounds );
 
-        // Strongly forward-scattering, near-zero absorption => bright white
-        // cloud with a glowing rim where the sun shines through thin regions.
-        auto cloud_mat = make_shared<medium_mat_hg_constant>(
-            color(0.00002, 0.00002, 0.00002), // sigma_a (basically non-absorbing)
-            color(0.030,   0.030,   0.030  ), // sigma_s (τ ~ 4 through the body)
-            colors::black,                    // no emission
-            0.85                              // strong forward scatter (Mie-ish)
-        );
-        auto cloud_grid_mat = make_shared<medium_mat_grid>( grid, cloud_mat );
-        mediums.add( object_library::make_box_medium(
-            point3( -40, 360, 140 ), half_size, cloud_grid_mat ) );
+            // Strongly forward-scattering, near-zero absorption so the
+            // back-lit edges glow brilliantly.
+            auto cloud_mat = make_shared<medium_mat_hg_constant>(
+                color(0.08, 0.09, 0.11),
+                color(2.5,   2.5,   2.5  ),
+                colors::black,
+                0.88
+            );
+            auto cloud_grid_mat = make_shared<medium_mat_grid>( grid, cloud_mat );
+            mediums.add( object_library::make_box_medium(
+                point3( 20, 320, 220 ), half_size, cloud_grid_mat ) );
+        }
 
-        // A second, much thinner wisp slightly in front of the main cloud to
-        // catch a bit of forward-scattered light and add depth. Optional —
-        // remove if you want a cleaner silhouette.
-        vec3 wisp_half( 220, 50, 160 );
-        aabb wisp_bounds( -wisp_half, wisp_half );
-        auto wisp_grid = make_cloud_grid( 48, 16, 48, wisp_bounds );
-        auto wisp_mat = make_shared<medium_mat_hg_constant>(
-            color(0.00002, 0.00002, 0.00002),
-            color(0.010,   0.010,   0.010  ),
-            colors::black,
-            0.80
-        );
-        auto wisp_grid_mat = make_shared<medium_mat_grid>( wisp_grid, wisp_mat );
-        mediums.add( object_library::make_box_medium(
-            point3( 200, 220, -200 ), wisp_half, wisp_grid_mat ) );
+        // Light atmospheric haze — a giant, very thin homogeneous box
+        // around the whole shot. Picks up a bit of forward-scattered
+        // sunlight and gives the hero crystal that "in the world"
+        // feel rather than sitting on a flat sky.
+        {
+            auto haze = make_shared<medium_mat_constant>(
+                color(0.000005, 0.000005, 0.000005),
+                color(0.00010, 0.00014, 0.0002),
+                colors::black
+            );
+            mediums.add( object_library::make_box_medium(
+                point3( 0, 200, 0 ), vec3( 1500, 600, 1500 ), haze ) );
+        }
+
+        // ─── HERO REFRACTIVE ELEMENTS ──────────────────────────────────
+        // Crystal glass ball — the main subject. Lower-left of frame so
+        // the sun is mirrored/refracted across it.
+        auto crystal_mat = make_shared<dielectric>( 1.5 );
+        const point3 ball_c( -35, 170, 40 );
+        const double ball_r = 30;
+        surfaces.add( object_library::make_sphere( ball_c, ball_r, crystal_mat ) );
+
+        auto red_crystal_inside = make_shared<medium_mat_constant>(color(0.03, 0.5, 0.5), color(0, 0, 0), colors::black);
+        const point3 ball_cr( -110, 140, 40 );
+        const double ball_rr = 20;
+        surfaces.add( object_library::make_sphere( ball_cr, ball_rr, crystal_mat ) );
+        mediums.add( object_library::make_sphere_medium(ball_cr, ball_rr, red_crystal_inside));
+
+        auto sand_mat = make_shared<lambertian>( color(0.26, 0.52, 0.85) );
+        const point3 ball_c2( -60, 100, 40 );
+        const double ball_r2 = 40;
+        surfaces.add( object_library::make_sphere( ball_c2, ball_r2, sand_mat ) );
 
         surface_list surface_lights;
-        surface_lights.add( sun );          // critical: NEE/MIS targets the sun
+        surface_lights.add( sun );          // NEE/MIS targets the sun
         medium_list  medium_lights;
 
-        // Clear-sky gradient: saturated blue zenith, pale warm horizon.
+        // Clear sky: deep zenith blue → warm hazy horizon.
         auto const skybox = make_shared<gradient_skybox>(
-            color(0.30, 0.55, 0.92),    // zenith
-            color(0.88, 0.90, 0.92)     // horizon
+            color(0.08, 0.08, 0.2),
+            color(0.04, 0.04, 0.1)
         );
 
         return scene( cam,
@@ -1000,7 +1110,8 @@ public:
         if (name == "cornell_blue_ball") return cornell_blue_ball();
         if (name == "cornell_smoke") return cornell_smoke();
         if (name == "cornell_showcase") return cornell_showcase();
-        if (name == "sun_through_clouds") return sun_through_clouds();
+        if (name == "cornell_error") return cornell_error();
+        if (name == "hero_shot") return hero_shot();
 
         if (name == "clouds") return clouds();
         if (name == "sunset_clouds") return sunset_clouds();

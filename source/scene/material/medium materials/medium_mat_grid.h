@@ -13,7 +13,8 @@ class medium_mat_grid : public medium_material {
 public:
     medium_mat_grid(shared_ptr<density_grid> grid, shared_ptr<medium_material> base)
         : m_density_grid(grid), m_base(base){
-        m_sigma_maj = compute_majorant();
+        m_sigma_maj = compute_maj();
+        m_scatter_maj = compute_scatter_maj();
         m_average_density = average_density();
     }
 
@@ -52,6 +53,10 @@ public:
         return m_sigma_maj;
     }
 
+    color scatter_maj() const override {
+        return m_base->scatter_maj();
+    }
+
     void scatter(const vec3 &in_dir, medium_scatter_rec &srec) const override {
         m_base->scatter(in_dir, srec);
     }
@@ -72,9 +77,10 @@ private:
     shared_ptr<density_grid> m_density_grid;
     shared_ptr<medium_material> m_base;
     color m_sigma_maj;
+    color m_scatter_maj;
     double m_average_density;
 
-    color compute_majorant() {
+    color compute_maj() {
         double m_sigma_maj_r = 0.0;
         double m_sigma_maj_g = 0.0;
         double m_sigma_maj_b = 0.0;
@@ -87,6 +93,21 @@ private:
         }
 
         return color(m_sigma_maj_r, m_sigma_maj_g, m_sigma_maj_b);
+    }
+
+    color compute_scatter_maj() {
+        double m_scatter_maj_r = 0.0;
+        double m_scatter_maj_g = 0.0;
+        double m_scatter_maj_b = 0.0;
+
+        for (double d : m_density_grid->data) {
+            color scatter_t = m_base->scatter_maj();
+            m_scatter_maj_r = std::max(scatter_t[0] * d, m_scatter_maj_r);
+            m_scatter_maj_g = std::max(scatter_t[1] * d, m_scatter_maj_g);
+            m_scatter_maj_b = std::max(scatter_t[2] * d, m_scatter_maj_b);
+        }
+
+        return color(m_scatter_maj_r, m_scatter_maj_g, m_scatter_maj_b);
     }
 
     double average_density() {
