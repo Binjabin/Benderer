@@ -182,12 +182,15 @@ public:
                     }
 
                     if (chosen_mat == nullptr) {
-                        //treat as null collision
-                        offset += dt;
-                        remaining-=dt;
-                        c_d = random_double();
-                        budget = -std::log(1.0 - c_d);
-                        continue;
+                        //If any other channel has scatter, treat as null collision (hero just happened to have no scatter)
+                        if (max_component(actual_sigma_s) > epsilon) {
+                            offset += dt;
+                            remaining-=dt;
+                            c_d = random_double();
+                            budget = -std::log(1.0 - c_d);
+                            continue;
+                        }
+                        //Otherwise this is a true absorption event; fall through and terminate
                     }
 
                     rec.m_transmittance = throughput;
