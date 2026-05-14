@@ -617,12 +617,12 @@ public:
         medium_list mediums;
 
         // Embedded star light sources
-        auto star1_mat = make_shared<emissive>( color(12, 10, 6) );
-        auto star1 = object_library::make_sphere( point3(-60, 20, 50), 15, star1_mat );
+        auto star1_mat = make_shared<emissive>( color(120, 100, 60) );
+        auto star1 = object_library::make_sphere( point3(-60, 20, 50), 4, star1_mat );
         surfaces.add( star1 );
 
-        auto star2_mat = make_shared<emissive>( color(4, 4, 12) );
-        auto star2 = object_library::make_sphere( point3(80, -30, -20), 10, star2_mat );
+        auto star2_mat = make_shared<emissive>( color(40, 40, 120) );
+        auto star2 = object_library::make_sphere( point3(80, -30, -20), 3, star2_mat );
         surfaces.add( star2 );
 
         // Red/orange nebula cloud
@@ -632,8 +632,8 @@ public:
         auto grid1 = make_smoke_grid(25, 20, 25, bounds1);
         // path ≈ 240, avg density ≈ 0.19: τ_r = 0.025×0.19×240 ≈ 1.1
         auto red_cloud_mat = make_shared<medium_mat_constant>(
-            color(0.001, 0.004, 0.004),    // sigma_a: absorb green/blue
-            color(0.025, 0.006, 0.003),    // sigma_s: scatter red
+            color(0.025, 0.02, 0.02),    // sigma_a: absorb green/blue
+            color(0.05, 0.03, 0.015),    // sigma_s: scatter red
             colors::black
         );
         auto grid_mat1 = make_shared<medium_mat_grid>(grid1, red_cloud_mat);
@@ -646,8 +646,8 @@ public:
         auto grid2 = make_smoke_grid(22, 18, 22, bounds2);
         // path ≈ 200, avg density ≈ 0.19: τ_b = 0.025×0.19×200 ≈ 1.0
         auto blue_cloud_mat = make_shared<medium_mat_constant>(
-            color(0.004, 0.002, 0.0005),   // sigma_a: absorb red
-            color(0.004, 0.008, 0.025),    // sigma_s: scatter blue
+            color(0.02, 0.01, 0.0025),   // sigma_a: absorb red
+            color(0.02, 0.05, 0.05),    // sigma_s: scatter blue
             colors::black
         );
         auto grid_mat2 = make_shared<medium_mat_grid>(grid2, blue_cloud_mat);
@@ -758,17 +758,22 @@ public:
             point3(-3000, 0, -3000), vec3(6000, 0, 0), vec3(0, 0, 6000), ground_mat));
 
         // Low-angle warm "sun" light (sunset from the side, much brighter)
-        auto sun_mat = make_shared<emissive>( color(100, 15, 6) );
-        auto sun = object_library::make_quad(
-            point3( 1500, 180, 800 ), vec3( 0, 200, 0 ), vec3( 0, 0, 200 ), sun_mat );
+        auto sun_mat = make_shared<emissive>( color(40, 5, 0.4) );
+        auto sun = object_library::make_sphere(
+            point3( -100, 300, 800 ), 40, sun_mat );
         surfaces.add( sun );
 
-        // Shared cloud material — scattering raised substantially so clouds are visible
+        auto sun_mat_2 = make_shared<emissive>( color(10, 0.8, 0.1) );
+        auto sun_2 = object_library::make_sphere(
+            point3( 200, 260, 800 ), 25, sun_mat_2 );
+        surfaces.add( sun_2 );
+
+        // Shared cloud material
         auto cloud_mat1 = make_shared<medium_mat_hg_constant>(
             color(0.02, 0.02, 0.02),   // absorption
-            color(0.5,  0.5,  0.5 ),   // scattering (was 0.018 — far too low)
+            color(2.1,  2.1,  2.1 ),
             colors::black,
-            0.76                        // strong forward scatter
+            0.9                        // strong forward scatter
         );
 
         // Cloud layer 1 - wide flat cloud
@@ -783,14 +788,13 @@ public:
         aabb b2(-hs2, hs2);
         auto g2  = make_cloud_grid(20, 10, 20, b2);
         auto gm2 = make_shared<medium_mat_grid>(g2, cloud_mat1);
-        mediums.add(object_library::make_box_medium(point3(200, 380, 700), hs2, gm2));
+        mediums.add(object_library::make_box_medium(point3(100, 380, 700), hs2, gm2));
 
-        // Cloud layer 3 - small wispy cloud
-        vec3 hs3(80, 25, 70);
+        vec3 hs3(200, 40, 400);
         aabb b3(-hs3, hs3);
-        auto g3  = make_cloud_grid(16, 8, 16, b3);
+        auto g3  = make_cloud_grid(28, 12, 28, b3);
         auto gm3 = make_shared<medium_mat_grid>(g3, cloud_mat1);
-        mediums.add(object_library::make_box_medium(point3(-200, 340, 400), hs3, gm3));
+        mediums.add(object_library::make_box_medium(point3(200, 250, 500), hs3, gm3));
 
         surface_list surface_lights;
         surface_lights.add( sun );

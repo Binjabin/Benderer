@@ -25,11 +25,6 @@ public:
         path_state p_state = path_state::initial_path_state();
         path_result res = path_trace(r, world, p_state);
 
-        constexpr double k_max_path_lum = 100.0;
-        color& c = res.radiance_from_path;
-        double lum = luminance(c);
-        if (lum > k_max_path_lum) c *= (k_max_path_lum / lum);
-
         return res.radiance_from_path;
     }
 
@@ -133,14 +128,14 @@ private:
 
             child_state.overall_throughput *= (mat_inv_pdf * medium_rec.m_transmittance * sigma_s * phase_factor);
 
-            //Apply russian roulette
-            if (!russian_roulette(child_state)) {
+            double q = russian_roulette(child_state);
+            if (q == 0.0) {
                 return path_result::color_path_result((emittance + direct * mat_inv_pdf) * medium_rec.m_transmittance);
             }
 
             path_result indirect_res = path_trace(sray, world, child_state);
-            color indirect_rad = indirect_res.radiance_from_path * sigma_s * phase_factor * mat_inv_pdf;
-            out_result.radiance_from_path = (indirect_rad + direct * mat_inv_pdf + emittance)  * medium_rec.m_transmittance;
+            color indirect_rad = indirect_res.radiance_from_path * sigma_s * phase_factor * mat_inv_pdf / q;
+            out_result.radiance_from_path = (indirect_rad + direct * mat_inv_pdf + emittance) * medium_rec.m_transmittance;
             return out_result;
         }
 
@@ -316,12 +311,13 @@ private:
             child_state.prev_was_delta = true;
             child_state.prev_bsdf_pdf = 1.0;
 
-            if (!russian_roulette(child_state)) {
+            double q = russian_roulette(child_state);
+            if (q == 0.0) {
                 return path_result::empty_path_result();
             }
 
             indirect_res = path_trace(srec.s_ray, world, child_state);
-            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf;
+            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf / q;
         }
         else {
             //----------------------------------------
@@ -337,26 +333,24 @@ private:
             child_state.prev_was_delta = false;
             child_state.prev_bsdf_pdf = pdf;
 
-            if (!russian_roulette(child_state)) {
+            double q = russian_roulette(child_state);
+            if (q == 0.0) {
                 return path_result::empty_path_result();
             }
 
             indirect_res = path_trace(srec.s_ray, world, child_state);
-            indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;
+            indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput / q;
         }
 
         return indirect_res;
     }
 
-    bool russian_roulette(path_state& p_state) const {
-        if (p_state.depth < m_rr_start_depth) return true;
-
-        double p = rr_importance(p_state.overall_throughput);
-
-        if (random_double() > p) return false;
-
-        p_state.overall_throughput /= p;
-        return true;
+    double russian_roulette(path_state& p_state) const {
+        if (p_state.depth < m_rr_start_depth) return 1.0;
+        double q = rr_importance(p_state.overall_throughput);
+        if (random_double() > q) return 0.0;
+        p_state.overall_throughput /= q;
+        return q;
     }
 
     double rr_importance(const vec3& throughput) const {

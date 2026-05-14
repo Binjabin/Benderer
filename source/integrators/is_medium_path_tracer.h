@@ -172,7 +172,7 @@ private:
             // The cosine term is the geometry term for the material
             vec3 scatter_dir = srec.s_ray.direction();
             double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
-            double pdf = 1.0 / (2.0 * pi);
+            double pdf = srec.w_pdf;
             color throughput = srec.bsdf * cos_theta / pdf;
 
             //----------------------------------------

@@ -106,14 +106,12 @@ private:
 
             child_state.overall_throughput *= (mat_inv_pdf * medium_rec.m_transmittance * sigma_s * phase_factor);
 
-            //Apply russian roulette
-            if (!russian_roulette(child_state)) {
-                return path_result::color_path_result(emittance * medium_rec.m_transmittance);
-            }
+            double q = russian_roulette(child_state);
+            if (q == 0.0) return path_result::color_path_result(emittance * medium_rec.m_transmittance);
 
             path_result indirect_res = path_trace(sray, world, child_state);
             color indirect_rad = indirect_res.radiance_from_path;
-            out_result.radiance_from_path = (indirect_rad * sigma_s * phase_factor * mat_inv_pdf + emittance)  * medium_rec.m_transmittance;
+            out_result.radiance_from_path = (indirect_rad * sigma_s * phase_factor * mat_inv_pdf / q + emittance) * medium_rec.m_transmittance;
             return out_result;
         }
 
@@ -166,12 +164,10 @@ private:
             // No cos term as it is considered to be "absorbed" into the bsdf for delta materials
             child_state.overall_throughput = srec.bsdf * child_state.overall_throughput;
 
-            if (!russian_roulette(child_state)) {
-                return path_result::empty_path_result();
-            }
-
+            double q = russian_roulette(child_state);
+            if (q == 0.0) return path_result::empty_path_result();
             indirect_res = path_trace(srec.s_ray, world, child_state);
-            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf;
+            indirect_res.radiance_from_path = indirect_res.radiance_from_path * srec.bsdf / q;
         }
         else {
             //----------------------------------------
@@ -179,33 +175,28 @@ private:
             // The cosine term is the geometry term for the material
             vec3 scatter_dir = srec.s_ray.direction();
             double cos_theta = fmax(0.0, dot(scatter_dir, rec.get_normal()));
-            double pdf = 1.0 / (2.0 * pi);
+            double pdf = srec.w_pdf;
             color throughput = srec.bsdf * cos_theta / pdf;
 
             //----------------------------------------
             // Keep track of overall throughput, to terminate paths with tiny contributions early
             child_state.overall_throughput *= throughput;
 
-            if (!russian_roulette(child_state)) {
-                return path_result::empty_path_result();
-            }
-
+            double q = russian_roulette(child_state);
+            if (q == 0.0) return path_result::empty_path_result();
             indirect_res = path_trace(srec.s_ray, world, child_state);
-            indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput;
+            indirect_res.radiance_from_path = indirect_res.radiance_from_path * throughput / q;
         }
 
         return indirect_res;
     }
 
-    bool russian_roulette(path_state& p_state) const {
-        if (p_state.depth < m_rr_start_depth) return true;
-
-        double p = rr_importance(p_state.overall_throughput);
-
-        if (random_double() > p) return false;
-
-        p_state.overall_throughput /= p;
-        return true;
+    double russian_roulette(path_state& p_state) const {
+        if (p_state.depth < m_rr_start_depth) return 1.0;
+        double q = rr_importance(p_state.overall_throughput);
+        if (random_double() > q) return 0.0;
+        p_state.overall_throughput /= q;
+        return q;
     }
 
     double rr_importance(const vec3& throughput) const {

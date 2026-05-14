@@ -164,8 +164,8 @@ public:
     static image_info error_ref() {
         return image_info(
             1.0,
-             64,
-             8196,
+             32,
+             10000,
              64
         );
     }

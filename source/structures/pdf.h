@@ -45,6 +45,9 @@ public:
     }
 
     double value(const vec3& direction) const override {
+        if (dot(unit_vector(direction), n) <= 0.0) {
+            return 0.0;
+        }
         return 1.0 / (2.0 * pi);
     }
 

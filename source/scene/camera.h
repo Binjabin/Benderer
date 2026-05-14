@@ -28,6 +28,8 @@ public:
     void render(const std::string& filename, const world& world, image_info info, const integrator& itgr, post_process& post, const image_writer& preview_writer, const image_writer& result_writer) {
         initialize(info);
 
+        constexpr bool snapshots = true;
+
         int ph = info.pixel_height();
         int pw = info.pixel_width();
         int spp = info.samples_per_pixel();
@@ -56,6 +58,16 @@ public:
                 for ( int i = 0; i < pw ; i++ ) {
                     color pixel_color( 0, 0, 0 );
                     ray r = get_ray( i, j );
+
+                    color col = itgr.ray_color( r, md, world );
+
+                    constexpr bool clamp_lum = true;
+                    if (clamp_lum) {
+                        constexpr double k_max_path_lum = 100.0;
+                        double lum = luminance(col);
+                        if (lum > k_max_path_lum) col *= (k_max_path_lum / lum);
+                    }
+
                     pixel_color += itgr.ray_color( r, md, world );
 
                     const size_t idx = (size_t(j) * size_t(pw) + size_t(i)) * 3;
@@ -71,11 +83,18 @@ public:
                     }
                 }
             }
+
+            int completed_samples = (sample + 1);
+            if (snapshots && (completed_samples > 0) && (completed_samples & (completed_samples - 1)) == 0) {
+                double ss = (1.0 / double(completed_samples));
+                accum_to_display(display_buff, accum_buff, post, pixel_area, ss);
+                result_writer.write(filename + "-SNAP-" + std::to_string(completed_samples), display_buff);
+                std::clog << "OUTPUT SNAP: " << std::to_string(completed_samples);
+            }
         }
 
         //Reset preview:
         preview_writer.write("preview", black);
-
         accum_to_display(display_buff, accum_buff, post, pixel_area, ss);
         result_writer.write(filename, display_buff);
         std::clog << "\rDone. \n";

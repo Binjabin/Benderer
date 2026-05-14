@@ -99,7 +99,7 @@ private:
             path_state child_state = p_state;
             child_state.depth++; // advance path depth for medium bounce
 
-            color sigma_s = medium_rec.m_mat->sigma_s(p);
+            color sigma_s = medium_rec.m_mat->sigma_s(medium_rec.m_local_p);
             double phase_factor = srec.phase_pdf / srec.w_pdf;
 
             // Update child throughput for path termination check
